@@ -1,0 +1,29 @@
+services:
+  api-gateway:
+    build:
+      context: ../../
+      dockerfile: ./services/api-gateway/Dockerfile
+    container_name: api-gateway
+    restart: unless-stopped
+    ports:
+      - "8000:8000"
+    environment:
+      - AUTH_SERVICE_URL=${AUTH_SERVICE_URL}
+    volumes:
+      - ./storage:/var/www/api-gateway/storage
+      - ./logs:/var/www/api-gateway/storage/logs
+    develop:
+      watch:
+        - action: sync
+          path: .
+          target: /var/www/api-gateway
+          ignore:
+            - vendor/
+        - action: rebuild
+          path: composer.json
+    networks:
+      - microservices-network
+
+networks:
+  microservices-network:
+    driver: bridge
