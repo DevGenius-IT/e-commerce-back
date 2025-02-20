@@ -1,0 +1,4 @@
+.env
+services/**/vendor
+services/**/mysql
+services/**/minio
