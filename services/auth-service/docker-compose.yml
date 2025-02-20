@@ -1,0 +1,36 @@
+services:
+  auth-service:
+    build:
+      context: ../../
+      dockerfile: ./services/auth-service/Dockerfile
+    ports:
+      - "8001:8001"
+    environment:
+      - DB_HOST=auth-db
+    depends_on:
+      - auth-db
+    develop:
+      watch:
+        - action: sync
+          path: .
+          target: /var/www/auth-service
+          ignore:
+            - vendor/
+        - action: rebuild
+          path: composer.json
+    networks:
+      - microservices-network
+
+  auth-db:
+    image: mysql:latest
+    environment:
+      MYSQL_DATABASE: auth_service_db
+      MYSQL_ROOT_PASSWORD: root
+    ports:
+      - ${DB_PORT}:3306
+    networks:
+      - microservices-network
+
+networks:
+  microservices-network:
+    driver: bridge
