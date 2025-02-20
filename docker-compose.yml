@@ -1,0 +1,84 @@
+services:
+  api-gateway:
+    build:
+      context: .
+      dockerfile: ./services/api-gateway/Dockerfile
+    volumes:
+      - ./services/api-gateway:/var/www/api-gateway
+      - /var/www/api-gateway/vendor
+    environment:
+      - APP_ENV=local
+      - CONTAINER_ROLE=app
+    develop:
+      watch:
+        - action: sync
+          path: services/api-gateway
+          target: /var/www/api-gateway
+          ignore:
+            - vendor/
+        - action: rebuild
+          path: services/api-gateway/composer.json
+    networks:
+      - microservices-network
+
+  auth-service:
+    build:
+      context: .
+      dockerfile: ./services/auth-service/Dockerfile
+    volumes:
+      - ./services/auth-service:/var/www/auth-service
+      - /var/www/auth-service/vendor
+    environment:
+      - APP_ENV=local
+      - CONTAINER_ROLE=app
+      - DB_HOST=${DB_AUTH_HOST}
+    develop:
+      watch:
+        - action: sync
+          path: services/auth-service
+          target: /var/www/auth-service
+          ignore:
+            - vendor/
+        - action: rebuild
+          path: services/auth-service/composer.json
+    networks:
+      - microservices-network
+    depends_on:
+      - auth-db
+      
+  auth-db:
+    image: mysql:latest
+    environment:
+      MYSQL_DATABASE: auth_service_db
+      MYSQL_ROOT_PASSWORD: root
+    ports:
+      - ${DB_AUTH_PORT}:3306
+    networks:
+      - microservices-network
+
+  nginx:
+    image: nginx:alpine
+    ports:
+      - "80:80"
+      - "443:443"  # Pour HTTPS
+    volumes:
+      - ./docker/nginx/conf.d:/etc/nginx/conf.d
+      - ./services/api-gateway:/var/www/api-gateway
+      - ./services/auth-service:/var/www/auth-service
+    develop:
+      watch:
+        - action: sync
+          path: docker/nginx/conf.d
+          target: /etc/nginx/conf.d
+    networks:
+      - microservices-network
+    depends_on:
+      - api-gateway
+      - auth-service
+
+volumes:
+  auth-db-data:
+
+networks:
+  microservices-network:
+    driver: bridge
