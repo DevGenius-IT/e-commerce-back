@@ -1,0 +1,22 @@
+{
+    "name": "e-commerce/shared",
+    "description": "Shared code for microservices",
+    "type": "library",
+    "minimum-stability": "dev",
+    "prefer-stable": true,
+    "autoload": {
+        "psr-4": {
+            "Shared\\": "./"
+        }
+    },
+    "require": {
+        "php": "^8.2"
+    },
+    "extra": {
+        "laravel": {
+            "providers": [],
+            "aliases": {}
+        }
+    },
+    "version": "1.0.0"
+}
