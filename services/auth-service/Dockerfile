@@ -12,6 +12,7 @@ RUN apt-get update && apt-get install -y \
     libxml2-dev \
     zip \
     unzip \
+    netcat-traditional \
     inotify-tools \
     && rm -rf /var/lib/apt/lists/*
 
@@ -38,6 +39,8 @@ WORKDIR /var/www/auth-service
 # Copy application files with proper permissions
 COPY --chown=api-gateway:api-gateway services/auth-service .
 COPY --chown=api-gateway:api-gateway shared/ ../../shared
+
+RUN composer install --no-interaction --optimize-autoloader
 
 EXPOSE 8001
 
