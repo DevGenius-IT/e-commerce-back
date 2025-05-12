@@ -1,0 +1,36 @@
+services:
+  addresses-service:
+    build:
+      context: ../../
+      dockerfile: ./services/addresses-service/Dockerfile
+    ports:
+      - "8001:8001"
+    environment:
+      - DB_HOST=addresses-db
+    depends_on:
+      - addresses-db
+    develop:
+      watch:
+        - action: sync
+          path: .
+          target: /var/www/addresses-service
+          ignore:
+            - vendor/
+        - action: rebuild
+          path: composer.json
+    networks:
+      - microservices-network
+
+  addresses-db:
+    image: mysql:latest
+    environment:
+      MYSQL_DATABASE: addresses_service_db
+      MYSQL_ROOT_PASSWORD: root
+    ports:
+      - ${DB_PORT}:3306
+    networks:
+      - microservices-network
+
+networks:
+  microservices-network:
+    driver: bridge
