@@ -1,0 +1,69 @@
+version: '3.8'
+
+services:
+  messages-broker:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: messages-broker
+    restart: unless-stopped
+    ports:
+      - "8005:9000"
+    volumes:
+      - .:/var/www
+      - ./storage:/var/www/storage
+      - ./bootstrap/cache:/var/www/bootstrap/cache
+    environment:
+      - DB_HOST=messages-broker-db
+      - DB_PORT=3306
+      - DB_DATABASE=messages_broker
+      - DB_USERNAME=root
+      - DB_PASSWORD=secret
+      - RABBITMQ_HOST=rabbitmq
+      - RABBITMQ_PORT=5672
+      - RABBITMQ_USER=guest
+      - RABBITMQ_PASSWORD=guest
+    depends_on:
+      - messages-broker-db
+    networks:
+      - microservices-network
+
+  messages-broker-nginx:
+    image: nginx:alpine
+    container_name: messages-broker-nginx
+    restart: unless-stopped
+    ports:
+      - "8085:80"
+    volumes:
+      - .:/var/www
+      - ./docker/nginx/conf.d:/etc/nginx/conf.d
+    depends_on:
+      - messages-broker
+    networks:
+      - microservices-network
+
+  messages-broker-db:
+    image: mysql:8.0
+    container_name: messages-broker-db
+    restart: unless-stopped
+    ports:
+      - "3320:3306"
+    environment:
+      MYSQL_DATABASE: messages_broker
+      MYSQL_ROOT_PASSWORD: secret
+      MYSQL_PASSWORD: secret
+      MYSQL_USER: messages_broker_user
+    volumes:
+      - messages-broker-db-data:/var/lib/mysql
+    networks:
+      - microservices-network
+
+
+
+volumes:
+  messages-broker-db-data:
+
+networks:
+  microservices-network:
+    name: e-commerce-back_microservices-network
+    external: true
