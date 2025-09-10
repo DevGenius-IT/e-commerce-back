@@ -96,6 +96,41 @@ services:
     networks:
       - microservices-network
 
+  addresses-service:
+    build:
+      context: .
+      dockerfile: ./services/addresses-service/Dockerfile
+    volumes:
+      - ./services/addresses-service:/var/www/addresses-service
+      - /var/www/addresses-service/vendor
+    environment:
+      - APP_ENV=local
+      - CONTAINER_ROLE=app
+      - DB_HOST=${DB_ADDRESSES_HOST}
+    develop:
+      watch:
+        - action: sync
+          path: services/addresses-service
+          target: /var/www/addresses-service
+          ignore:
+            - vendor/
+        - action: rebuild
+          path: services/addresses-service/composer.json
+    networks:
+      - microservices-network
+    depends_on:
+      - addresses-db
+
+  addresses-db:
+    image: mysql:8.0
+    environment:
+      MYSQL_DATABASE: addresses_service
+      MYSQL_ROOT_PASSWORD: root
+    ports:
+      - ${DB_ADDRESSES_PORT}:3306
+    networks:
+      - microservices-network
+
   rabbitmq:
     image: rabbitmq:3.12-management-alpine
     container_name: rabbitmq
@@ -121,6 +156,7 @@ services:
       - ./docker/nginx/conf.d:/etc/nginx/conf.d
       - ./services/api-gateway:/var/www/api-gateway
       - ./services/auth-service:/var/www/auth-service
+      - ./services/addresses-service:/var/www/addresses-service
     develop:
       watch:
         - action: sync
@@ -131,10 +167,12 @@ services:
     depends_on:
       - api-gateway
       - auth-service
+      - addresses-service
       - messages-broker
 
 volumes:
   auth-db-data:
+  addresses-db-data:
   rabbitmq-data:
 
 networks:
