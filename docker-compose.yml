@@ -56,6 +56,62 @@ services:
     networks:
       - microservices-network
 
+  messages-broker:
+    build:
+      context: .
+      dockerfile: ./services/messages-broker/Dockerfile
+    volumes:
+      - ./services/messages-broker:/var/www/messages-broker
+      - /var/www/messages-broker/vendor
+    environment:
+      - APP_ENV=local
+      - CONTAINER_ROLE=app
+      - DB_HOST=${DB_MESSAGES_BROKER_HOST}
+      - RABBITMQ_HOST=rabbitmq
+      - RABBITMQ_PORT=5672
+      - RABBITMQ_USER=guest
+      - RABBITMQ_PASSWORD=guest
+    develop:
+      watch:
+        - action: sync
+          path: services/messages-broker
+          target: /var/www/messages-broker
+          ignore:
+            - vendor/
+        - action: rebuild
+          path: services/messages-broker/composer.json
+    networks:
+      - microservices-network
+    depends_on:
+      - messages-broker-db
+      - rabbitmq
+
+  messages-broker-db:
+    image: mysql:8.0
+    environment:
+      MYSQL_DATABASE: messages_broker
+      MYSQL_ROOT_PASSWORD: root
+    ports:
+      - ${DB_MESSAGES_BROKER_PORT}:3306
+    networks:
+      - microservices-network
+
+  rabbitmq:
+    image: rabbitmq:3.12-management-alpine
+    container_name: rabbitmq
+    restart: unless-stopped
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    environment:
+      RABBITMQ_DEFAULT_USER: guest
+      RABBITMQ_DEFAULT_PASS: guest
+      RABBITMQ_DEFAULT_VHOST: /
+    volumes:
+      - rabbitmq-data:/var/lib/rabbitmq
+    networks:
+      - microservices-network
+
   nginx:
     image: nginx:alpine
     ports:
@@ -75,9 +131,11 @@ services:
     depends_on:
       - api-gateway
       - auth-service
+      - messages-broker
 
 volumes:
   auth-db-data:
+  rabbitmq-data:
 
 networks:
   microservices-network:
