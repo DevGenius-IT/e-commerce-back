@@ -6,7 +6,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 
-class Category extends Model
+class Catalog extends Model
 {
     use HasFactory;
 
@@ -15,10 +15,10 @@ class Category extends Model
     ];
 
     /**
-     * The products that belong to the category.
+     * The products that belong to the catalog.
      */
     public function products(): BelongsToMany
     {
-        return $this->belongsToMany(Product::class, 'product_categories');
+        return $this->belongsToMany(Product::class, 'product_catalogs');
     }
 }

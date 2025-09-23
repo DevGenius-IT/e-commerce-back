@@ -4,7 +4,10 @@ namespace App\Http\Controllers\API;
 
 use App\Http\Controllers\Controller;
 use App\Models\Product;
+use App\Models\Brand;
+use App\Models\Type;
 use App\Models\Category;
+use App\Models\Catalog;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Validation\Rule;
@@ -16,39 +19,56 @@ class ProductController extends Controller
      */
     public function index(Request $request): JsonResponse
     {
-        $query = Product::with(['categories', 'images'])
-                       ->active()
+        $query = Product::with(['brand', 'types', 'categories', 'catalogs', 'attributes.attributeGroup', 'characteristics.relatedCharacteristic'])
                        ->orderBy('created_at', 'desc');
 
         // Apply filters
         if ($search = $request->get('search')) {
-            $query->search($search);
+            $query->where('name', 'like', "%{$search}%")
+                  ->orWhere('ref', 'like', "%{$search}%");
+        }
+
+        if ($brandId = $request->get('brand_id')) {
+            $query->where('id_1', $brandId);
         }
 
         if ($categoryId = $request->get('category_id')) {
-            $query->inCategory($categoryId);
+            $query->whereHas('categories', function ($q) use ($categoryId) {
+                $q->where('categories.id', $categoryId);
+            });
         }
 
-        if ($request->get('featured') === 'true') {
-            $query->featured();
+        if ($typeId = $request->get('type_id')) {
+            $query->whereHas('types', function ($q) use ($typeId) {
+                $q->where('types.id', $typeId);
+            });
+        }
+
+        if ($catalogId = $request->get('catalog_id')) {
+            $query->whereHas('catalogs', function ($q) use ($catalogId) {
+                $q->where('catalogs.id', $catalogId);
+            });
         }
 
         if ($request->get('in_stock') === 'true') {
-            $query->inStock();
+            $query->where('stock', '>', 0);
         }
 
         // Price range filter
         $minPrice = $request->get('min_price');
         $maxPrice = $request->get('max_price');
-        if ($minPrice || $maxPrice) {
-            $query->priceRange($minPrice, $maxPrice);
+        if ($minPrice) {
+            $query->where('price_ht', '>=', $minPrice);
+        }
+        if ($maxPrice) {
+            $query->where('price_ht', '<=', $maxPrice);
         }
 
         // Sorting
         $sortBy = $request->get('sort_by', 'created_at');
         $sortOrder = $request->get('sort_order', 'desc');
         
-        if (in_array($sortBy, ['name', 'price', 'created_at'])) {
+        if (in_array($sortBy, ['name', 'ref', 'price_ht', 'stock', 'created_at'])) {
             $query->orderBy($sortBy, $sortOrder);
         }
 
@@ -75,67 +95,38 @@ class ProductController extends Controller
     {
         $validatedData = $request->validate([
             'name' => 'required|string|max:255',
-            'sku' => 'required|string|max:255|unique:products',
-            'description' => 'nullable|string',
-            'short_description' => 'nullable|string|max:500',
-            'price' => 'required|numeric|min:0',
-            'compare_price' => 'nullable|numeric|min:0|gt:price',
-            'cost' => 'nullable|numeric|min:0',
-            'track_quantity' => 'boolean',
-            'quantity' => 'nullable|integer|min:0',
-            'min_quantity' => 'nullable|integer|min:0',
-            'weight' => 'nullable|numeric|min:0',
-            'dimensions' => 'nullable|array',
-            'dimensions.length' => 'nullable|numeric|min:0',
-            'dimensions.width' => 'nullable|numeric|min:0',
-            'dimensions.height' => 'nullable|numeric|min:0',
-            'meta_title' => 'nullable|string|max:255',
-            'meta_description' => 'nullable|string|max:500',
-            'tags' => 'nullable|array',
-            'tags.*' => 'string|max:50',
-            'is_active' => 'boolean',
-            'is_featured' => 'boolean',
-            'requires_shipping' => 'boolean',
-            'is_digital' => 'boolean',
+            'ref' => 'required|string|max:255|unique:products',
+            'price_ht' => 'required|numeric|min:0',
+            'stock' => 'required|integer|min:0',
+            'id_1' => 'nullable|exists:brands,id', // brand_id
+            'type_ids' => 'nullable|array',
+            'type_ids.*' => 'exists:types,id',
             'category_ids' => 'nullable|array',
             'category_ids.*' => 'exists:categories,id',
-            'images' => 'nullable|array',
-            'images.*.url' => 'required|string',
-            'images.*.alt_text' => 'nullable|string',
-            'images.*.is_primary' => 'boolean'
+            'catalog_ids' => 'nullable|array',
+            'catalog_ids.*' => 'exists:catalogs,id',
         ]);
 
-        // Create slug from name
-        $validatedData['slug'] = \Illuminate\Support\Str::slug($validatedData['name']);
-        
-        // Ensure slug is unique
-        $originalSlug = $validatedData['slug'];
-        $counter = 1;
-        while (Product::where('slug', $validatedData['slug'])->exists()) {
-            $validatedData['slug'] = $originalSlug . '-' . $counter;
-            $counter++;
-        }
-
+        $typeIds = $validatedData['type_ids'] ?? [];
         $categoryIds = $validatedData['category_ids'] ?? [];
-        $images = $validatedData['images'] ?? [];
-        unset($validatedData['category_ids'], $validatedData['images']);
+        $catalogIds = $validatedData['catalog_ids'] ?? [];
+        
+        unset($validatedData['type_ids'], $validatedData['category_ids'], $validatedData['catalog_ids']);
 
         $product = Product::create($validatedData);
 
-        // Attach categories
+        // Attach relationships
+        if (!empty($typeIds)) {
+            $product->types()->attach($typeIds);
+        }
         if (!empty($categoryIds)) {
             $product->categories()->attach($categoryIds);
         }
-
-        // Create images
-        foreach ($images as $index => $imageData) {
-            $product->images()->create([
-                ...$imageData,
-                'sort_order' => $index + 1
-            ]);
+        if (!empty($catalogIds)) {
+            $product->catalogs()->attach($catalogIds);
         }
 
-        $product->load(['categories', 'images']);
+        $product->load(['brand', 'types', 'categories', 'catalogs']);
 
         return response()->json([
             'data' => $product,
@@ -148,11 +139,7 @@ class ProductController extends Controller
      */
     public function show(Product $product): JsonResponse
     {
-        if (!$product->is_active) {
-            return response()->json(['error' => 'Product not found'], 404);
-        }
-
-        $product->load(['categories', 'images']);
+        $product->load(['brand', 'types', 'categories', 'catalogs', 'attributes.attributeGroup', 'characteristics.relatedCharacteristic']);
 
         return response()->json(['data' => $product]);
     }
@@ -164,52 +151,38 @@ class ProductController extends Controller
     {
         $validatedData = $request->validate([
             'name' => 'sometimes|string|max:255',
-            'sku' => ['sometimes', 'string', 'max:255', Rule::unique('products')->ignore($product->id)],
-            'description' => 'nullable|string',
-            'short_description' => 'nullable|string|max:500',
-            'price' => 'sometimes|numeric|min:0',
-            'compare_price' => 'nullable|numeric|min:0',
-            'cost' => 'nullable|numeric|min:0',
-            'track_quantity' => 'boolean',
-            'quantity' => 'nullable|integer|min:0',
-            'min_quantity' => 'nullable|integer|min:0',
-            'weight' => 'nullable|numeric|min:0',
-            'dimensions' => 'nullable|array',
-            'meta_title' => 'nullable|string|max:255',
-            'meta_description' => 'nullable|string|max:500',
-            'tags' => 'nullable|array',
-            'tags.*' => 'string|max:50',
-            'is_active' => 'boolean',
-            'is_featured' => 'boolean',
-            'requires_shipping' => 'boolean',
-            'is_digital' => 'boolean',
+            'ref' => ['sometimes', 'string', 'max:255', Rule::unique('products')->ignore($product->id)],
+            'price_ht' => 'sometimes|numeric|min:0',
+            'stock' => 'sometimes|integer|min:0',
+            'id_1' => 'nullable|exists:brands,id', // brand_id
+            'type_ids' => 'nullable|array',
+            'type_ids.*' => 'exists:types,id',
             'category_ids' => 'nullable|array',
-            'category_ids.*' => 'exists:categories,id'
+            'category_ids.*' => 'exists:categories,id',
+            'catalog_ids' => 'nullable|array',
+            'catalog_ids.*' => 'exists:catalogs,id',
         ]);
 
-        // Update slug if name changed
-        if (isset($validatedData['name']) && $validatedData['name'] !== $product->name) {
-            $slug = \Illuminate\Support\Str::slug($validatedData['name']);
-            $originalSlug = $slug;
-            $counter = 1;
-            while (Product::where('slug', $slug)->where('id', '!=', $product->id)->exists()) {
-                $slug = $originalSlug . '-' . $counter;
-                $counter++;
-            }
-            $validatedData['slug'] = $slug;
-        }
-
+        $typeIds = $validatedData['type_ids'] ?? null;
         $categoryIds = $validatedData['category_ids'] ?? null;
-        unset($validatedData['category_ids']);
+        $catalogIds = $validatedData['catalog_ids'] ?? null;
+        
+        unset($validatedData['type_ids'], $validatedData['category_ids'], $validatedData['catalog_ids']);
 
         $product->update($validatedData);
 
-        // Update categories if provided
+        // Update relationships if provided
+        if ($typeIds !== null) {
+            $product->types()->sync($typeIds);
+        }
         if ($categoryIds !== null) {
             $product->categories()->sync($categoryIds);
         }
+        if ($catalogIds !== null) {
+            $product->catalogs()->sync($catalogIds);
+        }
 
-        $product->load(['categories', 'images']);
+        $product->load(['brand', 'types', 'categories', 'catalogs']);
 
         return response()->json([
             'data' => $product,
@@ -233,24 +206,25 @@ class ProductController extends Controller
     public function updateStock(Request $request, Product $product): JsonResponse
     {
         $validatedData = $request->validate([
-            'quantity' => 'required|integer|min:0',
+            'stock' => 'required|integer|min:0',
             'operation' => ['required', Rule::in(['set', 'increment', 'decrement'])]
         ]);
 
         $operation = $validatedData['operation'];
-        $quantity = $validatedData['quantity'];
+        $stock = $validatedData['stock'];
 
         switch ($operation) {
             case 'set':
-                $product->update(['quantity' => $quantity]);
+                $product->update(['stock' => $stock]);
                 break;
             case 'increment':
-                $product->incrementStock($quantity);
+                $product->increment('stock', $stock);
                 break;
             case 'decrement':
-                if (!$product->decrementStock($quantity)) {
+                if ($product->stock < $stock) {
                     return response()->json(['error' => 'Insufficient stock'], 400);
                 }
+                $product->decrement('stock', $stock);
                 break;
         }
 
@@ -259,31 +233,10 @@ class ProductController extends Controller
         return response()->json([
             'data' => [
                 'id' => $product->id,
-                'quantity' => $product->quantity,
-                'stock_status' => $product->stock_status
+                'stock' => $product->stock,
+                'in_stock' => $product->stock > 0
             ],
             'message' => 'Stock updated successfully'
-        ]);
-    }
-
-    /**
-     * Get featured products.
-     */
-    public function featured(Request $request): JsonResponse
-    {
-        $limit = min($request->get('limit', 10), 20);
-        
-        $products = Product::with(['categories', 'images'])
-                          ->active()
-                          ->featured()
-                          ->inStock()
-                          ->orderBy('created_at', 'desc')
-                          ->limit($limit)
-                          ->get();
-
-        return response()->json([
-            'data' => $products,
-            'meta' => ['total' => $products->count()]
         ]);
     }
 
@@ -299,9 +252,9 @@ class ProductController extends Controller
         $query = $request->get('q');
         $limit = min($request->get('limit', 20), 50);
 
-        $products = Product::with(['categories', 'images'])
-                          ->active()
-                          ->search($query)
+        $products = Product::with(['brand', 'types', 'categories', 'catalogs'])
+                          ->where('name', 'like', "%{$query}%")
+                          ->orWhere('ref', 'like', "%{$query}%")
                           ->orderBy('name')
                           ->limit($limit)
                           ->get();

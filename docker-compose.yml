@@ -150,6 +150,7 @@ services:
       dockerfile: ./services/products-service/Dockerfile
     volumes:
       - ./services/products-service:/var/www/products-service
+      - ./shared:/var/www/shared
       - /var/www/products-service/vendor
     environment:
       - APP_ENV=local

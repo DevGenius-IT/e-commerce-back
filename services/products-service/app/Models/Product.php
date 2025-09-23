@@ -4,268 +4,74 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Product extends Model
 {
-    use HasFactory;
+    use HasFactory, SoftDeletes;
 
-    /**
-     * The attributes that are mass assignable.
-     *
-     * @var array<int, string>
-     */
     protected $fillable = [
         'name',
-        'slug',
-        'sku',
-        'description',
-        'short_description',
-        'price',
-        'compare_price',
-        'cost',
-        'track_quantity',
-        'quantity',
-        'min_quantity',
-        'weight',
-        'dimensions',
-        'meta_title',
-        'meta_description',
-        'tags',
-        'is_active',
-        'is_featured',
-        'requires_shipping',
-        'is_digital'
+        'ref',
+        'price_ht',
+        'stock',
+        'id_1', // brand_id
     ];
 
-    /**
-     * The attributes that should be cast.
-     *
-     * @var array<string, string>
-     */
     protected $casts = [
-        'price' => 'decimal:2',
-        'compare_price' => 'decimal:2',
-        'cost' => 'decimal:2',
-        'weight' => 'decimal:3',
-        'dimensions' => 'json',
-        'tags' => 'json',
-        'is_active' => 'boolean',
-        'is_featured' => 'boolean',
-        'requires_shipping' => 'boolean',
-        'is_digital' => 'boolean',
-        'track_quantity' => 'boolean',
-        'quantity' => 'integer',
-        'min_quantity' => 'integer'
+        'price_ht' => 'decimal:2',
+        'stock' => 'integer',
+        'deleted_at' => 'datetime',
     ];
 
     /**
-     * Get the categories for this product.
+     * Get the brand that owns the product.
+     */
+    public function brand(): BelongsTo
+    {
+        return $this->belongsTo(Brand::class, 'id_1');
+    }
+
+    /**
+     * The types that belong to the product.
+     */
+    public function types(): BelongsToMany
+    {
+        return $this->belongsToMany(Type::class, 'product_types');
+    }
+
+    /**
+     * The categories that belong to the product.
      */
     public function categories(): BelongsToMany
     {
-        return $this->belongsToMany(Category::class, 'product_categories')
-                    ->withTimestamps();
+        return $this->belongsToMany(Category::class, 'product_categories');
     }
 
     /**
-     * Get the images for this product.
+     * The catalogs that belong to the product.
      */
-    public function images(): HasMany
+    public function catalogs(): BelongsToMany
     {
-        return $this->hasMany(ProductImage::class)->orderBy('sort_order');
+        return $this->belongsToMany(Catalog::class, 'product_catalogs');
     }
 
     /**
-     * Get the primary image for this product.
+     * Get the attributes for the product.
      */
-    public function primaryImage(): HasMany
+    public function attributes(): HasMany
     {
-        return $this->images()->where('is_primary', true)->limit(1);
+        return $this->hasMany(Attribute::class);
     }
 
     /**
-     * Get the formatted price.
+     * Get the characteristics for the product.
      */
-    public function getFormattedPriceAttribute(): string
+    public function characteristics(): HasMany
     {
-        return '$' . number_format($this->price, 2);
-    }
-
-    /**
-     * Get the formatted compare price.
-     */
-    public function getFormattedComparePriceAttribute(): ?string
-    {
-        return $this->compare_price ? '$' . number_format($this->compare_price, 2) : null;
-    }
-
-    /**
-     * Get the discount percentage.
-     */
-    public function getDiscountPercentageAttribute(): ?int
-    {
-        if (!$this->compare_price || $this->compare_price <= $this->price) {
-            return null;
-        }
-        
-        return (int) round((($this->compare_price - $this->price) / $this->compare_price) * 100);
-    }
-
-    /**
-     * Check if product is on sale.
-     */
-    public function getIsOnSaleAttribute(): bool
-    {
-        return $this->compare_price && $this->compare_price > $this->price;
-    }
-
-    /**
-     * Check if product is in stock.
-     */
-    public function getIsInStockAttribute(): bool
-    {
-        if (!$this->track_quantity) {
-            return true;
-        }
-        
-        return $this->quantity > 0;
-    }
-
-    /**
-     * Check if product is low stock.
-     */
-    public function getIsLowStockAttribute(): bool
-    {
-        if (!$this->track_quantity) {
-            return false;
-        }
-        
-        return $this->quantity <= $this->min_quantity && $this->quantity > 0;
-    }
-
-    /**
-     * Check if product is out of stock.
-     */
-    public function getIsOutOfStockAttribute(): bool
-    {
-        if (!$this->track_quantity) {
-            return false;
-        }
-        
-        return $this->quantity <= 0;
-    }
-
-    /**
-     * Get stock status string.
-     */
-    public function getStockStatusAttribute(): string
-    {
-        if (!$this->track_quantity) {
-            return 'unlimited';
-        }
-        
-        if ($this->is_out_of_stock) {
-            return 'out_of_stock';
-        }
-        
-        if ($this->is_low_stock) {
-            return 'low_stock';
-        }
-        
-        return 'in_stock';
-    }
-
-    /**
-     * Scope a query to only include active products.
-     */
-    public function scopeActive($query)
-    {
-        return $query->where('is_active', true);
-    }
-
-    /**
-     * Scope a query to only include featured products.
-     */
-    public function scopeFeatured($query)
-    {
-        return $query->where('is_featured', true);
-    }
-
-    /**
-     * Scope a query to only include in-stock products.
-     */
-    public function scopeInStock($query)
-    {
-        return $query->where(function ($q) {
-            $q->where('track_quantity', false)
-              ->orWhere('quantity', '>', 0);
-        });
-    }
-
-    /**
-     * Scope a query to filter by category.
-     */
-    public function scopeInCategory($query, $categoryId)
-    {
-        return $query->whereHas('categories', function ($q) use ($categoryId) {
-            $q->where('categories.id', $categoryId);
-        });
-    }
-
-    /**
-     * Scope a query to filter by price range.
-     */
-    public function scopePriceRange($query, $min = null, $max = null)
-    {
-        if ($min !== null) {
-            $query->where('price', '>=', $min);
-        }
-        
-        if ($max !== null) {
-            $query->where('price', '<=', $max);
-        }
-        
-        return $query;
-    }
-
-    /**
-     * Scope a query to search products by name, description, or SKU.
-     */
-    public function scopeSearch($query, $term)
-    {
-        return $query->where(function ($q) use ($term) {
-            $q->where('name', 'LIKE', "%{$term}%")
-              ->orWhere('description', 'LIKE', "%{$term}%")
-              ->orWhere('sku', 'LIKE', "%{$term}%");
-        });
-    }
-
-    /**
-     * Update inventory when product is purchased.
-     */
-    public function decrementStock(int $quantity): bool
-    {
-        if (!$this->track_quantity) {
-            return true;
-        }
-        
-        if ($this->quantity < $quantity) {
-            return false;
-        }
-        
-        $this->decrement('quantity', $quantity);
-        return true;
-    }
-
-    /**
-     * Restock product.
-     */
-    public function incrementStock(int $quantity): void
-    {
-        if ($this->track_quantity) {
-            $this->increment('quantity', $quantity);
-        }
+        return $this->hasMany(Characteristic::class);
     }
 }

@@ -12,6 +12,16 @@ return Application::configure(basePath: dirname(__DIR__))
   )
   ->withMiddleware(function (Middleware $middleware) {
     $middleware->trustHosts();
+    
+    // Register the JWT middleware with full path
+    $middleware->alias([
+      'jwt.auth' => \Shared\Middleware\JWTAuthMiddleware::class,
+    ]);
+    
+    // Try alternative registration approach for Laravel 12
+    $middleware->appendToGroup('api', [
+      // Add to API middleware group
+    ]);
   })
   ->withExceptions(function (Exceptions $exceptions) {
     //

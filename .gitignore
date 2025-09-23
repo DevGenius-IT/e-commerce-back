@@ -2,3 +2,4 @@
 services/**/vendor
 services/**/mysql
 services/**/minio
+CLAUDE.md

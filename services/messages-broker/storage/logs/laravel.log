@@ -731,3 +731,43 @@
 [2025-09-23 12:43:20] local.INFO: Starting to consume messages from queue: auth.events  
 [2025-09-23 12:43:21] local.ERROR: Consumer error: The connection timed out after 1 sec while awaiting incoming data  
 [2025-09-23 12:43:21] local.INFO: RabbitMQ connection closed  
+[2025-09-23 22:47:42] local.INFO: RabbitMQ connection closed  
+[2025-09-23 22:47:43] local.INFO: RabbitMQ connection established successfully  
+[2025-09-23 22:47:43] local.INFO: RabbitMQ connection closed  
+[2025-09-23 22:47:43] local.INFO: RabbitMQ connection closed  
+[2025-09-23 22:47:43] local.INFO: RabbitMQ connection established successfully  
+[2025-09-23 22:47:43] local.INFO: Starting to consume messages from queue: auth.events  
+[2025-09-23 22:47:44] local.ERROR: Consumer error: The connection timed out after 1 sec while awaiting incoming data  
+[2025-09-23 22:47:44] local.INFO: RabbitMQ connection closed  
+[2025-09-23 23:12:00] local.INFO: RabbitMQ connection closed  
+[2025-09-23 23:12:00] local.INFO: RabbitMQ connection established successfully  
+[2025-09-23 23:12:00] local.INFO: RabbitMQ connection closed  
+[2025-09-23 23:12:00] local.INFO: RabbitMQ connection closed  
+[2025-09-23 23:12:00] local.INFO: RabbitMQ connection established successfully  
+[2025-09-23 23:12:00] local.INFO: Starting to consume messages from queue: auth.events  
+[2025-09-23 23:12:01] local.ERROR: Consumer error: The connection timed out after 1 sec while awaiting incoming data  
+[2025-09-23 23:12:01] local.INFO: RabbitMQ connection closed  
+[2025-09-23 23:14:22] local.INFO: RabbitMQ connection closed  
+[2025-09-23 23:14:22] local.INFO: RabbitMQ connection established successfully  
+[2025-09-23 23:14:22] local.INFO: RabbitMQ connection closed  
+[2025-09-23 23:14:22] local.INFO: RabbitMQ connection closed  
+[2025-09-23 23:14:22] local.INFO: RabbitMQ connection established successfully  
+[2025-09-23 23:14:22] local.INFO: Starting to consume messages from queue: auth.events  
+[2025-09-23 23:14:23] local.ERROR: Consumer error: The connection timed out after 1 sec while awaiting incoming data  
+[2025-09-23 23:14:23] local.INFO: RabbitMQ connection closed  
+[2025-09-23 23:25:11] local.INFO: RabbitMQ connection closed  
+[2025-09-23 23:25:11] local.INFO: RabbitMQ connection established successfully  
+[2025-09-23 23:25:11] local.INFO: RabbitMQ connection closed  
+[2025-09-23 23:25:11] local.INFO: RabbitMQ connection closed  
+[2025-09-23 23:25:11] local.INFO: RabbitMQ connection established successfully  
+[2025-09-23 23:25:11] local.INFO: Starting to consume messages from queue: auth.events  
+[2025-09-23 23:25:12] local.ERROR: Consumer error: The connection timed out after 1 sec while awaiting incoming data  
+[2025-09-23 23:25:12] local.INFO: RabbitMQ connection closed  
+[2025-09-23 23:25:28] local.INFO: RabbitMQ connection closed  
+[2025-09-23 23:25:28] local.INFO: RabbitMQ connection established successfully  
+[2025-09-23 23:25:28] local.INFO: RabbitMQ connection closed  
+[2025-09-23 23:25:28] local.INFO: RabbitMQ connection closed  
+[2025-09-23 23:25:28] local.INFO: RabbitMQ connection established successfully  
+[2025-09-23 23:25:28] local.INFO: Starting to consume messages from queue: auth.events  
+[2025-09-23 23:25:29] local.ERROR: Consumer error: The connection timed out after 1 sec while awaiting incoming data  
+[2025-09-23 23:25:29] local.INFO: RabbitMQ connection closed  
