@@ -9,6 +9,11 @@ services:
     environment:
       - APP_ENV=local
       - CONTAINER_ROLE=app
+      - RABBITMQ_HOST=rabbitmq
+      - RABBITMQ_PORT=5672
+      - RABBITMQ_USER=guest
+      - RABBITMQ_PASSWORD=guest
+      - RABBITMQ_VHOST=/
     develop:
       watch:
         - action: sync
@@ -20,6 +25,8 @@ services:
           path: services/api-gateway/composer.json
     networks:
       - microservices-network
+    depends_on:
+      - rabbitmq
 
   auth-service:
     build:
@@ -52,7 +59,7 @@ services:
       MYSQL_DATABASE: auth_service_db
       MYSQL_ROOT_PASSWORD: root
     ports:
-      - ${DB_AUTH_PORT}:3306
+      - ${DB_AUTH_EXTERNAL_PORT}:3306
     networks:
       - microservices-network
 
@@ -92,7 +99,7 @@ services:
       MYSQL_DATABASE: messages_broker
       MYSQL_ROOT_PASSWORD: root
     ports:
-      - ${DB_MESSAGES_BROKER_PORT}:3306
+      - ${DB_MESSAGES_BROKER_EXTERNAL_PORT}:3306
     networks:
       - microservices-network
 
@@ -107,6 +114,11 @@ services:
       - APP_ENV=local
       - CONTAINER_ROLE=app
       - DB_HOST=${DB_ADDRESSES_HOST}
+      - RABBITMQ_HOST=rabbitmq
+      - RABBITMQ_PORT=5672
+      - RABBITMQ_USER=guest
+      - RABBITMQ_PASSWORD=guest
+      - RABBITMQ_VHOST=/
     develop:
       watch:
         - action: sync
@@ -120,6 +132,7 @@ services:
       - microservices-network
     depends_on:
       - addresses-db
+      - rabbitmq
 
   addresses-db:
     image: mysql:8.0
@@ -127,7 +140,42 @@ services:
       MYSQL_DATABASE: addresses_service
       MYSQL_ROOT_PASSWORD: root
     ports:
-      - ${DB_ADDRESSES_PORT}:3306
+      - ${DB_ADDRESSES_EXTERNAL_PORT}:3306
+    networks:
+      - microservices-network
+
+  products-service:
+    build:
+      context: .
+      dockerfile: ./services/products-service/Dockerfile
+    volumes:
+      - ./services/products-service:/var/www/products-service
+      - /var/www/products-service/vendor
+    environment:
+      - APP_ENV=local
+      - CONTAINER_ROLE=app
+      - DB_HOST=${DB_PRODUCTS_HOST}
+    develop:
+      watch:
+        - action: sync
+          path: services/products-service
+          target: /var/www/products-service
+          ignore:
+            - vendor/
+        - action: rebuild
+          path: services/products-service/composer.json
+    networks:
+      - microservices-network
+    depends_on:
+      - products-db
+
+  products-db:
+    image: mysql:8.0
+    environment:
+      MYSQL_DATABASE: products_service_db
+      MYSQL_ROOT_PASSWORD: root
+    ports:
+      - ${DB_PRODUCTS_EXTERNAL_PORT}:3306
     networks:
       - microservices-network
 
@@ -157,6 +205,7 @@ services:
       - ./services/api-gateway:/var/www/api-gateway
       - ./services/auth-service:/var/www/auth-service
       - ./services/addresses-service:/var/www/addresses-service
+      - ./services/products-service:/var/www/products-service
     develop:
       watch:
         - action: sync
@@ -168,11 +217,13 @@ services:
       - api-gateway
       - auth-service
       - addresses-service
+      - products-service
       - messages-broker
 
 volumes:
   auth-db-data:
   addresses-db-data:
+  products-db-data:
   rabbitmq-data:
 
 networks:

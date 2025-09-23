@@ -15,6 +15,9 @@ RUN apt-get update && apt-get install -y \
 # Install PHP extensions
 RUN docker-php-ext-install pdo_mysql mbstring exif pcntl bcmath gd
 
+# Install sockets extension
+RUN docker-php-ext-install sockets
+
 # Get latest Composer
 COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 
@@ -30,7 +33,7 @@ WORKDIR /var/www/api-gateway
 COPY --chown=api-gateway:api-gateway services/api-gateway .
 COPY --chown=api-gateway:api-gateway shared/ ../../shared
 
-RUN composer install --no-interaction --optimize-autoloader
+RUN composer update --no-interaction --optimize-autoloader
 
 EXPOSE 8000
 

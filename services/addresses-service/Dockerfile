@@ -24,6 +24,9 @@ RUN docker-php-ext-install \
     pcntl \
     bcmath \
     gd
+    
+# Install sockets extension
+RUN docker-php-ext-install sockets
 
 # Install Composer
 COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
@@ -40,7 +43,7 @@ WORKDIR /var/www/addresses-service
 COPY --chown=api-gateway:api-gateway services/addresses-service .
 COPY --chown=api-gateway:api-gateway shared/ ../../shared
 
-RUN composer install --no-interaction --optimize-autoloader
+RUN composer update --no-interaction --optimize-autoloader
 
 EXPOSE 8001
 

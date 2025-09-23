@@ -1,5 +1,8 @@
 FROM php:8.2-fpm-alpine
 
+# Set working directory
+WORKDIR /var/www
+
 # Install system dependencies
 RUN apk add --no-cache \
     git \
@@ -13,7 +16,9 @@ RUN apk add --no-cache \
     rabbitmq-c-dev \
     autoconf \
     g++ \
-    make
+    make \
+    netcat-openbsd \
+    linux-headers
 
 # Install PHP extensions
 RUN docker-php-ext-install pdo_mysql mbstring exif pcntl bcmath gd sockets
@@ -25,20 +30,24 @@ RUN pecl install amqp && \
 # Install Composer
 COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 
-# Set working directory
-WORKDIR /var/www
+# Add user for Laravel application
+RUN adduser -D -s /bin/bash -u 1000 api-gateway
 
-# Copy application files
-COPY . /var/www
+# Ensure proper directory permissions
+RUN mkdir -p /var/www/messages-broker && chown -R api-gateway:api-gateway /var/www/messages-broker
 
-# Install dependencies
-RUN composer install --no-interaction --optimize-autoloader --no-dev
+WORKDIR /var/www/messages-broker
 
-# Set permissions
-RUN chown -R www-data:www-data /var/www/storage /var/www/bootstrap/cache
+# Copy application files with proper permissions
+COPY --chown=api-gateway:api-gateway services/messages-broker .
+COPY --chown=api-gateway:api-gateway shared/ ../../shared
 
-# Expose port
-EXPOSE 9000
+RUN composer install --no-interaction --optimize-autoloader
 
-# Start PHP-FPM
-CMD ["php-fpm"]
+EXPOSE 8002
+
+# Copy and set permissions for start script
+COPY services/messages-broker/tools/start.sh /usr/local/bin/
+RUN chmod +x /usr/local/bin/start.sh
+
+CMD ["/usr/local/bin/start.sh"]
