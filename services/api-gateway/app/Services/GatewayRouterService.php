@@ -64,8 +64,8 @@ class GatewayRouterService
             throw new ServiceUnavailableException("Unknown service: {$service}");
         }
 
-        // Use HTTP for auth service, addresses service, products service and baskets service, message broker for others
-        if ($service === 'auth' || $service === 'addresses' || $service === 'products' || $service === 'baskets') {
+        // Use HTTP for auth service, addresses service, products service, baskets service and orders service, message broker for others
+        if ($service === 'auth' || $service === 'addresses' || $service === 'products' || $service === 'baskets' || $service === 'orders') {
             return $this->routeViaHttp($service, $path, $request);
         } else {
             return $this->routeViaMessageBroker($service, $path, $request);

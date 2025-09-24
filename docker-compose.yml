@@ -218,6 +218,44 @@ services:
     networks:
       - microservices-network
 
+  orders-service:
+    build:
+      context: .
+      dockerfile: ./services/orders-service/Dockerfile
+    volumes:
+      - ./services/orders-service:/var/www/orders-service
+      - ./shared:/var/www/shared
+      - /var/www/orders-service/vendor
+    environment:
+      - APP_ENV=local
+      - CONTAINER_ROLE=app
+      - DB_HOST=${DB_ORDERS_HOST}
+    develop:
+      watch:
+        - action: sync
+          path: services/orders-service
+          target: /var/www/orders-service
+          ignore:
+            - vendor/
+        - action: rebuild
+          path: services/orders-service/composer.json
+    networks:
+      - microservices-network
+    depends_on:
+      - orders-db
+
+  orders-db:
+    image: mysql:8.0
+    environment:
+      MYSQL_DATABASE: orders_service_db
+      MYSQL_ROOT_PASSWORD: root
+    ports:
+      - ${DB_ORDERS_EXTERNAL_PORT}:3306
+    volumes:
+      - orders-db-data:/var/lib/mysql
+    networks:
+      - microservices-network
+
   rabbitmq:
     image: rabbitmq:3.12-management-alpine
     container_name: rabbitmq
@@ -266,6 +304,7 @@ volumes:
   addresses-db-data:
   products-db-data:
   baskets-db-data:
+  orders-db-data:
   rabbitmq-data:
 
 networks:
