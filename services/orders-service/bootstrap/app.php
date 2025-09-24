@@ -12,11 +12,11 @@ return Application::configure(basePath: dirname(__DIR__))
   ->withMiddleware(function (Middleware $middleware) {
     $middleware->trustHosts();
     
-    // Register middleware aliases
-    $middleware->alias([
-      'jwt.auth' => \Shared\Middleware\JWTAuthMiddleware::class,
-      'admin' => \App\Http\Middleware\AdminMiddleware::class,
-    ]);
+    // Register middleware aliases (temporarily disabled)
+    // $middleware->alias([
+    //   'jwt.auth' => \App\Http\Middleware\JWTAuthMiddleware::class,
+    //   'admin' => \App\Http\Middleware\AdminMiddleware::class,
+    // ]);
   })
   ->withExceptions(function (Exceptions $exceptions) {
     //

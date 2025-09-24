@@ -256,6 +256,44 @@ services:
     networks:
       - microservices-network
 
+  deliveries-service:
+    build:
+      context: .
+      dockerfile: ./services/deliveries-service/Dockerfile
+    volumes:
+      - ./services/deliveries-service:/var/www/deliveries-service
+      - ./shared:/var/www/shared
+      - /var/www/deliveries-service/vendor
+    environment:
+      - APP_ENV=local
+      - CONTAINER_ROLE=app
+      - DB_HOST=${DB_DELIVERIES_HOST}
+    develop:
+      watch:
+        - action: sync
+          path: services/deliveries-service
+          target: /var/www/deliveries-service
+          ignore:
+            - vendor/
+        - action: rebuild
+          path: services/deliveries-service/composer.json
+    networks:
+      - microservices-network
+    depends_on:
+      - deliveries-db
+
+  deliveries-db:
+    image: mysql:8.0
+    environment:
+      MYSQL_DATABASE: deliveries_service_db
+      MYSQL_ROOT_PASSWORD: root
+    ports:
+      - ${DB_DELIVERIES_EXTERNAL_PORT}:3306
+    volumes:
+      - deliveries-db-data:/var/lib/mysql
+    networks:
+      - microservices-network
+
   rabbitmq:
     image: rabbitmq:3.12-management-alpine
     container_name: rabbitmq
@@ -284,6 +322,7 @@ services:
       - ./services/addresses-service:/var/www/addresses-service
       - ./services/products-service:/var/www/products-service
       - ./services/baskets-service:/var/www/baskets-service
+      - ./services/deliveries-service:/var/www/deliveries-service
     develop:
       watch:
         - action: sync
@@ -297,6 +336,7 @@ services:
       - addresses-service
       - products-service
       - baskets-service
+      - deliveries-service
       - messages-broker
 
 volumes:
@@ -305,6 +345,7 @@ volumes:
   products-db-data:
   baskets-db-data:
   orders-db-data:
+  deliveries-db-data:
   rabbitmq-data:
 
 networks:
