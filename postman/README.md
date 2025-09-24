@@ -89,6 +89,24 @@ Les variables suivantes sont pré-configurées :
 - **List VAT Rates** : Liste des taux de TVA
 - **Get VAT Rate Details** : Détails d'un taux de TVA
 
+### 🛒 Baskets (Nouveaux endpoints)
+
+#### 🛍️ Public & User Endpoints
+- **Get Current User Basket** : Panier actuel de l'utilisateur connecté
+- **Add Product to Basket** : Ajouter un produit au panier
+- **Remove Product from Basket** : Retirer un produit du panier
+- **Update Product Quantity** : Modifier la quantité d'un produit
+- **Clear Basket** : Vider le panier
+- **Apply Promo Code** : Appliquer un code promo
+- **Remove Promo Code** : Retirer un code promo
+- **Get Basket Items** : Liste des articles du panier
+- **Get Basket Summary** : Résumé du panier avec totaux
+
+#### 🎟️ Promo Codes (Public)
+- **List Available Promo Codes** : Codes promo disponibles
+- **Get Promo Code Details** : Détails d'un code promo
+- **Validate Promo Code** : Vérifier la validité d'un code
+
 ### 📨 Messages
 - **Messages Health** : Santé du service de messages
 - **Publish Message** : Publication d'un message
@@ -128,6 +146,22 @@ Les variables suivantes sont pré-configurées :
 - **Update VAT Rate** : Mise à jour d'un taux de TVA
 - **Delete VAT Rate** : Suppression d'un taux de TVA
 
+#### 🛒 Basket Management
+- **List All Baskets** : Voir tous les paniers (admin)
+- **Get User Baskets** : Paniers d'un utilisateur spécifique
+
+#### 🎟️ Promo Code Management
+- **Create Promo Code** : Créer un nouveau code promo
+- **Update Promo Code** : Modifier un code promo
+- **Delete Promo Code** : Supprimer un code promo
+- **List All Promo Codes** : Voir tous les codes promo
+
+#### 🏷️ Promo Type Management
+- **List Promo Types** : Types de codes promo
+- **Create Promo Type** : Créer un type de promo
+- **Update Promo Type** : Modifier un type de promo
+- **Delete Promo Type** : Supprimer un type de promo
+
 ## Guide de test rapide
 
 ### 1. Vérification des services
@@ -146,10 +180,17 @@ Les variables suivantes sont pré-configurées :
 4. **List Categories** : Voir les catégories
 5. **Filter Products by Brand** : Filtrer par marque Apple (ID: 1)
 
-### 4. Test des opérations admin
+### 4. Test des paniers
+1. **Get Current User Basket** : Voir le panier actuel
+2. **Add Product to Basket** : Ajouter un produit (ID: 1, quantity: 2)
+3. **Apply Promo Code** : Utiliser le code "WELCOME10"
+4. **Get Basket Summary** : Voir les totaux avec remise
+
+### 5. Test des opérations admin
 1. **Create Product** : Créer un nouveau produit
 2. **Update Product Stock** : Modifier le stock
 3. **Create Brand** : Créer une nouvelle marque
+4. **Create Promo Code** : Créer un code promo
 
 ## Exemples de données de test
 
@@ -182,6 +223,28 @@ Les variables suivantes sont pré-configurées :
 }
 ```
 
+### Ajout d'un produit au panier
+```json
+{
+    "product_id": 1,
+    "quantity": 2
+}
+```
+
+### Création d'un code promo
+```json
+{
+    "code": "NEWCODE20",
+    "description": "Réduction de 20%",
+    "type_id": 1,
+    "value": 20.00,
+    "is_active": true,
+    "usage_limit": 100,
+    "start_date": "2024-01-01",
+    "end_date": "2024-12-31"
+}
+```
+
 ## Filtres disponibles pour les produits
 
 - `search` : Recherche dans le nom et la référence
@@ -195,16 +258,23 @@ Les variables suivantes sont pré-configurées :
 - `sort_order` : Ordre (asc, desc)
 - `per_page` : Nombre d'éléments par page
 
-## Nouveautés du schéma
+## Nouveautés des services
 
-Cette collection reflète le nouveau schéma de base de données qui inclut :
+Cette collection inclut maintenant :
 
+### Service Produits (products-service)
 - **Système de marques** : Gestion complète des marques
 - **Types de produits** : Classification par type (Smartphone, Laptop, etc.)
 - **Catalogues** : Regroupement de produits en catalogues
 - **Taux de TVA** : Gestion des taux de TVA
 - **Relations many-to-many** : Produits liés à plusieurs types, catégories, catalogues
-- **Attributs et caractéristiques** : Système d'attributs avancé (à venir)
+
+### Service Paniers (baskets-service) 🆕
+- **Gestion de paniers** : Création automatique et gestion des paniers utilisateurs
+- **Articles de panier** : Ajout, modification, suppression de produits
+- **Codes promo** : Système complet de codes promotionnels avec types
+- **Calculs automatiques** : Totaux HT, TTC et remises calculés automatiquement
+- **Relations complexes** : Paniers liés aux codes promo avec gestion many-to-many
 
 ## Troubleshooting
 
@@ -228,6 +298,9 @@ Cette collection reflète le nouveau schéma de base de données qui inclut :
 {{test_product_id}} - ID de produit de test
 {{test_brand_id}} - ID de marque de test
 {{test_category_id}} - ID de catégorie de test
+{{test_basket_id}} - ID de panier de test
+{{test_promo_code}} - Code promo de test ("WELCOME10")
+{{test_type_id}} - ID de type de promo de test
 ```
 
-Cette collection est maintenant prête pour tester toutes les fonctionnalités du nouveau service produits avec le schéma de base de données migré.
+Cette collection est maintenant prête pour tester toutes les fonctionnalités des services produits et paniers avec leurs schémas de base de données complets.

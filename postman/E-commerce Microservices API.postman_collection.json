@@ -1,6 +1,6 @@
 {
 	"info": {
-		"_postman_id": "c893f62a-11ba-4d66-bd64-fcc41b2dbe00",
+		"_postman_id": "8b8ea201-744f-4d14-8ef2-d99cc07ee420",
 		"name": "E-commerce Microservices API",
 		"description": "Collection complète pour tester l'API e-commerce microservices avec API Gateway - Mise à jour avec nouveau schéma Products Service",
 		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
@@ -1966,6 +1966,802 @@
 					"script": {
 						"type": "text/javascript",
 						"packages": {},
+						"exec": [
+							""
+						]
+					}
+				}
+			]
+		},
+		{
+			"name": "🛒 Baskets Service",
+			"item": [
+				{
+					"name": "🔓 Public Endpoints",
+					"item": [
+						{
+							"name": "Baskets Health Check",
+							"request": {
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{base_url}}/v1/baskets/health",
+									"host": [
+										"{{base_url}}"
+									],
+									"path": [
+										"v1",
+										"baskets",
+										"health"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Validate Promo Code",
+							"request": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n  \"code\": \"WELCOME10\"\n}"
+								},
+								"url": {
+									"raw": "{{base_url}}/v1/baskets/promo-codes/validate",
+									"host": [
+										"{{base_url}}"
+									],
+									"path": [
+										"v1",
+										"baskets",
+										"promo-codes",
+										"validate"
+									]
+								}
+							},
+							"response": []
+						}
+					]
+				},
+				{
+					"name": "🔐 User Basket Management",
+					"item": [
+						{
+							"name": "Get Current Basket",
+							"request": {
+								"method": "GET",
+								"header": [
+									{
+										"key": "Authorization",
+										"value": "Bearer {{working_jwt_token}}"
+									},
+									{
+										"key": "Content-Type",
+										"value": "application/json"
+									}
+								],
+								"url": {
+									"raw": "{{base_url}}/v1/baskets/current",
+									"host": [
+										"{{base_url}}"
+									],
+									"path": [
+										"v1",
+										"baskets",
+										"current"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Add Item to Basket",
+							"request": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "Authorization",
+										"value": "Bearer {{working_jwt_token}}"
+									},
+									{
+										"key": "Content-Type",
+										"value": "application/json"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n  \"product_id\": 15,\n  \"quantity\": 2,\n  \"price_ht\": 25.99\n}"
+								},
+								"url": {
+									"raw": "{{base_url}}/v1/baskets/baskets/items",
+									"host": [
+										"{{base_url}}"
+									],
+									"path": [
+										"v1",
+										"baskets",
+										"baskets",
+										"items"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Update Item Quantity",
+							"request": {
+								"method": "PUT",
+								"header": [
+									{
+										"key": "Authorization",
+										"value": "Bearer {{working_jwt_token}}"
+									},
+									{
+										"key": "Content-Type",
+										"value": "application/json"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n  \"quantity\": 3\n}"
+								},
+								"url": {
+									"raw": "{{base_url}}/v1/baskets/baskets/items/:basket_item_id",
+									"host": [
+										"{{base_url}}"
+									],
+									"path": [
+										"v1",
+										"baskets",
+										"baskets",
+										"items",
+										":basket_item_id"
+									],
+									"variable": [
+										{
+											"key": "basket_item_id",
+											"value": "1"
+										}
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Remove Item from Basket",
+							"request": {
+								"method": "DELETE",
+								"header": [
+									{
+										"key": "Authorization",
+										"value": "Bearer {{working_jwt_token}}"
+									},
+									{
+										"key": "Content-Type",
+										"value": "application/json"
+									}
+								],
+								"url": {
+									"raw": "{{base_url}}/v1/baskets/baskets/items/:basket_item_id",
+									"host": [
+										"{{base_url}}"
+									],
+									"path": [
+										"v1",
+										"baskets",
+										"baskets",
+										"items",
+										":basket_item_id"
+									],
+									"variable": [
+										{
+											"key": "basket_item_id",
+											"value": "1"
+										}
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Apply Promo Code",
+							"request": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "Authorization",
+										"value": "Bearer {{working_jwt_token}}"
+									},
+									{
+										"key": "Content-Type",
+										"value": "application/json"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n  \"code\": \"SUMMER15\"\n}"
+								},
+								"url": {
+									"raw": "{{base_url}}/v1/baskets/baskets/promo-codes",
+									"host": [
+										"{{base_url}}"
+									],
+									"path": [
+										"v1",
+										"baskets",
+										"baskets",
+										"promo-codes"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Remove Promo Code",
+							"request": {
+								"method": "DELETE",
+								"header": [
+									{
+										"key": "Authorization",
+										"value": "Bearer {{working_jwt_token}}"
+									},
+									{
+										"key": "Content-Type",
+										"value": "application/json"
+									}
+								],
+								"url": {
+									"raw": "{{base_url}}/v1/baskets/baskets/promo-codes/:promo_code_id",
+									"host": [
+										"{{base_url}}"
+									],
+									"path": [
+										"v1",
+										"baskets",
+										"baskets",
+										"promo-codes",
+										":promo_code_id"
+									],
+									"variable": [
+										{
+											"key": "promo_code_id",
+											"value": "1"
+										}
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Clear Basket",
+							"request": {
+								"method": "DELETE",
+								"header": [
+									{
+										"key": "Authorization",
+										"value": "Bearer {{working_jwt_token}}"
+									},
+									{
+										"key": "Content-Type",
+										"value": "application/json"
+									}
+								],
+								"url": {
+									"raw": "{{base_url}}/v1/baskets/baskets/clear",
+									"host": [
+										"{{base_url}}"
+									],
+									"path": [
+										"v1",
+										"baskets",
+										"baskets",
+										"clear"
+									]
+								}
+							},
+							"response": []
+						}
+					]
+				},
+				{
+					"name": "👑 Admin - Baskets Management",
+					"item": [
+						{
+							"name": "List All Baskets",
+							"request": {
+								"method": "GET",
+								"header": [
+									{
+										"key": "Authorization",
+										"value": "Bearer {{working_jwt_token}}"
+									},
+									{
+										"key": "Content-Type",
+										"value": "application/json"
+									}
+								],
+								"url": {
+									"raw": "{{base_url}}/v1/baskets/admin/baskets",
+									"host": [
+										"{{base_url}}"
+									],
+									"path": [
+										"v1",
+										"baskets",
+										"admin",
+										"baskets"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Get Specific Basket",
+							"request": {
+								"method": "GET",
+								"header": [
+									{
+										"key": "Authorization",
+										"value": "Bearer {{working_jwt_token}}"
+									},
+									{
+										"key": "Content-Type",
+										"value": "application/json"
+									}
+								],
+								"url": {
+									"raw": "{{base_url}}/v1/baskets/admin/baskets/:id",
+									"host": [
+										"{{base_url}}"
+									],
+									"path": [
+										"v1",
+										"baskets",
+										"admin",
+										"baskets",
+										":id"
+									],
+									"variable": [
+										{
+											"key": "id",
+											"value": "1"
+										}
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Delete Basket",
+							"request": {
+								"method": "DELETE",
+								"header": [
+									{
+										"key": "Authorization",
+										"value": "Bearer {{working_jwt_token}}"
+									},
+									{
+										"key": "Content-Type",
+										"value": "application/json"
+									}
+								],
+								"url": {
+									"raw": "{{base_url}}/v1/baskets/admin/baskets/:id",
+									"host": [
+										"{{base_url}}"
+									],
+									"path": [
+										"v1",
+										"baskets",
+										"admin",
+										"baskets",
+										":id"
+									],
+									"variable": [
+										{
+											"key": "id",
+											"value": ""
+										}
+									]
+								}
+							},
+							"response": []
+						}
+					]
+				},
+				{
+					"name": "👑 Admin - Promo Codes",
+					"item": [
+						{
+							"name": "List All Promo Codes",
+							"request": {
+								"method": "GET",
+								"header": [
+									{
+										"key": "Authorization",
+										"value": "Bearer {{working_jwt_token}}"
+									},
+									{
+										"key": "Content-Type",
+										"value": "application/json"
+									}
+								],
+								"url": {
+									"raw": "{{base_url}}/v1/baskets/admin/promo-codes",
+									"host": [
+										"{{base_url}}"
+									],
+									"path": [
+										"v1",
+										"baskets",
+										"admin",
+										"promo-codes"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Create Promo Code",
+							"request": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "Authorization",
+										"value": "Bearer {{working_jwt_token}}"
+									},
+									{
+										"key": "Content-Type",
+										"value": "application/json"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n  \"name\": \"Test Promo Code\",\n  \"code\": \"TEST50\",\n  \"discount\": 50.00,\n  \"id_1\": {{test_promo_type_id}}\n}"
+								},
+								"url": {
+									"raw": "{{base_url}}/v1/baskets/admin/promo-codes",
+									"host": [
+										"{{base_url}}"
+									],
+									"path": [
+										"v1",
+										"baskets",
+										"admin",
+										"promo-codes"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Get Specific Promo Code",
+							"request": {
+								"method": "GET",
+								"header": [
+									{
+										"key": "Authorization",
+										"value": "Bearer {{working_jwt_token}}"
+									},
+									{
+										"key": "Content-Type",
+										"value": "application/json"
+									}
+								],
+								"url": {
+									"raw": "{{base_url}}/v1/baskets/admin/promo-codes/:promo_code_id",
+									"host": [
+										"{{base_url}}"
+									],
+									"path": [
+										"v1",
+										"baskets",
+										"admin",
+										"promo-codes",
+										":promo_code_id"
+									],
+									"variable": [
+										{
+											"key": "promo_code_id",
+											"value": "1"
+										}
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Update Promo Code",
+							"request": {
+								"method": "PUT",
+								"header": [
+									{
+										"key": "Authorization",
+										"value": "Bearer {{working_jwt_token}}"
+									},
+									{
+										"key": "Content-Type",
+										"value": "application/json"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n  \"name\": \"Updated Promo Code\",\n  \"discount\": 15.00\n}"
+								},
+								"url": {
+									"raw": "{{base_url}}/v1/baskets/admin/promo-codes/:promo_code_id",
+									"host": [
+										"{{base_url}}"
+									],
+									"path": [
+										"v1",
+										"baskets",
+										"admin",
+										"promo-codes",
+										":promo_code_id"
+									],
+									"variable": [
+										{
+											"key": "promo_code_id",
+											"value": ""
+										}
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Delete Promo Code",
+							"request": {
+								"method": "DELETE",
+								"header": [
+									{
+										"key": "Authorization",
+										"value": "Bearer {{working_jwt_token}}"
+									},
+									{
+										"key": "Content-Type",
+										"value": "application/json"
+									}
+								],
+								"url": {
+									"raw": "{{base_url}}/v1/baskets/admin/promo-codes/:promo_code_id",
+									"host": [
+										"{{base_url}}"
+									],
+									"path": [
+										"v1",
+										"baskets",
+										"admin",
+										"promo-codes",
+										":promo_code_id"
+									],
+									"variable": [
+										{
+											"key": "promo_code_id",
+											"value": "1"
+										}
+									]
+								}
+							},
+							"response": []
+						}
+					]
+				},
+				{
+					"name": "👑 Admin - Types Management",
+					"item": [
+						{
+							"name": "List All Types",
+							"request": {
+								"method": "GET",
+								"header": [
+									{
+										"key": "Authorization",
+										"value": "Bearer {{working_jwt_token}}"
+									},
+									{
+										"key": "Content-Type",
+										"value": "application/json"
+									}
+								],
+								"url": {
+									"raw": "{{base_url}}/v1/baskets/admin/types",
+									"host": [
+										"{{base_url}}"
+									],
+									"path": [
+										"v1",
+										"baskets",
+										"admin",
+										"types"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Create Type",
+							"request": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "Authorization",
+										"value": "Bearer {{working_jwt_token}}"
+									},
+									{
+										"key": "Content-Type",
+										"value": "application/json"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n  \"name\": \"Nouveau Type\",\n  \"symbol\": \"🎁\"\n}"
+								},
+								"url": {
+									"raw": "{{base_url}}/v1/baskets/admin/types",
+									"host": [
+										"{{base_url}}"
+									],
+									"path": [
+										"v1",
+										"baskets",
+										"admin",
+										"types"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Get Specific Type",
+							"request": {
+								"method": "GET",
+								"header": [
+									{
+										"key": "Authorization",
+										"value": "Bearer {{working_jwt_token}}"
+									},
+									{
+										"key": "Content-Type",
+										"value": "application/json"
+									}
+								],
+								"url": {
+									"raw": "{{base_url}}/v1/baskets/admin/types/:promo_type_id",
+									"host": [
+										"{{base_url}}"
+									],
+									"path": [
+										"v1",
+										"baskets",
+										"admin",
+										"types",
+										":promo_type_id"
+									],
+									"variable": [
+										{
+											"key": "promo_type_id",
+											"value": "1"
+										}
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Update Type",
+							"request": {
+								"method": "PUT",
+								"header": [
+									{
+										"key": "Authorization",
+										"value": "Bearer {{working_jwt_token}}"
+									},
+									{
+										"key": "Content-Type",
+										"value": "application/json"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n  \"name\": \"Type Mis à Jour\",\n  \"symbol\": \"⭐\"\n}"
+								},
+								"url": {
+									"raw": "{{base_url}}/v1/baskets/admin/types/:promo_type_id",
+									"host": [
+										"{{base_url}}"
+									],
+									"path": [
+										"v1",
+										"baskets",
+										"admin",
+										"types",
+										":promo_type_id"
+									],
+									"variable": [
+										{
+											"key": "promo_type_id",
+											"value": "1"
+										}
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Delete Type",
+							"request": {
+								"method": "DELETE",
+								"header": [
+									{
+										"key": "Authorization",
+										"value": "Bearer {{working_jwt_token}}"
+									},
+									{
+										"key": "Content-Type",
+										"value": "application/json"
+									}
+								],
+								"url": {
+									"raw": "{{base_url}}/v1/baskets/admin/types/:promo_type_id",
+									"host": [
+										"{{base_url}}"
+									],
+									"path": [
+										"v1",
+										"baskets",
+										"admin",
+										"types",
+										":promo_type_id"
+									],
+									"variable": [
+										{
+											"key": "promo_type_id",
+											"value": "5"
+										}
+									]
+								}
+							},
+							"response": []
+						}
+					]
+				}
+			],
+			"auth": {
+				"type": "bearer",
+				"bearer": [
+					{
+						"key": "token",
+						"value": "{{jwt_token}}",
+						"type": "string"
+					}
+				]
+			},
+			"event": [
+				{
+					"listen": "prerequest",
+					"script": {
+						"type": "text/javascript",
+						"packages": {},
+						"requests": {},
+						"exec": [
+							""
+						]
+					}
+				},
+				{
+					"listen": "test",
+					"script": {
+						"type": "text/javascript",
+						"packages": {},
+						"requests": {},
 						"exec": [
 							""
 						]

@@ -180,6 +180,44 @@ services:
     networks:
       - microservices-network
 
+  baskets-service:
+    build:
+      context: .
+      dockerfile: ./services/baskets-service/Dockerfile
+    volumes:
+      - ./services/baskets-service:/var/www/baskets-service
+      - ./shared:/var/www/shared
+      - /var/www/baskets-service/vendor
+    environment:
+      - APP_ENV=local
+      - CONTAINER_ROLE=app
+      - DB_HOST=${DB_BASKETS_HOST}
+    develop:
+      watch:
+        - action: sync
+          path: services/baskets-service
+          target: /var/www/baskets-service
+          ignore:
+            - vendor/
+        - action: rebuild
+          path: services/baskets-service/composer.json
+    networks:
+      - microservices-network
+    depends_on:
+      - baskets-db
+
+  baskets-db:
+    image: mysql:8.0
+    environment:
+      MYSQL_DATABASE: baskets_service_db
+      MYSQL_ROOT_PASSWORD: root
+    ports:
+      - ${DB_BASKETS_EXTERNAL_PORT}:3306
+    volumes:
+      - baskets-db-data:/var/lib/mysql
+    networks:
+      - microservices-network
+
   rabbitmq:
     image: rabbitmq:3.12-management-alpine
     container_name: rabbitmq
@@ -207,6 +245,7 @@ services:
       - ./services/auth-service:/var/www/auth-service
       - ./services/addresses-service:/var/www/addresses-service
       - ./services/products-service:/var/www/products-service
+      - ./services/baskets-service:/var/www/baskets-service
     develop:
       watch:
         - action: sync
@@ -219,12 +258,14 @@ services:
       - auth-service
       - addresses-service
       - products-service
+      - baskets-service
       - messages-broker
 
 volumes:
   auth-db-data:
   addresses-db-data:
   products-db-data:
+  baskets-db-data:
   rabbitmq-data:
 
 networks:

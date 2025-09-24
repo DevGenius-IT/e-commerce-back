@@ -78,7 +78,13 @@ class JWTAuthMiddleware
             // In a full implementation, this should call the auth service
             $payload = $this->decodeJWT($token);
             
-            if (!$payload || !isset($payload['user_id'])) {
+            if (!$payload) {
+                return null;
+            }
+
+            // Support both user_id and sub fields for user identification
+            $userId = $payload['user_id'] ?? $payload['sub'] ?? null;
+            if (!$userId) {
                 return null;
             }
 
@@ -89,7 +95,7 @@ class JWTAuthMiddleware
 
             // Create a minimal user object for the request
             $user = new User();
-            $user->id = $payload['user_id'];
+            $user->id = $userId;
             $user->email = $payload['email'] ?? '';
             
             return $user;
