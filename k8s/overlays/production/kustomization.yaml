@@ -1,0 +1,49 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+metadata:
+  annotations:
+    description: Production environment configuration for e-commerce platform
+  name: e-commerce-production
+
+# Reference to base configuration
+resources:
+- ../../base
+
+# Production-specific namespace
+namespace: e-commerce-prod
+
+# Production labels
+  
+commonAnnotations:
+  cluster: production
+  environment: production
+
+# Production-specific patches
+
+# Production images (specific tagged versions for stability)
+images:
+- name: redis
+  newTag: 7.2.4-alpine
+
+# Production-specific configurations
+generators:
+- generator-options.yaml
+
+# JSON patches for production-specific modifications
+labels:
+- includeSelectors: true
+  pairs:
+    environment: production
+patches:
+- path: patches/redis-production.yaml
+  target:
+    group: apps
+    kind: Deployment
+    name: redis
+    version: v1
+- path: patches/environment-config.yaml
+- path: patches/resource-limits.yaml
+- path: patches/replica-counts.yaml
+- patch: patches/monitoring.yaml
+- patch: patches/security.yaml

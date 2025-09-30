@@ -1,4 +1,4 @@
-FROM php:8.2-fpm
+FROM php:8.3-fpm
 
 # Set working directory
 WORKDIR /var/www
@@ -18,10 +18,13 @@ RUN apt-get update && apt-get install -y \
 RUN apt-get clean && rm -rf /var/lib/apt/lists/*
 
 # Install PHP extensions
-RUN docker-php-ext-install pdo_mysql mbstring exif pcntl bcmath gd sockets
+RUN docker-php-ext-install pdo_mysql mbstring exif pcntl bcmath gd sockets 
 
 # Get latest Composer
 COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
+
+# Allow Composer to run as superuser
+ENV COMPOSER_ALLOW_SUPERUSER=1
 
 # Create system user to run Composer and Artisan Commands
 RUN groupadd -g 1000 www

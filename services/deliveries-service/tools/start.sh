@@ -5,7 +5,7 @@ echo "🚀 Starting deliveries-service..."
 
 # Wait for database to be ready
 echo "⏳ Waiting for database connection..."
-while ! nc -z deliveries-db 3306; do
+while ! nc -z deliveries-service-mysql.e-commerce.svc.cluster.local 3306; do
     echo "Database not ready, waiting..."
     sleep 2
 done
@@ -49,4 +49,4 @@ php artisan config:cache
 echo "🎉 deliveries-service started successfully!"
 
 # Start PHP built-in server
-exec php artisan serve --host=0.0.0.0 --port=8006
+exec php artisan serve --host=0.0.0.0 --port=8000

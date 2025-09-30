@@ -1,0 +1,307 @@
+# Default values for e-commerce-microservices
+# This is a YAML-formatted file.
+
+# Global configuration
+global:
+  imageRegistry: "your-registry.com"
+  imagePullSecrets: []
+  storageClass: ""
+  
+# Environment configuration
+environment: production
+
+# Namespace configuration
+namespace:
+  create: true
+  name: e-commerce
+
+# Services configuration
+services:
+  # API Gateway
+  api-gateway:
+    enabled: true
+    replicaCount: 3
+    image:
+      repository: e-commerce/api-gateway
+      tag: "latest"
+      pullPolicy: Always
+    service:
+      type: ClusterIP
+      port: 80
+      targetPort: 8000
+    resources:
+      requests:
+        memory: 256Mi
+        cpu: 250m
+      limits:
+        memory: 512Mi
+        cpu: 500m
+    autoscaling:
+      enabled: true
+      minReplicas: 2
+      maxReplicas: 10
+      targetCPUUtilizationPercentage: 70
+    
+  # Auth Service
+  auth-service:
+    enabled: true
+    replicaCount: 3
+    image:
+      repository: e-commerce/auth-service
+      tag: "latest"
+      pullPolicy: Always
+    service:
+      type: ClusterIP
+      port: 80
+      targetPort: 8000
+    database:
+      enabled: true
+      name: auth_service_db
+      user: auth_user
+    resources:
+      requests:
+        memory: 256Mi
+        cpu: 250m
+      limits:
+        memory: 512Mi
+        cpu: 500m
+    autoscaling:
+      enabled: true
+      minReplicas: 2
+      maxReplicas: 8
+      targetCPUUtilizationPercentage: 70
+
+  # Products Service
+  products-service:
+    enabled: true
+    replicaCount: 3
+    image:
+      repository: e-commerce/products-service
+      tag: "latest"
+      pullPolicy: Always
+    service:
+      type: ClusterIP
+      port: 80
+      targetPort: 8000
+    database:
+      enabled: true
+      name: products_service_db
+      user: products_user
+    resources:
+      requests:
+        memory: 256Mi
+        cpu: 250m
+      limits:
+        memory: 512Mi
+        cpu: 500m
+    autoscaling:
+      enabled: true
+      minReplicas: 3
+      maxReplicas: 15
+      targetCPUUtilizationPercentage: 70
+
+  # Baskets Service
+  baskets-service:
+    enabled: true
+    replicaCount: 3
+    image:
+      repository: e-commerce/baskets-service
+      tag: "latest"
+      pullPolicy: Always
+    service:
+      type: ClusterIP
+      port: 80
+      targetPort: 8000
+    database:
+      enabled: true
+      name: baskets_service_db
+      user: baskets_user
+    resources:
+      requests:
+        memory: 256Mi
+        cpu: 250m
+      limits:
+        memory: 512Mi
+        cpu: 500m
+    autoscaling:
+      enabled: true
+      minReplicas: 2
+      maxReplicas: 10
+      targetCPUUtilizationPercentage: 70
+
+  # Orders Service
+  orders-service:
+    enabled: true
+    replicaCount: 3
+    image:
+      repository: e-commerce/orders-service
+      tag: "latest"
+      pullPolicy: Always
+    service:
+      type: ClusterIP
+      port: 80
+      targetPort: 8000
+    database:
+      enabled: true
+      name: orders_service_db
+      user: orders_user
+    resources:
+      requests:
+        memory: 512Mi
+        cpu: 500m
+      limits:
+        memory: 1Gi
+        cpu: 1000m
+    autoscaling:
+      enabled: true
+      minReplicas: 3
+      maxReplicas: 12
+      targetCPUUtilizationPercentage: 70
+
+  # Other services (addresses, deliveries, etc.)
+  addresses-service:
+    enabled: true
+    replicaCount: 2
+    database:
+      enabled: true
+      name: addresses_service_db
+      user: addresses_user
+  
+  deliveries-service:
+    enabled: true
+    replicaCount: 2
+    database:
+      enabled: true
+      name: deliveries_service_db
+      user: deliveries_user
+  
+  newsletters-service:
+    enabled: true
+    replicaCount: 2
+    database:
+      enabled: true
+      name: newsletters_service_db
+      user: newsletters_user
+  
+  sav-service:
+    enabled: true
+    replicaCount: 2
+    database:
+      enabled: true
+      name: sav_service_db
+      user: sav_user
+  
+  questions-service:
+    enabled: true
+    replicaCount: 2
+    database:
+      enabled: true
+      name: questions_service_db
+      user: questions_user
+  
+  contacts-service:
+    enabled: true
+    replicaCount: 2
+    database:
+      enabled: true
+      name: contacts_service_db
+      user: contacts_user
+  
+  websites-service:
+    enabled: true
+    replicaCount: 2
+    database:
+      enabled: true
+      name: websites_service_db
+      user: websites_user
+
+# Database configuration (MySQL)
+mysql:
+  enabled: true
+  architecture: standalone
+  primary:
+    persistence:
+      enabled: true
+      storageClass: ""
+      size: 20Gi
+    resources:
+      requests:
+        memory: 512Mi
+        cpu: 500m
+      limits:
+        memory: 1Gi
+        cpu: 1000m
+  metrics:
+    enabled: true
+
+# Redis configuration
+redis:
+  enabled: true
+  architecture: standalone
+  master:
+    persistence:
+      enabled: true
+      size: 8Gi
+    resources:
+      requests:
+        memory: 256Mi
+        cpu: 250m
+      limits:
+        memory: 512Mi
+        cpu: 500m
+
+# RabbitMQ configuration
+rabbitmq:
+  enabled: true
+  replicaCount: 3
+  clustering:
+    enabled: true
+  persistence:
+    enabled: true
+    size: 8Gi
+  resources:
+    requests:
+      memory: 512Mi
+      cpu: 500m
+    limits:
+      memory: 1Gi
+      cpu: 1000m
+  metrics:
+    enabled: true
+
+# Ingress configuration
+ingress:
+  enabled: true
+  className: "traefik"
+  annotations:
+    traefik.ingress.kubernetes.io/router.tls: "true"
+    cert-manager.io/cluster-issuer: "letsencrypt-prod"
+  hosts:
+    - host: api.yourcompany.com
+      paths:
+        - path: /
+          pathType: Prefix
+  tls:
+    - secretName: api-tls
+      hosts:
+        - api.yourcompany.com
+
+# Monitoring configuration
+monitoring:
+  enabled: true
+  prometheus:
+    enabled: true
+  grafana:
+    enabled: true
+  alertmanager:
+    enabled: true
+
+# Security configuration
+security:
+  networkPolicies:
+    enabled: true
+  podSecurityPolicy:
+    enabled: true
+  externalSecrets:
+    enabled: true
+    secretStore: vault

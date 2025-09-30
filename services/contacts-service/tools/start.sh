@@ -42,4 +42,4 @@ chmod -R 775 storage bootstrap/cache
 php-fpm --daemonize
 
 # Garder le conteneur actif avec un serveur artisan
-php artisan serve --host=0.0.0.0 --port=8010
+php artisan serve --host=0.0.0.0 --port=8000

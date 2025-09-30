@@ -1,13 +1,13 @@
 #!/bin/bash
 
 # Attendre que la base de données soit prête
-until nc -z $DB_HOST 3306; do
+until nc -z sav-service-mysql.e-commerce.svc.cluster.local 3306; do
     echo "Waiting for database connection..."
     sleep 2
 done
 
 # Attendre RabbitMQ
-until nc -z $RABBITMQ_HOST 5672; do
+until nc -z rabbitmq.e-commerce-messaging.svc.cluster.local 5672; do
     echo "Waiting for RabbitMQ connection..."
     sleep 2
 done
@@ -42,4 +42,4 @@ chmod -R 775 storage bootstrap/cache
 php-fpm --daemonize
 
 # Garder le conteneur actif avec un serveur artisan
-php artisan serve --host=0.0.0.0 --port=8008
+php artisan serve --host=0.0.0.0 --port=8000

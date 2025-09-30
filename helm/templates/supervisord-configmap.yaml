@@ -1,0 +1,191 @@
+{{- range $serviceName, $serviceConfig := .Values.services }}
+{{- if $serviceConfig.enabled }}
+{{- if and (ne $serviceName "api-gateway") (ne $serviceName "addresses-service") (ne $serviceName "messages-broker") }}
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ $serviceName }}-supervisord-config
+  namespace: {{ $.Values.namespace.name }}
+  labels:
+    app: {{ $serviceName }}
+    component: config
+    chart: {{ $.Chart.Name }}-{{ $.Chart.Version }}
+    release: {{ $.Release.Name }}
+    heritage: {{ $.Release.Service }}
+data:
+  supervisord.conf: |
+    [supervisord]
+    nodaemon=true
+    user=root
+    logfile=/var/log/supervisor/supervisord.log
+    pidfile=/var/run/supervisord.pid
+    logfile_maxbytes=50MB
+    logfile_backups=10
+    loglevel=info
+
+    [unix_http_server]
+    file=/var/run/supervisor.sock
+    chmod=0700
+    username=supervisor
+    password=supervisor
+
+    [supervisorctl]
+    serverurl=unix:///var/run/supervisor.sock
+    username=supervisor
+    password=supervisor
+
+    [rpcinterface:supervisor]
+    supervisor.rpcinterface_factory = supervisor.rpcinterface:make_main_rpcinterface
+
+    [program:nginx]
+    command=nginx -g "daemon off;"
+    user=root
+    autostart=true
+    autorestart=true
+    stdout_logfile=/var/log/nginx/access.log
+    stderr_logfile=/var/log/nginx/error.log
+    priority=1
+
+    [program:php-fpm]
+    command=php-fpm -F
+    user=root
+    autostart=true
+    autorestart=true
+    stdout_logfile=/var/log/supervisor/php-fpm.log
+    stderr_logfile=/var/log/supervisor/php-fpm.log
+    priority=2
+
+    ; [program:laravel-queue]
+    ; command=php artisan queue:work --sleep=3 --tries=3 --max-time=3600 --timeout=3600
+    ; directory=/var/www/services/{{ $serviceName }}
+    ; user=root
+    ; autostart=true
+    ; autorestart=true
+    ; numprocs=1
+    ; redirect_stderr=true
+    ; stdout_logfile=/var/log/supervisor/laravel-queue.log
+    ; stopwaitsecs=3600
+    ; killasgroup=true
+    ; priority=3
+
+    [program:laravel-scheduler]
+    command=/bin/bash -c "while true; do php artisan schedule:run --verbose --no-interaction; sleep 60; done"
+    directory=/var/www/services/{{ $serviceName }}
+    user=root
+    autostart=true
+    autorestart=true
+    redirect_stderr=true
+    stdout_logfile=/var/log/supervisor/laravel-scheduler.log
+    priority=4
+
+    [group:laravel]
+    programs=nginx,php-fpm,laravel-scheduler
+    priority=999
+  nginx.conf: |
+    user root;
+    worker_processes auto;
+    error_log /var/log/nginx/error.log warn;
+    pid /var/run/nginx.pid;
+
+    events {
+        worker_connections 1024;
+        use epoll;
+        multi_accept on;
+    }
+
+    http {
+        include /etc/nginx/mime.types;
+        default_type application/octet-stream;
+
+        # Logging format
+        log_format main '$remote_addr - $remote_user [$time_local] "$request" '
+                        '$status $body_bytes_sent "$http_referer" '
+                        '"$http_user_agent" "$http_x_forwarded_for" '
+                        'rt=$request_time uct="$upstream_connect_time" '
+                        'uht="$upstream_header_time" urt="$upstream_response_time"';
+
+        access_log /var/log/nginx/access.log main;
+
+        # Basic Settings
+        sendfile on;
+        tcp_nopush on;
+        tcp_nodelay on;
+        keepalive_timeout 65;
+        types_hash_max_size 2048;
+        client_max_body_size 64M;
+
+        # Gzip Settings
+        gzip on;
+        gzip_vary on;
+        gzip_proxied any;
+        gzip_comp_level 6;
+        gzip_types
+            text/plain
+            text/css
+            text/xml
+            text/javascript
+            application/json
+            application/javascript
+            application/xml+rss
+            application/atom+xml
+            image/svg+xml;
+
+        # PHP-FPM upstream
+        upstream php-fpm {
+            server 127.0.0.1:9000;
+        }
+
+        # Default server configuration
+        server {
+            listen 8000 default_server;
+            listen [::]:8000 default_server;
+            server_name _;
+            root /var/www/services/{{ $serviceName }}/public;
+            index index.php index.html index.htm;
+
+            # Security headers
+            add_header X-Frame-Options "SAMEORIGIN" always;
+            add_header X-XSS-Protection "1; mode=block" always;
+            add_header X-Content-Type-Options "nosniff" always;
+            add_header Referrer-Policy "no-referrer-when-downgrade" always;
+            add_header Content-Security-Policy "default-src 'self' http: https: data: blob: 'unsafe-inline'" always;
+
+            # Laravel routes
+            location / {
+                try_files $uri $uri/ /index.php?$query_string;
+            }
+
+            # PHP processing
+            location ~ \.php$ {
+                include fastcgi_params;
+                fastcgi_pass php-fpm;
+                fastcgi_index index.php;
+                fastcgi_param SCRIPT_FILENAME $realpath_root$fastcgi_script_name;
+                fastcgi_param DOCUMENT_ROOT $realpath_root;
+                fastcgi_intercept_errors on;
+                fastcgi_read_timeout 300;
+            }
+
+            # Deny access to hidden files
+            location ~ /\. {
+                deny all;
+            }
+
+            # Health check endpoint
+            location /health {
+                access_log off;
+                return 200 "healthy\n";
+                add_header Content-Type text/plain;
+            }
+
+            # Ready check endpoint  
+            location /ready {
+                access_log off;
+                try_files $uri /index.php?$query_string;
+            }
+        }
+    }
+{{- end }}
+{{- end }}
+{{- end }}

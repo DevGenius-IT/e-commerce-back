@@ -23,13 +23,17 @@ RUN docker-php-ext-install \
     exif \
     pcntl \
     bcmath \
-    gd
+    gd \
+    sockets
     
-# Install sockets extension
-RUN docker-php-ext-install sockets
+# Install Redis extension
+RUN pecl install redis && docker-php-ext-enable redis 
 
 # Install Composer
 COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
+
+# Allow Composer to run as superuser
+ENV COMPOSER_ALLOW_SUPERUSER=1
 
 # Add user for Laravel application
 RUN useradd -ms /bin/bash -u 1000 api-gateway

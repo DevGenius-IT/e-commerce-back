@@ -10,6 +10,11 @@ Route::group([], function () {
         return response()->json(['status' => 'healthy', 'service' => 'api-gateway']);
     });
 
+    // Simple health check for probes (text response)
+    Route::get('simple-health', function () {
+        return response('healthy', 200)->header('Content-Type', 'text/plain');
+    });
+
     // Test RabbitMQ connection
     Route::get('test-rabbitmq', function () {
         try {

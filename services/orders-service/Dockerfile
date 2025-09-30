@@ -14,10 +14,13 @@ RUN apt-get update && apt-get install -y \
     && rm -rf /var/lib/apt/lists/*
 
 # Install PHP extensions
-RUN docker-php-ext-install pdo_mysql mbstring exif pcntl bcmath gd intl sockets
+RUN docker-php-ext-install pdo_mysql mbstring exif pcntl bcmath gd intl sockets 
 
 # Install Composer
 COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
+
+# Allow Composer to run as superuser
+ENV COMPOSER_ALLOW_SUPERUSER=1
 
 # Set working directory
 WORKDIR /var/www

@@ -1,0 +1,49 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: orders-db
+  namespace: e-commerce
+spec:
+  selector:
+    app: orders-service-mysql
+  ports:
+  - port: 3306
+    targetPort: 3306
+  type: ClusterIP
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: baskets-db
+  namespace: e-commerce
+spec:
+  selector:
+    app: baskets-service-mysql
+  ports:
+  - port: 3306
+    targetPort: 3306
+  type: ClusterIP
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: addresses-db
+  namespace: e-commerce
+spec:
+  selector:
+    app: addresses-service-mysql
+  ports:
+  - port: 3306
+    targetPort: 3306
+  type: ClusterIP
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: rabbitmq
+  namespace: e-commerce
+spec:
+  type: ExternalName
+  externalName: rabbitmq.e-commerce-messaging.svc.cluster.local
+  ports:
+  - port: 5672

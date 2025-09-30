@@ -1,0 +1,376 @@
+# ArgoCD Applications for E-commerce Platform
+
+# Development Environment Application
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: e-commerce-dev
+  namespace: argocd
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+  labels:
+    app.kubernetes.io/name: e-commerce-dev
+    environment: development
+spec:
+  project: e-commerce
+  
+  source:
+    repoURL: https://github.com/your-org/e-commerce-back
+    path: k8s/overlays/development
+    targetRevision: develop  # Track develop branch for dev env
+    
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: e-commerce-dev
+  
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+      allowEmpty: false
+    syncOptions:
+      - CreateNamespace=true
+      - PrunePropagationPolicy=foreground
+      - PruneLast=true
+    retry:
+      limit: 5
+      backoff:
+        duration: 5s
+        factor: 2
+        maxDuration: 3m
+  
+  # Health check configuration
+  ignoreDifferences:
+    - group: apps
+      kind: Deployment
+      jsonPointers:
+        - /spec/replicas
+  
+  # Notification annotations
+  annotations:
+    notifications.argoproj.io/subscribe.on-deployed.slack: devops
+    notifications.argoproj.io/subscribe.on-health-degraded.slack: devops
+    notifications.argoproj.io/subscribe.on-sync-failed.slack: devops
+
+---
+# Staging Environment Application
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: e-commerce-staging
+  namespace: argocd
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+  labels:
+    app.kubernetes.io/name: e-commerce-staging
+    environment: staging
+spec:
+  project: e-commerce
+  
+  source:
+    repoURL: https://github.com/your-org/e-commerce-back
+    path: k8s/overlays/staging
+    targetRevision: main  # Track main branch for staging
+    
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: e-commerce-staging
+  
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: false  # Manual healing for staging
+      allowEmpty: false
+    syncOptions:
+      - CreateNamespace=true
+      - PrunePropagationPolicy=foreground
+      - PruneLast=true
+    retry:
+      limit: 3
+      backoff:
+        duration: 10s
+        factor: 2
+        maxDuration: 5m
+  
+  # Health check configuration
+  ignoreDifferences:
+    - group: apps
+      kind: Deployment
+      jsonPointers:
+        - /spec/replicas
+  
+  annotations:
+    notifications.argoproj.io/subscribe.on-deployed.slack: devops
+    notifications.argoproj.io/subscribe.on-health-degraded.slack: devops-alerts
+    notifications.argoproj.io/subscribe.on-sync-failed.slack: devops-alerts
+
+---
+# Production Environment Application
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: e-commerce-production
+  namespace: argocd
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+  labels:
+    app.kubernetes.io/name: e-commerce-production
+    environment: production
+spec:
+  project: e-commerce
+  
+  source:
+    repoURL: https://github.com/your-org/e-commerce-back
+    path: k8s/overlays/production
+    targetRevision: main  # Production tracks main branch
+    
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: e-commerce-prod
+  
+  syncPolicy:
+    # NO automated sync for production - manual approval required
+    automated: null
+    syncOptions:
+      - CreateNamespace=true
+      - PrunePropagationPolicy=foreground
+      - PruneLast=true
+    retry:
+      limit: 2
+      backoff:
+        duration: 30s
+        factor: 2
+        maxDuration: 10m
+  
+  # Health check configuration
+  ignoreDifferences:
+    - group: apps
+      kind: Deployment
+      jsonPointers:
+        - /spec/replicas
+    - group: autoscaling
+      kind: HorizontalPodAutoscaler
+      jsonPointers:
+        - /spec/minReplicas
+        - /spec/maxReplicas
+  
+  annotations:
+    notifications.argoproj.io/subscribe.on-deployed.slack: production-alerts
+    notifications.argoproj.io/subscribe.on-health-degraded.slack: production-critical
+    notifications.argoproj.io/subscribe.on-sync-failed.slack: production-critical
+
+---
+# ApplicationSet for individual microservices (optional fine-grained control)
+apiVersion: argoproj.io/v1alpha1
+kind: ApplicationSet
+metadata:
+  name: e-commerce-microservices
+  namespace: argocd
+spec:
+  generators:
+  - list:
+      elements:
+      - service: api-gateway
+        port: "8000"
+        replicas: "3"
+      - service: auth-service
+        port: "8000"
+        replicas: "3"
+      - service: products-service
+        port: "8000"
+        replicas: "3"
+      - service: baskets-service
+        port: "8000"
+        replicas: "2"
+      - service: orders-service
+        port: "8000"
+        replicas: "3"
+      - service: addresses-service
+        port: "8000"
+        replicas: "2"
+      - service: deliveries-service
+        port: "8000"
+        replicas: "2"
+      - service: newsletters-service
+        port: "8000"
+        replicas: "2"
+      - service: sav-service
+        port: "8000"
+        replicas: "2"
+      - service: questions-service
+        port: "8000"
+        replicas: "2"
+      - service: contacts-service
+        port: "8000"
+        replicas: "2"
+      - service: websites-service
+        port: "8000"
+        replicas: "2"
+  
+  template:
+    metadata:
+      name: '{{service}}-staging'
+      labels:
+        service: '{{service}}'
+        environment: staging
+    spec:
+      project: e-commerce
+      source:
+        repoURL: https://github.com/your-org/e-commerce-back
+        path: helm
+        targetRevision: main
+        helm:
+          parameters:
+          - name: services.{{service}}.enabled
+            value: "true"
+          - name: services.{{service}}.replicaCount
+            value: '{{replicas}}'
+          - name: services.{{service}}.service.port
+            value: '{{port}}'
+          - name: environment
+            value: staging
+          - name: global.imageRegistry
+            value: ghcr.io/your-org
+          - name: global.imageTag
+            value: latest
+      destination:
+        server: https://kubernetes.default.svc
+        namespace: e-commerce-staging
+      syncPolicy:
+        automated:
+          prune: true
+          selfHeal: true
+        syncOptions:
+          - CreateNamespace=true
+
+---
+# Infrastructure Application (RabbitMQ, MySQL, Redis)
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: e-commerce-infrastructure
+  namespace: argocd
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+  labels:
+    app.kubernetes.io/name: e-commerce-infrastructure
+    component: infrastructure
+spec:
+  project: e-commerce
+  
+  source:
+    repoURL: https://github.com/your-org/e-commerce-back
+    path: k8s/manifests
+    targetRevision: main
+    directory:
+      recurse: true
+      include: '{databases,messaging}/*'
+    
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: e-commerce-messaging
+  
+  syncPolicy:
+    automated:
+      prune: false  # Don't auto-prune infrastructure
+      selfHeal: true
+      allowEmpty: false
+    syncOptions:
+      - CreateNamespace=true
+      - PrunePropagationPolicy=foreground
+    retry:
+      limit: 3
+      backoff:
+        duration: 30s
+        factor: 2
+        maxDuration: 10m
+  
+  annotations:
+    notifications.argoproj.io/subscribe.on-deployed.slack: devops
+    notifications.argoproj.io/subscribe.on-health-degraded.slack: infrastructure-alerts
+
+---
+# Monitoring Application
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: e-commerce-monitoring
+  namespace: argocd
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+  labels:
+    app.kubernetes.io/name: e-commerce-monitoring
+    component: monitoring
+spec:
+  project: e-commerce
+  
+  source:
+    repoURL: https://github.com/your-org/e-commerce-back
+    path: k8s/manifests/monitoring
+    targetRevision: main
+    
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: monitoring
+  
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+      allowEmpty: false
+    syncOptions:
+      - CreateNamespace=true
+      - PrunePropagationPolicy=foreground
+    retry:
+      limit: 5
+      backoff:
+        duration: 15s
+        factor: 2
+        maxDuration: 5m
+  
+  annotations:
+    notifications.argoproj.io/subscribe.on-deployed.slack: devops
+    notifications.argoproj.io/subscribe.on-health-degraded.slack: monitoring-alerts
+
+---
+# Security Application (Network Policies, External Secrets)
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: e-commerce-security
+  namespace: argocd
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+  labels:
+    app.kubernetes.io/name: e-commerce-security
+    component: security
+spec:
+  project: e-commerce
+  
+  source:
+    repoURL: https://github.com/your-org/e-commerce-back
+    path: k8s/manifests/security
+    targetRevision: main
+    
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: e-commerce
+  
+  syncPolicy:
+    automated:
+      prune: false  # Don't auto-prune security policies
+      selfHeal: true
+      allowEmpty: false
+    syncOptions:
+      - CreateNamespace=true
+      - PrunePropagationPolicy=foreground
+    retry:
+      limit: 3
+      backoff:
+        duration: 20s
+        factor: 2
+        maxDuration: 5m
+  
+  annotations:
+    notifications.argoproj.io/subscribe.on-deployed.slack: security-team
+    notifications.argoproj.io/subscribe.on-health-degraded.slack: security-alerts

@@ -23,13 +23,17 @@ RUN docker-php-ext-install \
     exif \
     pcntl \
     bcmath \
-    gd
+    gd \
+    sockets
     
-# Install sockets extension
-RUN docker-php-ext-install sockets
+# Install Redis extension
+RUN pecl install redis && docker-php-ext-enable redis
 
 # Install Composer
 COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
+
+# Allow Composer to run as superuser
+ENV COMPOSER_ALLOW_SUPERUSER=1
 
 # Add user for Laravel application
 RUN useradd -ms /bin/bash -u 1000 api-gateway
@@ -43,8 +47,14 @@ WORKDIR /var/www/contacts-service
 COPY --chown=api-gateway:api-gateway services/contacts-service .
 COPY --chown=api-gateway:api-gateway shared/ ../../shared
 
+# Create Laravel cache directories and set permissions
+RUN mkdir -p bootstrap/cache storage/app storage/framework/cache storage/framework/sessions storage/framework/views storage/logs \
+    && chown -R api-gateway:api-gateway bootstrap/cache storage \
+    && chmod -R 775 bootstrap/cache storage
+
 RUN composer update --no-interaction --optimize-autoloader
-EXPOSE 8010
+
+EXPOSE 8000
 
 # Copy and set permissions for start script
 COPY services/contacts-service/tools/start.sh /usr/local/bin/

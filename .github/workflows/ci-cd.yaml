@@ -1,0 +1,392 @@
+name: CI/CD Pipeline - E-commerce Microservices
+
+on:
+  push:
+    branches: [main, dev]
+    paths:
+      - 'services/**'
+      - 'shared/**'
+      - 'k8s/**'
+      - 'helm/**'
+  pull_request:
+    branches: [main]
+    paths:
+      - 'services/**'
+      - 'shared/**'
+      - 'k8s/**'
+      - 'helm/**'
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_TAG: ${{ github.sha }}
+  KUBECONFIG_FILE: ${{ secrets.KUBECONFIG }}
+
+jobs:
+  # Detect changed services
+  detect-changes:
+    runs-on: ubuntu-latest
+    outputs:
+      services: ${{ steps.changes.outputs.services }}
+      k8s-changed: ${{ steps.changes.outputs.k8s }}
+      shared-changed: ${{ steps.changes.outputs.shared }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Detect service changes
+        uses: dorny/paths-filter@v2
+        id: changes
+        with:
+          list-files: shell
+          filters: |
+            shared:
+              - 'shared/**'
+            k8s:
+              - 'k8s/**'
+              - 'helm/**'
+            api-gateway:
+              - 'services/api-gateway/**'
+            auth-service:
+              - 'services/auth-service/**'
+            products-service:
+              - 'services/products-service/**'
+            baskets-service:
+              - 'services/baskets-service/**'
+            orders-service:
+              - 'services/orders-service/**'
+            addresses-service:
+              - 'services/addresses-service/**'
+            deliveries-service:
+              - 'services/deliveries-service/**'
+            newsletters-service:
+              - 'services/newsletters-service/**'
+            sav-service:
+              - 'services/sav-service/**'
+            questions-service:
+              - 'services/questions-service/**'
+            contacts-service:
+              - 'services/contacts-service/**'
+            websites-service:
+              - 'services/websites-service/**'
+            messages-broker:
+              - 'services/messages-broker/**'
+          
+      - name: Generate services list
+        id: services-list
+        run: |
+          services=()
+          
+          # Add changed services
+          if [[ "${{ steps.changes.outputs.api-gateway }}" == "true" ]]; then services+=("api-gateway"); fi
+          if [[ "${{ steps.changes.outputs.auth-service }}" == "true" ]]; then services+=("auth-service"); fi
+          if [[ "${{ steps.changes.outputs.products-service }}" == "true" ]]; then services+=("products-service"); fi
+          if [[ "${{ steps.changes.outputs.baskets-service }}" == "true" ]]; then services+=("baskets-service"); fi
+          if [[ "${{ steps.changes.outputs.orders-service }}" == "true" ]]; then services+=("orders-service"); fi
+          if [[ "${{ steps.changes.outputs.addresses-service }}" == "true" ]]; then services+=("addresses-service"); fi
+          if [[ "${{ steps.changes.outputs.deliveries-service }}" == "true" ]]; then services+=("deliveries-service"); fi
+          if [[ "${{ steps.changes.outputs.newsletters-service }}" == "true" ]]; then services+=("newsletters-service"); fi
+          if [[ "${{ steps.changes.outputs.sav-service }}" == "true" ]]; then services+=("sav-service"); fi
+          if [[ "${{ steps.changes.outputs.questions-service }}" == "true" ]]; then services+=("questions-service"); fi
+          if [[ "${{ steps.changes.outputs.contacts-service }}" == "true" ]]; then services+=("contacts-service"); fi
+          if [[ "${{ steps.changes.outputs.websites-service }}" == "true" ]]; then services+=("websites-service"); fi
+          if [[ "${{ steps.changes.outputs.messages-broker }}" == "true" ]]; then services+=("messages-broker"); fi
+          
+          # If shared library changed, rebuild all services
+          if [[ "${{ steps.changes.outputs.shared }}" == "true" ]]; then
+            services=("api-gateway" "auth-service" "products-service" "baskets-service" "orders-service" "addresses-service" "deliveries-service" "newsletters-service" "sav-service" "questions-service" "contacts-service" "websites-service" "messages-broker")
+          fi
+          
+          # Convert to JSON array
+          services_json=$(printf '"%s",' "${services[@]}" | sed 's/,$//')
+          echo "services=[$services_json]" >> $GITHUB_OUTPUT
+
+  # Security scanning
+  security-scan:
+    runs-on: ubuntu-latest
+    needs: detect-changes
+    if: ${{ needs.detect-changes.outputs.services != '[]' }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Run Trivy vulnerability scanner
+        uses: aquasecurity/trivy-action@master
+        with:
+          scan-type: 'fs'
+          scan-ref: '.'
+          format: 'sarif'
+          output: 'trivy-results.sarif'
+
+      - name: Upload Trivy scan results
+        uses: github/codeql-action/upload-sarif@v2
+        if: always()
+        with:
+          sarif_file: 'trivy-results.sarif'
+
+  # Build and test services
+  build-and-test:
+    runs-on: ubuntu-latest
+    needs: detect-changes
+    if: ${{ needs.detect-changes.outputs.services != '[]' }}
+    strategy:
+      fail-fast: false
+      matrix:
+        service: ${{ fromJson(needs.detect-changes.outputs.services) }}
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Login to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Set up PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.3'
+          extensions: mbstring, xml, ctype, iconv, intl, pdo_mysql, mysql, bcmath, gd, zip, redis
+          coverage: xdebug
+
+      - name: Cache Composer dependencies
+        uses: actions/cache@v3
+        with:
+          path: ~/.composer/cache
+          key: ${{ runner.os }}-composer-${{ hashFiles('**/composer.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-composer-
+
+      - name: Install shared dependencies
+        run: |
+          cd shared
+          composer install --no-dev --optimize-autoloader
+
+      - name: Install service dependencies
+        run: |
+          cd services/${{ matrix.service }}
+          composer install --optimize-autoloader
+
+      - name: Run PHP CS Fixer
+        run: |
+          cd services/${{ matrix.service }}
+          if [ -f "vendor/bin/pint" ]; then
+            ./vendor/bin/pint --test
+          fi
+
+      - name: Run PHPStan
+        run: |
+          cd services/${{ matrix.service }}
+          if [ -f "phpstan.neon" ]; then
+            ./vendor/bin/phpstan analyse
+          fi
+
+      - name: Set up test database
+        run: |
+          sudo systemctl start mysql
+          mysql -u root -proot -e "CREATE DATABASE IF NOT EXISTS ${matrix.service//-/_}_test;"
+
+      - name: Run tests
+        env:
+          DB_HOST: localhost
+          DB_PORT: 3306
+          DB_DATABASE: ${{ matrix.service }}_test
+          DB_USERNAME: root
+          DB_PASSWORD: root
+          APP_ENV: testing
+        run: |
+          cd services/${{ matrix.service }}
+          cp .env.example .env.testing
+          php artisan key:generate --env=testing
+          php artisan migrate --env=testing --force
+          php artisan test --coverage --min=80
+
+      - name: Build Docker image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: ./services/${{ matrix.service }}/Dockerfile
+          platforms: linux/amd64,linux/arm64
+          push: true
+          tags: |
+            ${{ env.REGISTRY }}/${{ github.repository_owner }}/${{ matrix.service }}:${{ env.IMAGE_TAG }}
+            ${{ env.REGISTRY }}/${{ github.repository_owner }}/${{ matrix.service }}:latest
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+          build-args: |
+            SERVICE_NAME=${{ matrix.service }}
+            BUILD_DATE=$(date -u +'%Y-%m-%dT%H:%M:%SZ')
+            VCS_REF=${{ github.sha }}
+
+  # Deploy to development
+  deploy-development:
+    runs-on: ubuntu-latest
+    needs: [detect-changes, build-and-test]
+    if: ${{ github.ref == 'refs/heads/develop' && needs.detect-changes.outputs.services != '[]' }}
+    environment: development
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up kubectl
+        uses: azure/setup-kubectl@v3
+        with:
+          version: 'v1.28.0'
+
+      - name: Set up Helm
+        uses: azure/setup-helm@v3
+        with:
+          version: '3.12.0'
+
+      - name: Configure kubectl
+        run: |
+          echo "${{ secrets.KUBECONFIG_DEV }}" | base64 -d > kubeconfig
+          export KUBECONFIG=kubeconfig
+
+      - name: Deploy services to development
+        run: |
+          export KUBECONFIG=kubeconfig
+          
+          # Apply Kustomize configurations
+          kubectl apply -k k8s/overlays/development
+          
+          # Deploy changed services with Helm
+          for service in $(echo '${{ needs.detect-changes.outputs.services }}' | jq -r '.[]'); do
+            helm upgrade --install $service-dev ./helm \
+              --namespace e-commerce-dev \
+              --create-namespace \
+              --set global.imageRegistry=${{ env.REGISTRY }}/${{ github.repository_owner }} \
+              --set global.imageTag=${{ env.IMAGE_TAG }} \
+              --set environment=development \
+              --set services.$service.enabled=true \
+              --wait --timeout=300s
+          done
+
+      - name: Verify deployment
+        run: |
+          export KUBECONFIG=kubeconfig
+          kubectl get pods -n e-commerce-dev
+          kubectl get services -n e-commerce-dev
+
+  # Deploy to staging
+  deploy-staging:
+    runs-on: ubuntu-latest
+    needs: [detect-changes, build-and-test]
+    if: ${{ github.ref == 'refs/heads/main' && needs.detect-changes.outputs.services != '[]' }}
+    environment: staging
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up kubectl
+        uses: azure/setup-kubectl@v3
+
+      - name: Set up Helm
+        uses: azure/setup-helm@v3
+
+      - name: Configure kubectl
+        run: |
+          echo "${{ secrets.KUBECONFIG_STAGING }}" | base64 -d > kubeconfig
+          export KUBECONFIG=kubeconfig
+
+      - name: Deploy to staging
+        run: |
+          export KUBECONFIG=kubeconfig
+          kubectl apply -k k8s/overlays/staging
+          
+          for service in $(echo '${{ needs.detect-changes.outputs.services }}' | jq -r '.[]'); do
+            helm upgrade --install $service-staging ./helm \
+              --namespace e-commerce-staging \
+              --create-namespace \
+              --set global.imageRegistry=${{ env.REGISTRY }}/${{ github.repository_owner }} \
+              --set global.imageTag=${{ env.IMAGE_TAG }} \
+              --set environment=staging \
+              --set services.$service.enabled=true \
+              --wait --timeout=600s
+          done
+
+      - name: Run integration tests
+        run: |
+          export KUBECONFIG=kubeconfig
+          # Wait for services to be ready
+          sleep 60
+          
+          # Run health checks
+          for service in $(echo '${{ needs.detect-changes.outputs.services }}' | jq -r '.[]'); do
+            kubectl wait --for=condition=ready pod -l app=$service -n e-commerce-staging --timeout=300s
+          done
+
+  # Deploy to production (manual approval required)
+  deploy-production:
+    runs-on: ubuntu-latest
+    needs: [detect-changes, deploy-staging]
+    if: ${{ github.ref == 'refs/heads/main' && needs.detect-changes.outputs.services != '[]' }}
+    environment: production
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up kubectl
+        uses: azure/setup-kubectl@v3
+
+      - name: Set up Helm
+        uses: azure/setup-helm@v3
+
+      - name: Configure kubectl
+        run: |
+          echo "${{ secrets.KUBECONFIG_PROD }}" | base64 -d > kubeconfig
+          export KUBECONFIG=kubeconfig
+
+      - name: Deploy to production
+        run: |
+          export KUBECONFIG=kubeconfig
+          kubectl apply -k k8s/overlays/production
+          
+          for service in $(echo '${{ needs.detect-changes.outputs.services }}' | jq -r '.[]'); do
+            helm upgrade --install $service-prod ./helm \
+              --namespace e-commerce-prod \
+              --create-namespace \
+              --set global.imageRegistry=${{ env.REGISTRY }}/${{ github.repository_owner }} \
+              --set global.imageTag=${{ env.IMAGE_TAG }} \
+              --set environment=production \
+              --set services.$service.enabled=true \
+              --wait --timeout=900s
+          done
+
+      - name: Verify production deployment
+        run: |
+          export KUBECONFIG=kubeconfig
+          kubectl get pods -n e-commerce-prod
+          
+          # Health check all services
+          for service in $(echo '${{ needs.detect-changes.outputs.services }}' | jq -r '.[]'); do
+            kubectl wait --for=condition=ready pod -l app=$service -n e-commerce-prod --timeout=600s
+          done
+
+      - name: Notify deployment success
+        uses: 8398a7/action-slack@v3
+        if: success()
+        with:
+          status: success
+          text: 'Production deployment successful! Services: ${{ needs.detect-changes.outputs.services }}'
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+
+      - name: Notify deployment failure
+        uses: 8398a7/action-slack@v3
+        if: failure()
+        with:
+          status: failure
+          text: 'Production deployment failed! Services: ${{ needs.detect-changes.outputs.services }}'
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}

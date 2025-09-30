@@ -1,5 +1,57 @@
+# Laravel / PHP
 .env
-services/**/vendor
-services/**/mysql
-services/**/minio
+.env.local
+.env.*.local
+vendor/
+shared/vendor/
+composer.lock
+services/**/vendor/
+services/**/storage/logs/
+services/**/storage/framework/cache/
+services/**/storage/framework/sessions/
+services/**/storage/framework/views/
+services/**/bootstrap/cache/
+
+# Docker & Infrastructure
+docker-compose.override.yml
+services/**/mysql/
+services/**/minio/
+*.log
+
+# Kubernetes
+k8s/secrets/
+*.secret.yaml
+
+# IDE & Editors
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Node.js (if any frontend assets)
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Testing
+.phpunit.result.cache
+coverage/
+
+# Temporary files
+*.tmp
+*.temp
+.tmp/
+
+# Claude documentation (auto-generated)
 CLAUDE.md

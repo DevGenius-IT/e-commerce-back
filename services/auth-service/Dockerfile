@@ -1,52 +1,97 @@
-FROM php:8.3-fpm
+# Dockerfile pour Auth Service - JWT + RBAC + Spatie Permissions
+ARG BUILD_DATE
+ARG VCS_REF
+
+FROM php:8.3-fpm AS base
+
+# Build arguments
+ARG BUILD_DATE
+ARG VCS_REF
+ENV SERVICE_NAME=auth-service
+
+# Labels
+LABEL maintainer="DevOps Team <devops@yourcompany.com>" \
+      org.label-schema.name="auth-service" \
+      org.label-schema.description="E-commerce Authentication Service with JWT and RBAC" \
+      org.label-schema.build-date="${BUILD_DATE}" \
+      org.label-schema.vcs-ref="${VCS_REF}"
+
+# Install system dependencies
+RUN apt-get update && apt-get install -y \
+    git curl libpng-dev libxml2-dev zip unzip default-mysql-client \
+    nginx supervisor libonig-dev libfreetype6-dev libjpeg62-turbo-dev \
+    libzip-dev libicu-dev build-essential netcat-traditional \
+    && rm -rf /var/lib/apt/lists/*
+
+# Install PHP extensions
+RUN docker-php-ext-configure gd --with-freetype --with-jpeg \
+    && docker-php-ext-configure intl \
+    && docker-php-ext-install \
+    pdo_mysql mbstring exif pcntl bcmath gd zip intl sockets opcache
+
+# Install Redis extension for sessions
+RUN pecl install redis && docker-php-ext-enable redis
+
+# Install Composer
+COPY --from=composer:2.6 /usr/bin/composer /usr/bin/composer
+
+# Allow Composer to run as superuser
+ENV COMPOSER_ALLOW_SUPERUSER=1
 
 # Set working directory
 WORKDIR /var/www
 
-# Install system dependencies
-RUN apt-get update && apt-get install -y \
-    git \
-    curl \
-    libpng-dev \
-    libonig-dev \
-    libxml2-dev \
-    zip \
-    unzip \
-    netcat-traditional \
-    inotify-tools \
-    && rm -rf /var/lib/apt/lists/*
+# Copy dependency files for better caching
+COPY shared/composer.json shared/composer.lock ./shared/
+COPY services/auth-service/composer.json services/auth-service/composer.lock ./services/auth-service/
 
-# Install PHP extensions
-RUN docker-php-ext-install \
-    pdo_mysql \
-    mbstring \
-    exif \
-    pcntl \
-    bcmath \
-    gd \
-    sockets
+# Install dependencies
+RUN cd shared && composer install --no-dev --no-autoloader --no-scripts --no-interaction
+RUN cd services/auth-service && composer install --no-dev --no-autoloader --no-scripts --no-interaction
 
-# Install Composer
-COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
+# Copy application source
+COPY shared/ ./shared/
+COPY services/auth-service/ ./services/auth-service/
 
-# Add user for Laravel application
-RUN useradd -ms /bin/bash -u 1000 api-gateway
+# Generate autoloader
+RUN cd shared && composer dump-autoload --optimize
+RUN cd services/auth-service && composer dump-autoload --optimize
 
-# Ensure proper directory permissions
-RUN mkdir -p /var/www/auth-service && chown -R api-gateway:api-gateway /var/www/auth-service
+# Copy Docker configuration files
+COPY docker/config/nginx.conf /etc/nginx/nginx.conf
+COPY docker/config/php.ini /usr/local/etc/php/conf.d/99-custom.ini
+COPY docker/config/opcache.ini /usr/local/etc/php/conf.d/opcache.ini
 
-WORKDIR /var/www/auth-service
+# Copy supervisord config specific to auth service
+COPY services/auth-service/docker/supervisord.conf /etc/supervisor/conf.d/supervisord.conf
 
-# Copy application files with proper permissions
-COPY --chown=api-gateway:api-gateway services/auth-service .
-COPY --chown=api-gateway:api-gateway shared/ ../../shared
+# Copy entrypoint
+COPY docker/scripts/entrypoint.sh /usr/local/bin/entrypoint.sh
+RUN chmod +x /usr/local/bin/entrypoint.sh
 
-RUN composer update --no-interaction --optimize-autoloader
+# Create directories and set permissions
+RUN mkdir -p /var/log/supervisor /var/log/nginx /run/nginx \
+    && mkdir -p /var/www/services/auth-service/storage/{app,framework/{cache,sessions,views},logs} \
+    && groupadd -r appgroup && useradd -r -g appgroup appuser \
+    && chown -R appuser:appgroup /var/www /var/log /run/nginx
 
-EXPOSE 8001
+# Switch to service directory
+WORKDIR /var/www/services/auth-service
 
-# Copy and set permissions for start script
-COPY services/auth-service/tools/start.sh /usr/local/bin/
-RUN chmod +x /usr/local/bin/start.sh
+# Health check specific to auth service
+HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
+    CMD curl -f http://localhost:8000/api/health || exit 1
 
-CMD ["/usr/local/bin/start.sh"]
+# Expose ports
+EXPOSE 8000 9090
+
+# Switch to non-root user
+USER appuser
+
+# Environment variables
+ENV SERVICE_NAME=auth-service
+ENV CONTAINER_ROLE=app
+
+# Start application
+ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]
+CMD ["supervisord", "-c", "/etc/supervisor/conf.d/supervisord.conf"]

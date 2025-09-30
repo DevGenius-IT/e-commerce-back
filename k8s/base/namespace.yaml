@@ -1,0 +1,35 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: e-commerce
+  labels:
+    name: e-commerce
+    environment: base
+    project: e-commerce-microservices
+    version: "1.0"
+  annotations:
+    description: "E-commerce microservices platform namespace"
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: e-commerce-monitoring
+  labels:
+    name: e-commerce-monitoring
+    environment: base
+    project: e-commerce-microservices
+    purpose: monitoring
+  annotations:
+    description: "Monitoring stack for e-commerce platform"
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: e-commerce-messaging
+  labels:
+    name: e-commerce-messaging
+    environment: base
+    project: e-commerce-microservices
+    purpose: messaging
+  annotations:
+    description: "RabbitMQ messaging infrastructure"

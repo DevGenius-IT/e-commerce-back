@@ -1,0 +1,94 @@
+# Dockerfile pour Auth Service - JWT + RBAC + Spatie Permissions
+ARG BUILD_DATE
+ARG VCS_REF
+
+FROM php:8.3-fpm AS base
+
+# Build arguments
+ARG BUILD_DATE
+ARG VCS_REF
+ENV SERVICE_NAME=auth-service
+
+# Labels
+LABEL maintainer="DevOps Team <devops@yourcompany.com>" \
+      org.label-schema.name="auth-service" \
+      org.label-schema.description="E-commerce Authentication Service with JWT and RBAC" \
+      org.label-schema.build-date="${BUILD_DATE}" \
+      org.label-schema.vcs-ref="${VCS_REF}"
+
+# Install system dependencies
+RUN apt-get update && apt-get install -y \
+    git curl libpng-dev libxml2-dev zip unzip default-mysql-client \
+    nginx supervisor libonig-dev libfreetype6-dev libjpeg62-turbo-dev \
+    libzip-dev libicu-dev build-essential netcat-traditional \
+    && rm -rf /var/lib/apt/lists/*
+
+# Install PHP extensions
+RUN docker-php-ext-configure gd --with-freetype --with-jpeg \
+    && docker-php-ext-configure intl \
+    && docker-php-ext-install \
+    pdo_mysql mbstring exif pcntl bcmath gd zip intl sockets opcache
+
+# Install Redis extension for sessions
+RUN pecl install redis && docker-php-ext-enable redis
+
+# Install Composer
+COPY --from=composer:2.6 /usr/bin/composer /usr/bin/composer
+
+# Set working directory
+WORKDIR /var/www
+
+# Copy dependency files for better caching
+COPY shared/composer.json shared/composer.lock ./shared/
+COPY services/auth-service/composer.json services/auth-service/composer.lock ./services/auth-service/
+
+# Install dependencies
+RUN cd shared && composer install --no-dev --no-autoloader --no-scripts --no-interaction
+RUN cd services/auth-service && composer install --no-dev --no-autoloader --no-scripts --no-interaction
+
+# Copy application source
+COPY shared/ ./shared/
+COPY services/auth-service/ ./services/auth-service/
+
+# Generate autoloader
+RUN cd shared && composer dump-autoload --optimize
+RUN cd services/auth-service && composer dump-autoload --optimize
+
+# Copy Docker configuration files
+COPY docker/config/nginx.conf /etc/nginx/nginx.conf
+COPY docker/config/php.ini /usr/local/etc/php/conf.d/99-custom.ini
+COPY docker/config/opcache.ini /usr/local/etc/php/conf.d/opcache.ini
+
+# Copy supervisord config specific to auth service
+COPY services/auth-service/docker/supervisord.conf /etc/supervisor/conf.d/supervisord.conf
+
+# Copy entrypoint
+COPY docker/scripts/entrypoint.sh /usr/local/bin/entrypoint.sh
+RUN chmod +x /usr/local/bin/entrypoint.sh
+
+# Create directories and set permissions
+RUN mkdir -p /var/log/supervisor /var/log/nginx /run/nginx \
+    && mkdir -p /var/www/services/auth-service/storage/{app,framework/{cache,sessions,views},logs} \
+    && groupadd -r appgroup && useradd -r -g appgroup appuser \
+    && chown -R appuser:appgroup /var/www /var/log /run/nginx
+
+# Switch to service directory
+WORKDIR /var/www/services/auth-service
+
+# Health check specific to auth service
+HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
+    CMD curl -f http://localhost:8000/api/health || exit 1
+
+# Expose ports
+EXPOSE 8000 9090
+
+# Switch to non-root user
+USER appuser
+
+# Environment variables
+ENV SERVICE_NAME=auth-service
+ENV CONTAINER_ROLE=app
+
+# Start application
+ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]
+CMD ["supervisord", "-c", "/etc/supervisor/conf.d/supervisord.conf"]

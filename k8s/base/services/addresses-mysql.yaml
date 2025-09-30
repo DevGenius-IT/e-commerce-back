@@ -1,0 +1,55 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: addresses-service-mysql
+  labels:
+    app: addresses-service-mysql
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: addresses-service-mysql
+  template:
+    metadata:
+      labels:
+        app: addresses-service-mysql
+    spec:
+      containers:
+      - name: mysql
+        image: mysql:8.0
+        env:
+        - name: MYSQL_ROOT_PASSWORD
+          value: "root"
+        - name: MYSQL_DATABASE
+          value: "addresses_service_db"
+        - name: MYSQL_USER
+          value: "addresses_user"
+        - name: MYSQL_PASSWORD
+          value: "addresses-password-change-this"
+        ports:
+        - containerPort: 3306
+        volumeMounts:
+        - name: mysql-storage
+          mountPath: /var/lib/mysql
+        resources:
+          requests:
+            memory: 256Mi
+            cpu: 250m
+          limits:
+            memory: 512Mi
+            cpu: 500m
+      volumes:
+      - name: mysql-storage
+        emptyDir: {}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: addresses-service-mysql
+spec:
+  selector:
+    app: addresses-service-mysql
+  ports:
+  - port: 3306
+    targetPort: 3306
+  type: ClusterIP

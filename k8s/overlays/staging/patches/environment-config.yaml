@@ -1,0 +1,35 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: global-config
+  namespace: e-commerce-staging
+data:
+  # Staging environment settings
+  APP_ENV: "staging"
+  APP_DEBUG: "false"
+  LOG_LEVEL: "info"
+  
+  # Staging monitoring (enabled for testing)
+  PROMETHEUS_ENABLED: "true"
+  METRICS_PORT: "9090"
+  
+  # Staging JWT (production-like settings)
+  JWT_TTL: "60"
+  JWT_REFRESH_TTL: "20160"
+  
+  # Staging API (moderate rate limit)
+  API_RATE_LIMIT: "200"
+  
+  # Staging domains
+  FRONTEND_URL: "https://staging.yourcompany.com"
+  API_URL: "https://staging.api.yourcompany.com"
+  
+  # Staging database (production-like)
+  DB_CONNECTION: "mysql"
+  DB_PORT: "3306"
+  
+  # Staging cache (Redis with auth)
+  CACHE_DRIVER: "redis"
+  
+  # Staging queue (RabbitMQ)
+  QUEUE_CONNECTION: "rabbitmq"

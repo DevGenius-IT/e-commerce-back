@@ -1,0 +1,450 @@
+# Development values for e-commerce-microservices
+# This is a YAML-formatted file for development environment.
+
+# Global configuration
+global:
+  imageRegistry: ""  # Use local Docker images without registry prefix
+  imagePullSecrets: []
+  storageClass: ""
+  image:
+    tag: "latest"
+  
+# Environment configuration
+environment: development
+
+# Namespace configuration
+namespace:
+  create: false  # Already created by kustomize
+  name: e-commerce
+
+# Services configuration
+services:
+  # Default resources for all services
+  defaults:
+    resources:
+      requests:
+        memory: 256Mi
+        cpu: 200m
+      limits:
+        memory: 512Mi
+        cpu: 500m
+  # API Gateway
+  api-gateway:
+    enabled: true
+    replicaCount: 1  # Single replica for dev
+    image:
+      repository: e-commerce-back-api-gateway
+      tag: "latest"
+      pullPolicy: IfNotPresent  # Faster for dev
+    service:
+      type: ClusterIP
+      port: 80
+      targetPort: 8000  # Laravel artisan serve port
+    healthCheck:
+      path: /v1/health
+    database:
+      enabled: false  # API Gateway doesn't need a database
+    resources:
+      requests:
+        memory: 256Mi
+        cpu: 200m
+      limits:
+        memory: 512Mi
+        cpu: 500m
+    autoscaling:
+      enabled: false  # Disabled for dev
+    
+  # Auth Service
+  auth-service:
+    enabled: true
+    replicaCount: 1
+    image:
+      repository: e-commerce-back-auth-service
+      tag: "latest"
+      pullPolicy: IfNotPresent
+    service:
+      type: ClusterIP
+      port: 80
+      targetPort: 8000
+    database:
+      enabled: true
+      name: auth_service_db
+      user: auth_user
+    resources:
+      requests:
+        memory: 256Mi
+        cpu: 200m
+      limits:
+        memory: 512Mi
+        cpu: 500m
+    autoscaling:
+      enabled: false
+
+  # Products Service
+  products-service:
+    enabled: true
+    replicaCount: 1
+    image:
+      repository: e-commerce-back-products-service
+      tag: "latest"
+      pullPolicy: IfNotPresent
+    service:
+      type: ClusterIP
+      port: 80
+      targetPort: 8000
+    database:
+      enabled: true
+      name: products_service_db
+      user: products_user
+    resources:
+      requests:
+        memory: 256Mi
+        cpu: 200m
+      limits:
+        memory: 512Mi
+        cpu: 500m
+    autoscaling:
+      enabled: false
+
+  # Baskets Service
+  baskets-service:
+    enabled: true
+    replicaCount: 1
+    image:
+      repository: e-commerce-back-baskets-service
+      tag: "latest"
+      pullPolicy: IfNotPresent
+    service:
+      type: ClusterIP
+      port: 80
+      targetPort: 8000
+    database:
+      enabled: true
+      name: baskets_service_db
+      user: baskets_user
+    resources:
+      requests:
+        memory: 256Mi
+        cpu: 200m
+      limits:
+        memory: 512Mi
+        cpu: 500m
+    autoscaling:
+      enabled: false
+
+  # Orders Service
+  orders-service:
+    enabled: true
+    replicaCount: 1
+    image:
+      repository: e-commerce-back-orders-service
+      tag: "latest"
+      pullPolicy: IfNotPresent
+    service:
+      type: ClusterIP
+      port: 80
+      targetPort: 8004
+    database:
+      enabled: true
+      name: orders_service_db
+      user: orders_user
+    resources:
+      requests:
+        memory: 256Mi
+        cpu: 200m
+      limits:
+        memory: 512Mi
+        cpu: 500m
+    autoscaling:
+      enabled: false
+
+  # Messages Broker
+  messages-broker:
+    enabled: true  # Re-enable with correct image name
+    replicaCount: 1
+    image:
+      repository: e-commerce-back-messages-broker
+      tag: "latest"
+      pullPolicy: IfNotPresent
+    service:
+      type: ClusterIP
+      port: 80
+      targetPort: 9000  # PHP-FPM runs on port 9000
+    database:
+      enabled: false  # Messages broker uses RabbitMQ, not MySQL
+    probes:
+      port: 9000  # Check PHP-FPM port instead of web server port
+      startup:
+        initialDelaySeconds: 30  # More time for RabbitMQ setup
+        periodSeconds: 10
+        timeoutSeconds: 5
+        failureThreshold: 60  # Allow up to 10 minutes total
+      readiness:
+        initialDelaySeconds: 15
+        periodSeconds: 10
+        timeoutSeconds: 5
+        failureThreshold: 5
+      liveness:
+        initialDelaySeconds: 120
+        periodSeconds: 30
+        timeoutSeconds: 10
+        failureThreshold: 3
+    resources:
+      requests:
+        memory: 256Mi
+        cpu: 200m
+      limits:
+        memory: 512Mi
+        cpu: 500m
+    autoscaling:
+      enabled: false
+
+  # Addresses Service
+  addresses-service:
+    enabled: true  # Re-enable with correct image name
+    replicaCount: 1
+    image:
+      repository: e-commerce-back-addresses-service
+      tag: "latest"
+      pullPolicy: IfNotPresent
+    service:
+      type: ClusterIP
+      port: 80
+      targetPort: 8000
+    database:
+      enabled: true
+      name: addresses_service_db
+      user: addresses_user
+    resources:
+      requests:
+        memory: 256Mi
+        cpu: 200m
+      limits:
+        memory: 512Mi
+        cpu: 500m
+    autoscaling:
+      enabled: false
+      
+  # Contacts Service
+  contacts-service:
+    enabled: true
+    replicaCount: 1
+    image:
+      repository: e-commerce-back-contacts-service
+      tag: "latest"
+      pullPolicy: IfNotPresent
+    service:
+      type: ClusterIP
+      port: 80
+      targetPort: 8000
+    database:
+      enabled: true
+      name: contacts_service_db
+      user: contacts_user
+    resources:
+      requests:
+        memory: 256Mi
+        cpu: 200m
+      limits:
+        memory: 512Mi
+        cpu: 500m
+    autoscaling:
+      enabled: false
+      
+  # Deliveries Service  
+  deliveries-service:
+    enabled: true
+    replicaCount: 1
+    image:
+      repository: e-commerce-back-deliveries-service
+      tag: "latest"
+      pullPolicy: IfNotPresent
+    service:
+      type: ClusterIP
+      port: 80
+      targetPort: 8000
+    database:
+      enabled: true
+      name: deliveries_service_db
+      user: deliveries_user
+    resources:
+      requests:
+        memory: 256Mi
+        cpu: 200m
+      limits:
+        memory: 512Mi
+        cpu: 500m
+    autoscaling:
+      enabled: false
+      
+  # Newsletters Service
+  newsletters-service:
+    enabled: true
+    replicaCount: 1
+    image:
+      repository: e-commerce-back-newsletters-service
+      tag: "latest"
+      pullPolicy: IfNotPresent
+    service:
+      type: ClusterIP
+      port: 80
+      targetPort: 8000
+    database:
+      enabled: true
+      name: newsletters_service_db
+      user: newsletters_user
+    resources:
+      requests:
+        memory: 256Mi
+        cpu: 200m
+      limits:
+        memory: 512Mi
+        cpu: 500m
+    autoscaling:
+      enabled: false
+      
+  # SAV Service
+  sav-service:
+    enabled: true
+    replicaCount: 1
+    image:
+      repository: e-commerce-back-sav-service
+      tag: "latest"
+      pullPolicy: IfNotPresent
+    service:
+      type: ClusterIP
+      port: 80
+      targetPort: 8000
+    database:
+      enabled: true
+      name: sav_service_db
+      user: sav_user
+    resources:
+      requests:
+        memory: 256Mi
+        cpu: 200m
+      limits:
+        memory: 512Mi
+        cpu: 500m
+    autoscaling:
+      enabled: false
+      
+  # Questions Service
+  questions-service:
+    enabled: true
+    replicaCount: 1
+    image:
+      repository: e-commerce-back-questions-service
+      tag: "latest"
+      pullPolicy: IfNotPresent
+    service:
+      type: ClusterIP
+      port: 80
+      targetPort: 8000
+    database:
+      enabled: true
+      name: questions_service_db
+      user: questions_user
+    resources:
+      requests:
+        memory: 256Mi
+        cpu: 200m
+      limits:
+        memory: 512Mi
+        cpu: 500m
+    autoscaling:
+      enabled: false
+      
+  # Websites Service
+  websites-service:
+    enabled: true
+    replicaCount: 1
+    image:
+      repository: e-commerce-back-websites-service
+      tag: "latest"
+      pullPolicy: IfNotPresent
+    service:
+      type: ClusterIP
+      port: 80
+      targetPort: 9000
+    probes:
+      port: 9000  # PHP-FPM port
+    database:
+      enabled: true
+      name: websites_service_db
+      user: websites_user
+    resources:
+      requests:
+        memory: 256Mi
+        cpu: 200m
+      limits:
+        memory: 512Mi
+        cpu: 500m
+    autoscaling:
+      enabled: false
+
+# Database configuration (MySQL) - Simplified for dev
+mysql:
+  enabled: false  # Using external databases for dev
+  
+# Redis configuration - Simplified for dev  
+redis:
+  enabled: false  # Already deployed via kustomize
+
+# RabbitMQ configuration - Simplified for dev
+rabbitmq:
+  enabled: true
+  replicaCount: 1  # Single instance for dev
+  clustering:
+    enabled: false  # No clustering needed for dev
+  persistence:
+    enabled: false  # No persistence needed for dev
+  resources:
+    requests:
+      memory: 128Mi
+      cpu: 100m
+    limits:
+      memory: 256Mi
+      cpu: 200m
+  metrics:
+    enabled: false  # No metrics for dev
+
+# Ingress configuration - Simplified for dev
+ingress:
+  enabled: false  # Use port-forward for dev testing
+  
+# Monitoring configuration - Disabled for dev
+monitoring:
+  enabled: false
+  prometheus:
+    enabled: false
+  grafana:
+    enabled: false
+  alertmanager:
+    enabled: false
+
+# Security configuration - Relaxed for dev
+security:
+  networkPolicies:
+    enabled: false  # Simplified networking for dev
+  podSecurityPolicy:
+    enabled: false  # No strict security for dev
+  externalSecrets:
+    enabled: false  # Using local secrets for dev
+  # Pod security context - relaxed for development
+  podSecurityContext:
+    runAsNonRoot: false
+    runAsUser: 0
+    fsGroup: 0
+  # Container security context - relaxed for development  
+  containerSecurityContext:
+    runAsNonRoot: false
+    runAsUser: 0
+    allowPrivilegeEscalation: true
+    readOnlyRootFilesystem: false
+    privileged: true
+    capabilities:
+      add:
+      - SETUID
+      - SETGID
+      - NET_BIND_SERVICE

@@ -1,0 +1,40 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+metadata:
+  annotations:
+    description: Development environment configuration for e-commerce platform
+  name: e-commerce-development
+
+# Reference to base configuration
+resources:
+- ../../base
+
+# Note: Using base namespaces with -dev suffix via patches instead of global namespace transformation
+
+# Development labels
+  
+commonAnnotations:
+  cluster: local
+  environment: development
+
+# Development-specific patches
+
+# Development-specific secrets
+secretGenerator:
+- literals:
+  - DB_ROOT_PASSWORD=dev-root-password
+  - JWT_SECRET=dev-jwt-secret-key
+  - RABBITMQ_PASSWORD=dev-rabbitmq-password
+  name: dev-secrets
+
+# Development images (latest versions for testing)
+images:
+- name: redis
+  newTag: 7-alpine
+labels:
+- includeSelectors: true
+  pairs:
+    environment: development
+patches:
+- path: patches/namespace-dev.yaml

@@ -1,0 +1,395 @@
+# Network Policies for E-commerce Platform Security
+
+# Default deny-all policy for e-commerce namespace
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: deny-all-default
+  namespace: e-commerce
+spec:
+  podSelector: {}
+  policyTypes:
+  - Ingress
+  - Egress
+
+---
+# Allow DNS resolution for all pods
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-dns
+  namespace: e-commerce
+spec:
+  podSelector: {}
+  policyTypes:
+  - Egress
+  egress:
+  - to: []
+    ports:
+    - protocol: UDP
+      port: 53
+    - protocol: TCP
+      port: 53
+
+---
+# Allow ingress traffic to API Gateway from Traefik
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-api-gateway-ingress
+  namespace: e-commerce
+spec:
+  podSelector:
+    matchLabels:
+      app: api-gateway
+  policyTypes:
+  - Ingress
+  ingress:
+  # Allow traffic from Traefik
+  - from:
+    - namespaceSelector:
+        matchLabels:
+          name: traefik
+    ports:
+    - protocol: TCP
+      port: 8000
+  # Allow traffic from monitoring
+  - from:
+    - namespaceSelector:
+        matchLabels:
+          name: monitoring
+    ports:
+    - protocol: TCP
+      port: 9090
+
+---
+# Allow API Gateway to communicate with microservices
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-api-gateway-egress
+  namespace: e-commerce
+spec:
+  podSelector:
+    matchLabels:
+      app: api-gateway
+  policyTypes:
+  - Egress
+  egress:
+  # Allow communication with all microservices
+  - to:
+    - podSelector:
+        matchLabels:
+          component: microservice
+    ports:
+    - protocol: TCP
+      port: 8000
+  # Allow communication with RabbitMQ
+  - to:
+    - namespaceSelector:
+        matchLabels:
+          name: e-commerce-messaging
+      podSelector:
+        matchLabels:
+          app.kubernetes.io/name: rabbitmq-cluster
+    ports:
+    - protocol: TCP
+      port: 5672
+
+---
+# Allow microservices to communicate with databases
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-microservices-database
+  namespace: e-commerce
+spec:
+  podSelector:
+    matchLabels:
+      component: microservice
+  policyTypes:
+  - Egress
+  egress:
+  # Allow communication with MySQL
+  - to:
+    - podSelector:
+        matchLabels:
+          mysql.oracle.com/cluster: mysql-cluster
+    ports:
+    - protocol: TCP
+      port: 3306
+  # Allow communication with Redis
+  - to:
+    - podSelector:
+        matchLabels:
+          app: redis
+    ports:
+    - protocol: TCP
+      port: 6379
+
+---
+# Allow microservices to communicate with RabbitMQ
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-microservices-rabbitmq
+  namespace: e-commerce
+spec:
+  podSelector:
+    matchLabels:
+      component: microservice
+  policyTypes:
+  - Egress
+  egress:
+  - to:
+    - namespaceSelector:
+        matchLabels:
+          name: e-commerce-messaging
+      podSelector:
+        matchLabels:
+          app.kubernetes.io/name: rabbitmq-cluster
+    ports:
+    - protocol: TCP
+      port: 5672
+
+---
+# Allow monitoring to scrape metrics from all services
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-monitoring-scraping
+  namespace: e-commerce
+spec:
+  podSelector: {}
+  policyTypes:
+  - Ingress
+  ingress:
+  - from:
+    - namespaceSelector:
+        matchLabels:
+          name: monitoring
+    ports:
+    - protocol: TCP
+      port: 9090
+
+---
+# Allow inter-service communication for business logic
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-microservices-communication
+  namespace: e-commerce
+spec:
+  podSelector:
+    matchLabels:
+      component: microservice
+  policyTypes:
+  - Ingress
+  - Egress
+  ingress:
+  # Allow communication from API Gateway
+  - from:
+    - podSelector:
+        matchLabels:
+          app: api-gateway
+    ports:
+    - protocol: TCP
+      port: 8000
+  # Allow communication from other microservices (for direct calls if needed)
+  - from:
+    - podSelector:
+        matchLabels:
+          component: microservice
+    ports:
+    - protocol: TCP
+      port: 8000
+  egress:
+  # Allow communication with other microservices
+  - to:
+    - podSelector:
+        matchLabels:
+          component: microservice
+    ports:
+    - protocol: TCP
+      port: 8000
+
+---
+# RabbitMQ messaging namespace policies
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: deny-all-default
+  namespace: e-commerce-messaging
+spec:
+  podSelector: {}
+  policyTypes:
+  - Ingress
+  - Egress
+
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-dns
+  namespace: e-commerce-messaging
+spec:
+  podSelector: {}
+  policyTypes:
+  - Egress
+  egress:
+  - to: []
+    ports:
+    - protocol: UDP
+      port: 53
+
+---
+# Allow RabbitMQ cluster internal communication
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-rabbitmq-cluster
+  namespace: e-commerce-messaging
+spec:
+  podSelector:
+    matchLabels:
+      app.kubernetes.io/name: rabbitmq-cluster
+  policyTypes:
+  - Ingress
+  - Egress
+  ingress:
+  # Allow connections from e-commerce services
+  - from:
+    - namespaceSelector:
+        matchLabels:
+          name: e-commerce
+    ports:
+    - protocol: TCP
+      port: 5672
+  # Allow management UI access from monitoring
+  - from:
+    - namespaceSelector:
+        matchLabels:
+          name: monitoring
+    ports:
+    - protocol: TCP
+      port: 15672
+    - protocol: TCP
+      port: 15692
+  # Allow inter-cluster communication
+  - from:
+    - podSelector:
+        matchLabels:
+          app.kubernetes.io/name: rabbitmq-cluster
+    ports:
+    - protocol: TCP
+      port: 25672
+    - protocol: TCP
+      port: 4369
+  egress:
+  # Allow inter-cluster communication
+  - to:
+    - podSelector:
+        matchLabels:
+          app.kubernetes.io/name: rabbitmq-cluster
+    ports:
+    - protocol: TCP
+      port: 25672
+    - protocol: TCP
+      port: 4369
+
+---
+# Monitoring namespace policies
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: deny-all-default
+  namespace: monitoring
+spec:
+  podSelector: {}
+  policyTypes:
+  - Ingress
+  - Egress
+
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-dns
+  namespace: monitoring
+spec:
+  podSelector: {}
+  policyTypes:
+  - Egress
+  egress:
+  - to: []
+    ports:
+    - protocol: UDP
+      port: 53
+
+---
+# Allow Prometheus to scrape metrics from all namespaces
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-prometheus-scraping
+  namespace: monitoring
+spec:
+  podSelector:
+    matchLabels:
+      app.kubernetes.io/name: prometheus
+  policyTypes:
+  - Egress
+  egress:
+  # Allow scraping from all namespaces
+  - to: []
+    ports:
+    - protocol: TCP
+      port: 9090
+    - protocol: TCP
+      port: 8080
+    - protocol: TCP
+      port: 15692
+
+---
+# Allow Grafana access to Prometheus
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-grafana-prometheus
+  namespace: monitoring
+spec:
+  podSelector:
+    matchLabels:
+      app.kubernetes.io/name: grafana
+  policyTypes:
+  - Egress
+  egress:
+  - to:
+    - podSelector:
+        matchLabels:
+          app.kubernetes.io/name: prometheus
+    ports:
+    - protocol: TCP
+      port: 9090
+
+---
+# Allow external access to Grafana
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-grafana-ingress
+  namespace: monitoring
+spec:
+  podSelector:
+    matchLabels:
+      app.kubernetes.io/name: grafana
+  policyTypes:
+  - Ingress
+  ingress:
+  - from:
+    - namespaceSelector:
+        matchLabels:
+          name: traefik
+    ports:
+    - protocol: TCP
+      port: 3000

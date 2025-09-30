@@ -13,13 +13,16 @@ RUN apt-get update && apt-get install -y \
     && rm -rf /var/lib/apt/lists/*
 
 # Install PHP extensions
-RUN docker-php-ext-install pdo_mysql mbstring exif pcntl bcmath gd
+RUN docker-php-ext-install pdo_mysql mbstring exif pcntl bcmath gd sockets
 
-# Install sockets extension
-RUN docker-php-ext-install sockets
+# Install Redis extension
+RUN pecl install redis && docker-php-ext-enable redis 
 
 # Get latest Composer
 COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
+
+# Allow Composer to run as superuser
+ENV COMPOSER_ALLOW_SUPERUSER=1
 
 # Add user for Laravel application 
 RUN useradd -ms /bin/bash -u 1000 api-gateway

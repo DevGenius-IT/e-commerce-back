@@ -1,0 +1,99 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: global-config
+  namespace: e-commerce
+  labels:
+    app: global-config
+    component: configuration
+data:
+  # Application Configuration
+  APP_ENV: "production"
+  APP_DEBUG: "false"
+  LOG_CHANNEL: "stdout"
+  LOG_LEVEL: "info"
+  
+  # Timezone
+  APP_TIMEZONE: "UTC"
+  
+  # RabbitMQ Configuration
+  RABBITMQ_HOST: "rabbitmq.e-commerce-messaging.svc.cluster.local"
+  RABBITMQ_PORT: "5672"
+  RABBITMQ_VHOST: "/"
+  RABBITMQ_EXCHANGE: "microservices_exchange"
+  
+  # Database Configuration
+  DB_CONNECTION: "mysql"
+  DB_PORT: "3306"
+  
+  # Cache Configuration
+  CACHE_DRIVER: "redis"
+  REDIS_HOST: "redis.e-commerce.svc.cluster.local"
+  REDIS_PORT: "6379"
+  
+  # Session Configuration
+  SESSION_DRIVER: "redis"
+  SESSION_LIFETIME: "120"
+  
+  # Queue Configuration
+  QUEUE_CONNECTION: "rabbitmq"
+  
+  # JWT Configuration
+  JWT_TTL: "60"
+  JWT_REFRESH_TTL: "20160"
+  
+  # API Configuration
+  API_VERSION: "v1"
+  API_RATE_LIMIT: "100"
+  
+  # Monitoring
+  PROMETHEUS_ENABLED: "true"
+  METRICS_PORT: "9090"
+  HEALTH_CHECK_PATH: "/health"
+  READY_CHECK_PATH: "/ready"
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: nginx-config
+  namespace: e-commerce
+  labels:
+    app: nginx-config
+    component: gateway
+data:
+  nginx.conf: |
+    upstream api_gateway {
+        server api-gateway.e-commerce.svc.cluster.local:8000;
+    }
+    
+    server {
+        listen 80;
+        server_name _;
+        
+        # Health check
+        location /health {
+            access_log off;
+            return 200 "healthy\n";
+            add_header Content-Type text/plain;
+        }
+        
+        # API routes
+        location /api/ {
+            proxy_pass http://api_gateway/v1/;
+            proxy_set_header Host $host;
+            proxy_set_header X-Real-IP $remote_addr;
+            proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+            proxy_set_header X-Forwarded-Proto $scheme;
+            
+            # Timeout settings
+            proxy_connect_timeout 30s;
+            proxy_send_timeout 30s;
+            proxy_read_timeout 30s;
+        }
+        
+        # Default response
+        location / {
+            return 404 "API not found\n";
+            add_header Content-Type text/plain;
+        }
+    }

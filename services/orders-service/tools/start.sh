@@ -2,7 +2,7 @@
 set -e  # Exit on error
 
 # Wait for the database to be ready
-until nc -z -v -w30 baskets-db 3306
+until nc -z -v -w30 orders-service-mysql.e-commerce.svc.cluster.local 3306
 do
   echo "Waiting for database connection..."
   sleep 5
@@ -12,5 +12,8 @@ if [ ! -d "vendor" ]; then
   composer install --no-interaction --no-plugins --no-scripts
 fi
 
+# Run Laravel migrations
+php artisan migrate --force
+
 # Start application
-php artisan serve --host=0.0.0.0 --port=8005
+php artisan serve --host=0.0.0.0 --port=8000

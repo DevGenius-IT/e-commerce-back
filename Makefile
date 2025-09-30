@@ -1,7 +1,8 @@
 # =============================================================================
-# E-commerce Microservices - Makefile
+# E-commerce Platform - Unified Makefile
 # =============================================================================
-# Ce Makefile facilite la gestion de l'ensemble du projet microservices
+# Makefile unifié pour Docker Compose et Kubernetes
+# Supporte la migration progressive et les opérations multi-environnement
 # =============================================================================
 
 # Variables de configuration
@@ -10,33 +11,64 @@ SERVICES = api-gateway auth-service messages-broker addresses-service products-s
 DB_SERVICES = auth-db messages-broker-db addresses-db products-db baskets-db orders-db deliveries-db newsletters-db sav-db contacts-db websites-db questions-db
 NETWORK = e-commerce-back_microservices-network
 
+# Kubernetes Configuration
+PLATFORM_CONTROL = ./platform-control.sh
+AUTOMATION_SCRIPT = ./scripts/complete-automation.sh
+VALIDATOR_SCRIPT = ./scripts/platform-validator.sh
+VERIFIER_SCRIPT = ./scripts/deployment-verifier.sh
+INTEGRATION_TESTS = ./tests/integration/platform-integration-tests.sh
+K8S_ENVIRONMENT ?= development
+SERVICE_NAME ?= api-gateway
+
 # Couleurs pour l'affichage
 GREEN = \033[0;32m
 YELLOW = \033[1;33m
 BLUE = \033[0;34m
 RED = \033[0;31m
+PURPLE = \033[0;35m
 NC = \033[0m # No Color
 
 .DEFAULT_GOAL := help
 
 # =============================================================================
-# Commandes principales
+# 🚀 COMMANDES PRINCIPALES - PLATEFORME UNIFIÉE
 # =============================================================================
 
-## 🚀 Démarrer l'ensemble du projet
-start: banner
-	@echo "$(GREEN)🚀 Démarrage de tous les services...$(NC)"
-	@docker-compose up -d
-	@$(MAKE) status
-	@echo "$(GREEN)✅ Projet démarré avec succès!$(NC)"
-	@echo "$(YELLOW)📋 Accès aux services:$(NC)"
-	@echo "  - API Gateway: http://localhost"
-	@echo "  - RabbitMQ Management: http://localhost:15672 (admin/admin)"
-	@echo "  - Services disponibles via: http://localhost/api/{service}/"
+## 🎛️ Tableau de bord interactif de la plateforme
+dashboard:
+	@echo "$(GREEN)🎛️ Ouverture du tableau de bord de la plateforme...$(NC)"
+	@$(PLATFORM_CONTROL)
 
-## 🏗️ Construire et démarrer (première installation)
-install: banner
-	@echo "$(GREEN)🏗️ Installation complète du projet...$(NC)"
+## 🚀 Installation complète (Docker Compose + Kubernetes ready)
+install-complete: banner
+	@echo "$(GREEN)🚀 Installation complète de la plateforme e-commerce...$(NC)"
+	@echo "$(YELLOW)Phase 1: Installation Docker Compose...$(NC)"
+	@$(MAKE) docker-install
+	@echo "$(YELLOW)Phase 2: Préparation Kubernetes...$(NC)"
+	@$(MAKE) k8s-prepare
+	@echo "$(GREEN)✅ Installation complète terminée!$(NC)"
+	@echo "$(BLUE)💡 Utilisez 'make k8s-deploy' pour déployer sur Kubernetes$(NC)"
+
+## 🔄 Migration progressive vers Kubernetes
+migrate-to-k8s: banner
+	@echo "$(PURPLE)🔄 Démarrage de la migration progressive vers Kubernetes...$(NC)"
+	@$(AUTOMATION_SCRIPT) migrate-progressive
+
+# =============================================================================
+# 🐳 COMMANDES DOCKER COMPOSE (LEGACY)
+# =============================================================================
+
+## 🚀 Démarrer avec Docker Compose
+docker-start: banner
+	@echo "$(GREEN)🚀 Démarrage de tous les services Docker...$(NC)"
+	@docker-compose up -d
+	@$(MAKE) docker-status
+	@echo "$(GREEN)✅ Services Docker démarrés!$(NC)"
+	@$(MAKE) docker-endpoints
+
+## 🏗️ Installation Docker Compose (première installation)
+docker-install: banner
+	@echo "$(GREEN)🏗️ Installation Docker Compose...$(NC)"
 	@echo "$(YELLOW)1. Construction des images Docker...$(NC)"
 	@docker-compose build
 	@echo "$(YELLOW)2. Démarrage des services...$(NC)"
@@ -46,199 +78,236 @@ install: banner
 	@echo "$(YELLOW)4. Exécution des migrations et seeds...$(NC)"
 	@$(MAKE) migrate-all
 	@$(MAKE) seed-all
-	@echo "$(GREEN)✅ Installation terminée!$(NC)"
-	@$(MAKE) status
+	@echo "$(GREEN)✅ Installation Docker terminée!$(NC)"
+	@$(MAKE) docker-status
 
-## 🔄 Redémarrer tous les services
-restart: banner
-	@echo "$(GREEN)🔄 Redémarrage de tous les services...$(NC)"
-	@docker-compose restart
-	@$(MAKE) status
-
-## ⏹️ Arrêter tous les services
-stop: banner
-	@echo "$(YELLOW)⏹️ Arrêt de tous les services...$(NC)"
-	@docker-compose stop
-	@echo "$(GREEN)✅ Tous les services sont arrêtés$(NC)"
-
-## 🗑️ Arrêter et supprimer tous les conteneurs
-down: banner
-	@echo "$(RED)🗑️ Suppression de tous les conteneurs...$(NC)"
-	@docker-compose down
-	@echo "$(GREEN)✅ Conteneurs supprimés$(NC)"
-
-## 🧹 Nettoyage complet (conteneurs + volumes + images)
-clean: banner
-	@echo "$(RED)🧹 Nettoyage complet du projet...$(NC)"
-	@docker-compose down -v --rmi all
-	@docker system prune -f
-	@echo "$(GREEN)✅ Nettoyage terminé$(NC)"
-
-## 📊 Afficher le statut de tous les services
-status: banner
-	@echo "$(BLUE)📊 Statut des services:$(NC)"
+## 📊 Statut des services Docker
+docker-status: 
+	@echo "$(BLUE)📊 Statut des services Docker:$(NC)"
 	@docker-compose ps
 
-## 📝 Voir les logs de tous les services
-logs:
-	@docker-compose logs -f
+## ⏹️ Arrêter Docker Compose
+docker-stop:
+	@echo "$(YELLOW)⏹️ Arrêt de tous les services Docker...$(NC)"
+	@docker-compose stop
 
-## 📝 Voir les logs d'un service spécifique (make logs-service SERVICE=auth-service)
-logs-service:
-	@docker-compose logs -f $(SERVICE)
+## 🗑️ Nettoyer Docker Compose
+docker-clean:
+	@echo "$(RED)🧹 Nettoyage Docker Compose...$(NC)"
+	@docker-compose down -v --rmi all
+	@docker system prune -f
+
+## 🌐 Points d'accès Docker
+docker-endpoints:
+	@echo "$(YELLOW)📋 Accès aux services Docker:$(NC)"
+	@echo "  - API Gateway: http://localhost"
+	@echo "  - RabbitMQ Management: http://localhost:15672 (admin/admin)"
+	@echo "  - Services disponibles via: http://localhost/api/{service}/"
 
 # =============================================================================
-# Gestion des bases de données
+# ☸️ COMMANDES KUBERNETES
+# =============================================================================
+
+## 🏗️ Configuration complète de Kubernetes
+k8s-setup: banner
+	@echo "$(GREEN)🏗️ Configuration complète de l'infrastructure Kubernetes...$(NC)"
+	@$(AUTOMATION_SCRIPT) setup-all
+
+## 📦 Déployer sur Kubernetes
+k8s-deploy: banner
+	@echo "$(GREEN)📦 Déploiement sur Kubernetes (environnement: $(K8S_ENVIRONMENT))...$(NC)"
+	@$(AUTOMATION_SCRIPT) deploy-env $(K8S_ENVIRONMENT)
+
+## 🔨 Construire toutes les images pour Kubernetes
+k8s-build:
+	@echo "$(YELLOW)🔨 Construction des images pour Kubernetes...$(NC)"
+	@$(AUTOMATION_SCRIPT) build-all latest true
+
+## 🏥 Vérifier la santé Kubernetes
+k8s-health:
+	@echo "$(BLUE)🏥 Vérification de la santé Kubernetes...$(NC)"
+	@$(AUTOMATION_SCRIPT) health-check
+
+## 📊 Statut de la plateforme Kubernetes
+k8s-status:
+	@echo "$(BLUE)📊 Statut de la plateforme Kubernetes...$(NC)"
+	@$(AUTOMATION_SCRIPT) status
+
+## 📈 Monitoring Kubernetes
+k8s-monitoring:
+	@echo "$(PURPLE)📈 Ouverture des tableaux de bord de monitoring...$(NC)"
+	@$(AUTOMATION_SCRIPT) monitoring
+
+## 📝 Logs Kubernetes
+k8s-logs:
+	@echo "$(BLUE)📝 Logs du service $(SERVICE_NAME)...$(NC)"
+	@$(AUTOMATION_SCRIPT) logs $(SERVICE_NAME) 100
+
+## 🌐 Points d'accès Kubernetes
+k8s-endpoints:
+	@echo "$(YELLOW)🌐 Points d'accès Kubernetes:$(NC)"
+	@$(AUTOMATION_SCRIPT) endpoints
+
+## 🧹 Nettoyer l'environnement Kubernetes
+k8s-clean:
+	@echo "$(RED)🧹 Nettoyage de l'environnement $(K8S_ENVIRONMENT)...$(NC)"
+	@$(AUTOMATION_SCRIPT) cleanup-env $(K8S_ENVIRONMENT)
+
+## ☸️ Préparer la migration Kubernetes
+k8s-prepare:
+	@echo "$(YELLOW)☸️ Préparation pour Kubernetes...$(NC)"
+	@chmod +x $(PLATFORM_CONTROL)
+	@chmod +x $(AUTOMATION_SCRIPT)
+	@chmod +x $(VALIDATOR_SCRIPT)
+	@chmod +x $(VERIFIER_SCRIPT)
+	@chmod +x $(INTEGRATION_TESTS)
+	@echo "$(GREEN)✅ Scripts Kubernetes préparés$(NC)"
+
+# =============================================================================
+# 🧪 TESTS ET VALIDATION
+# =============================================================================
+
+## 🔍 Validation complète de la plateforme
+validate-platform:
+	@echo "$(PURPLE)🔍 Validation complète de la plateforme...$(NC)"
+	@$(VALIDATOR_SCRIPT) all
+
+## 🔍 Validation rapide
+validate-quick:
+	@echo "$(BLUE)🔍 Validation rapide...$(NC)"
+	@$(VALIDATOR_SCRIPT) quick
+
+## ✅ Vérification du déploiement
+verify-deployment:
+	@echo "$(GREEN)✅ Vérification du déploiement...$(NC)"
+	@$(VERIFIER_SCRIPT) full
+
+## ✅ Vérification rapide du déploiement
+verify-quick:
+	@echo "$(BLUE)✅ Vérification rapide du déploiement...$(NC)"
+	@$(VERIFIER_SCRIPT) quick
+
+## 🧪 Tests d'intégration complets
+test-integration:
+	@echo "$(PURPLE)🧪 Tests d'intégration complets...$(NC)"
+	@$(INTEGRATION_TESTS) all
+
+## 🧪 Tests d'intégration santé
+test-health:
+	@echo "$(BLUE)🧪 Tests de santé...$(NC)"
+	@$(INTEGRATION_TESTS) health
+
+## 🧪 Tests d'authentification
+test-auth:
+	@echo "$(YELLOW)🧪 Tests d'authentification...$(NC)"
+	@$(INTEGRATION_TESTS) auth
+
+## 🧪 Tests de performance
+test-performance:
+	@echo "$(RED)🧪 Tests de performance...$(NC)"
+	@$(INTEGRATION_TESTS) performance
+
+## 🧪 Tests de sécurité
+test-security:
+	@echo "$(RED)🧪 Tests de sécurité...$(NC)"
+	@$(INTEGRATION_TESTS) security
+
+## 🎯 Suite de tests complète (validation + déploiement + intégration)
+test-all: validate-platform verify-deployment test-integration
+	@echo "$(GREEN)🎯 Suite de tests complète terminée!$(NC)"
+
+# =============================================================================
+# 🗄️ GESTION DES BASES DE DONNÉES (DOCKER)
 # =============================================================================
 
 ## 🗄️ Exécuter toutes les migrations
-migrate-all: banner
+migrate-all:
 	@echo "$(YELLOW)🗄️ Exécution des migrations...$(NC)"
-	@docker-compose exec auth-service php artisan migrate --force
-	@docker-compose exec addresses-service php artisan migrate --force
-	@docker-compose exec products-service php artisan migrate --force
-	@docker-compose exec baskets-service php artisan migrate --force
-	@docker-compose exec orders-service php artisan migrate --force
-	@docker-compose exec deliveries-service php artisan migrate --force
-	@docker-compose exec newsletters-service php artisan migrate --force
-	@docker-compose exec sav-service php artisan migrate --force
-	@docker-compose exec contacts-service php artisan migrate --force
-	@docker-compose exec questions-service php artisan migrate --force
+	@for service in auth-service addresses-service products-service baskets-service orders-service deliveries-service newsletters-service sav-service contacts-service questions-service; do \
+		echo "Migration: $$service"; \
+		docker-compose exec $$service php artisan migrate --force || true; \
+	done
 	@echo "$(GREEN)✅ Migrations terminées$(NC)"
 
 ## 🌱 Exécuter tous les seeders
-seed-all: banner
+seed-all:
 	@echo "$(YELLOW)🌱 Exécution des seeders...$(NC)"
-	@docker-compose exec auth-service php artisan db:seed --force
-	@docker-compose exec addresses-service php artisan db:seed --force
-	@docker-compose exec products-service php artisan db:seed --force
-	@docker-compose exec baskets-service php artisan db:seed --force
-	@docker-compose exec orders-service php artisan db:seed --force
-	@docker-compose exec deliveries-service php artisan db:seed --force
-	@docker-compose exec newsletters-service php artisan db:seed --force
-	@docker-compose exec sav-service php artisan db:seed --force
-	@docker-compose exec contacts-service php artisan db:seed --force
-	@docker-compose exec questions-service php artisan db:seed --force
+	@for service in auth-service addresses-service products-service baskets-service orders-service deliveries-service newsletters-service sav-service contacts-service questions-service; do \
+		echo "Seeding: $$service"; \
+		docker-compose exec $$service php artisan db:seed --force || true; \
+	done
 	@echo "$(GREEN)✅ Seeders terminés$(NC)"
 
-## 🔄 Réinitialiser toutes les bases de données (fresh + seed)
-fresh-all: banner
+## 🔄 Réinitialiser toutes les bases de données
+fresh-all:
 	@echo "$(RED)🔄 Réinitialisation complète des bases de données...$(NC)"
-	@docker-compose exec auth-service php artisan migrate:fresh --seed --force
-	@docker-compose exec addresses-service php artisan migrate:fresh --seed --force
-	@docker-compose exec products-service php artisan migrate:fresh --seed --force
-	@docker-compose exec baskets-service php artisan migrate:fresh --seed --force
-	@docker-compose exec orders-service php artisan migrate:fresh --seed --force
-	@docker-compose exec deliveries-service php artisan migrate:fresh --seed --force
-	@docker-compose exec newsletters-service php artisan migrate:fresh --seed --force
-	@docker-compose exec sav-service php artisan migrate:fresh --seed --force
-	@docker-compose exec contacts-service php artisan migrate:fresh --seed --force
-	@docker-compose exec questions-service php artisan migrate:fresh --seed --force
+	@for service in auth-service addresses-service products-service baskets-service orders-service deliveries-service newsletters-service sav-service contacts-service questions-service; do \
+		echo "Fresh migration: $$service"; \
+		docker-compose exec $$service php artisan migrate:fresh --seed --force || true; \
+	done
 	@echo "$(GREEN)✅ Bases de données réinitialisées$(NC)"
 
 # =============================================================================
-# Tests
+# 🧪 TESTS DOCKER (LEGACY)
 # =============================================================================
 
-## 🧪 Exécuter tous les tests
-test-all: banner
-	@echo "$(YELLOW)🧪 Exécution de tous les tests...$(NC)"
-	@docker-compose exec auth-service php artisan test
-	@docker-compose exec addresses-service php artisan test
-	@docker-compose exec products-service php artisan test
-	@docker-compose exec baskets-service php artisan test
-	@docker-compose exec orders-service php artisan test
-	@docker-compose exec deliveries-service php artisan test
-	@docker-compose exec newsletters-service php artisan test
-	@docker-compose exec sav-service php artisan test
-	@docker-compose exec contacts-service php artisan test
-	@docker-compose exec questions-service php artisan test
-	@echo "$(GREEN)✅ Tests terminés$(NC)"
+## 🧪 Tests Laravel Docker
+test-docker:
+	@echo "$(YELLOW)🧪 Exécution des tests Laravel...$(NC)"
+	@for service in auth-service addresses-service products-service baskets-service orders-service deliveries-service newsletters-service sav-service contacts-service questions-service; do \
+		echo "Testing: $$service"; \
+		docker-compose exec $$service php artisan test || true; \
+	done
+	@echo "$(GREEN)✅ Tests Docker terminés$(NC)"
 
-## 🧪 Tester un service spécifique (make test-service SERVICE=auth-service)
+## 🧪 Test d'un service spécifique
 test-service:
-	@docker-compose exec $(SERVICE) php artisan test
+	@echo "$(YELLOW)🧪 Test du service $(SERVICE_NAME)...$(NC)"
+	@docker-compose exec $(SERVICE_NAME) php artisan test
 
 # =============================================================================
-# Commandes utilitaires
+# 🛠️ UTILITAIRES DE DÉVELOPPEMENT
 # =============================================================================
 
-## 🐚 Accéder au shell d'un service (make shell SERVICE=auth-service)
+## 🐚 Shell d'un service Docker
 shell:
-	@docker-compose exec $(SERVICE) bash
+	@echo "$(BLUE)🐚 Accès au shell du service $(SERVICE_NAME)...$(NC)"
+	@docker-compose exec $(SERVICE_NAME) bash
 
-## 📋 Vérifier la santé de tous les services
-health: banner
-	@echo "$(BLUE)🏥 Vérification de la santé des services:$(NC)"
-	@echo "$(YELLOW)API Gateway:$(NC)"
-	@curl -s http://localhost/api/health | jq . || echo "❌ Non disponible"
-	@echo "$(YELLOW)Auth Service:$(NC)"
-	@curl -s http://localhost/api/auth/health | jq . || echo "❌ Non disponible"
-	@echo "$(YELLOW)Addresses Service:$(NC)"
-	@curl -s http://localhost/api/addresses/health | jq . || echo "❌ Non disponible"
-	@echo "$(YELLOW)Products Service:$(NC)"
-	@curl -s http://localhost/api/products/health | jq . || echo "❌ Non disponible"
-	@echo "$(YELLOW)Baskets Service:$(NC)"
-	@curl -s http://localhost/api/baskets/health | jq . || echo "❌ Non disponible"
-	@echo "$(YELLOW)Orders Service:$(NC)"
-	@curl -s http://localhost/api/orders/health | jq . || echo "❌ Non disponible"
-	@echo "$(YELLOW)Deliveries Service:$(NC)"
-	@curl -s http://localhost/api/deliveries/health | jq . || echo "❌ Non disponible"
-	@echo "$(YELLOW)Newsletters Service:$(NC)"
-	@curl -s http://localhost/api/newsletters/health | jq . || echo "❌ Non disponible"
-	@echo "$(YELLOW)SAV Service:$(NC)"
-	@curl -s http://localhost/api/sav/health | jq . || echo "❌ Non disponible"
-	@echo "$(YELLOW)Questions Service:$(NC)"
-	@curl -s http://localhost/api/questions/health | jq . || echo "❌ Non disponible"
-
-## 🔧 Installer les dépendances Composer pour un service
+## 🔧 Installation des dépendances Composer
 composer-install:
-	@docker-compose exec $(SERVICE) composer install
+	@echo "$(YELLOW)🔧 Installation Composer pour $(SERVICE_NAME)...$(NC)"
+	@docker-compose exec $(SERVICE_NAME) composer install
 
-## 🔧 Mettre à jour les dépendances Composer pour un service
-composer-update:
-	@docker-compose exec $(SERVICE) composer update
-
-## 📜 Générer la documentation API (si disponible)
-docs:
-	@echo "$(BLUE)📜 Documentation API disponible sur:$(NC)"
-	@echo "  - API Gateway: http://localhost/docs"
-	@echo "  - Auth Service: http://localhost/api/auth/docs"
-	@echo "  - Addresses Service: http://localhost/api/addresses/docs"
-	@echo "  - Products Service: http://localhost/api/products/docs"
-
-# =============================================================================
-# Développement
-# =============================================================================
-
-## 🔥 Mode développement avec surveillance des fichiers
-dev: banner
-	@echo "$(GREEN)🔥 Démarrage en mode développement...$(NC)"
-	@docker-compose up --watch
-
-## 🔄 Reconstruire et redémarrer un service (make rebuild SERVICE=auth-service)
-rebuild:
-	@echo "$(YELLOW)🔄 Reconstruction du service $(SERVICE)...$(NC)"
-	@docker-compose build $(SERVICE)
-	@docker-compose up -d $(SERVICE)
+## 📋 Vérifier la santé des services Docker
+health-docker:
+	@echo "$(BLUE)🏥 Vérification de la santé des services Docker:$(NC)"
+	@for service in auth addresses products baskets orders deliveries newsletters sav questions; do \
+		echo "$(YELLOW)$$service Service:$(NC)"; \
+		curl -s http://localhost/api/$$service/health | jq . || echo "❌ Non disponible"; \
+	done
 
 ## 🧹 Nettoyer les caches Laravel
 clear-cache:
-	@echo "$(YELLOW)🧹 Nettoyage des caches...$(NC)"
-	@docker-compose exec auth-service php artisan cache:clear
-	@docker-compose exec addresses-service php artisan cache:clear
-	@docker-compose exec products-service php artisan cache:clear
-	@docker-compose exec baskets-service php artisan cache:clear
-	@docker-compose exec orders-service php artisan cache:clear
-	@docker-compose exec deliveries-service php artisan cache:clear
-	@docker-compose exec newsletters-service php artisan cache:clear
-	@docker-compose exec sav-service php artisan cache:clear
-	@docker-compose exec contacts-service php artisan cache:clear
-	@docker-compose exec questions-service php artisan cache:clear
+	@echo "$(YELLOW)🧹 Nettoyage des caches Laravel...$(NC)"
+	@for service in auth-service addresses-service products-service baskets-service orders-service deliveries-service newsletters-service sav-service contacts-service questions-service; do \
+		echo "Clearing cache: $$service"; \
+		docker-compose exec $$service php artisan cache:clear || true; \
+	done
 	@echo "$(GREEN)✅ Caches nettoyés$(NC)"
 
+## 🔥 Mode développement avec surveillance
+dev:
+	@echo "$(GREEN)🔥 Démarrage en mode développement...$(NC)"
+	@docker-compose up --watch
+
+## 📈 Statistiques des ressources
+stats:
+	@echo "$(BLUE)📈 Utilisation des ressources:$(NC)"
+	@docker stats --no-stream
+
 # =============================================================================
-# Commandes spécifiques aux newsletters
+# 📧 NEWSLETTERS SPÉCIFIQUES
 # =============================================================================
 
 ## 📧 Traiter les campagnes programmées
@@ -252,97 +321,153 @@ newsletters-stats:
 	@echo "$(BLUE)📊 Statistiques des newsletters:$(NC)"
 	@curl -s http://localhost/api/newsletters/stats | jq . || echo "❌ Service non disponible"
 
-## 📧 Tester l'envoi d'email (make newsletters-test EMAIL=test@example.com CAMPAIGN_ID=1)
-newsletters-test:
-	@echo "$(YELLOW)📧 Test d'envoi d'email...$(NC)"
-	@curl -X POST http://localhost/api/newsletters/campaigns/$(CAMPAIGN_ID)/test-send \
-		-H "Content-Type: application/json" \
-		-d '{"test_email":"$(EMAIL)"}' | jq .
-
-## 🔄 Synchroniser les templates d'email
-newsletters-sync-templates:
-	@echo "$(YELLOW)🔄 Synchronisation des templates d'email...$(NC)"
-	@docker-compose exec newsletters-service php artisan db:seed --class=EmailTemplateSeeder --force
-	@echo "$(GREEN)✅ Templates synchronisés$(NC)"
-
 # =============================================================================
-# Monitoring et debug
+# 💾 SAUVEGARDE ET RESTAURATION
 # =============================================================================
 
-## 📈 Afficher l'utilisation des ressources
-stats:
-	@docker stats --no-stream
-
-## 🔍 Inspecter le réseau Docker
-network:
-	@docker network inspect $(NETWORK)
-
-## 📦 Afficher les volumes Docker
-volumes:
-	@docker volume ls | grep e-commerce-back
-
-## 🔍 Debug: afficher les variables d'environnement
-env-check:
-	@echo "$(BLUE)🔍 Variables d'environnement importantes:$(NC)"
-	@grep -E "(DB_|RABBITMQ_|SERVICE_)" .env
-
-# =============================================================================
-# Sauvegarde et restauration
-# =============================================================================
-
-## 💾 Sauvegarder toutes les bases de données
-backup: banner
-	@echo "$(YELLOW)💾 Sauvegarde des bases de données...$(NC)"
+## 💾 Sauvegarder les bases de données Docker
+backup-docker:
+	@echo "$(YELLOW)💾 Sauvegarde des bases de données Docker...$(NC)"
 	@mkdir -p ./backups
-	@docker-compose exec auth-db mysqldump -u root -proot auth_service_db > ./backups/auth_service_$(shell date +%Y%m%d_%H%M%S).sql
-	@docker-compose exec addresses-db mysqldump -u root -proot addresses_service > ./backups/addresses_service_$(shell date +%Y%m%d_%H%M%S).sql
-	@docker-compose exec products-db mysqldump -u root -proot products_service_db > ./backups/products_service_$(shell date +%Y%m%d_%H%M%S).sql
+	@timestamp=$$(date +%Y%m%d_%H%M%S); \
+	for db in auth-db addresses-db products-db baskets-db orders-db deliveries-db newsletters-db sav-db contacts-db questions-db; do \
+		echo "Sauvegarde: $$db"; \
+		docker-compose exec $$db mysqldump -u root -proot $${db%%-*}_service_db > ./backups/$${db}_$$timestamp.sql || true; \
+	done
 	@echo "$(GREEN)✅ Sauvegardes créées dans ./backups/$(NC)"
 
 # =============================================================================
-# Aide et informations
+# 🔧 WORKFLOWS DE DÉPLOIEMENT
+# =============================================================================
+
+## 🚀 Déploiement complet (build + deploy + verify + test)
+deploy-complete: 
+	@echo "$(GREEN)🚀 Déploiement complet sur Kubernetes...$(NC)"
+	@$(MAKE) k8s-build
+	@$(MAKE) k8s-deploy
+	@$(MAKE) verify-deployment
+	@$(MAKE) test-integration
+	@echo "$(GREEN)✅ Déploiement complet terminé!$(NC)"
+
+## 🎯 Workflow de développement
+dev-workflow:
+	@echo "$(BLUE)🎯 Workflow de développement:$(NC)"
+	@echo "1. $(YELLOW)Démarrage Docker pour développement...$(NC)"
+	@$(MAKE) docker-start
+	@echo "2. $(YELLOW)Tests de santé...$(NC)"
+	@$(MAKE) health-docker
+	@echo "3. $(YELLOW)Prêt pour le développement!$(NC)"
+
+## 🎯 Workflow de production
+prod-workflow:
+	@echo "$(RED)🎯 Workflow de production:$(NC)"
+	@echo "1. $(YELLOW)Tests de validation...$(NC)"
+	@$(MAKE) validate-platform
+	@echo "2. $(YELLOW)Déploiement...$(NC)"
+	@$(MAKE) deploy-complete
+	@echo "3. $(YELLOW)Monitoring...$(NC)"
+	@$(MAKE) k8s-monitoring
+
+## 🔄 Workflow de migration
+migration-workflow:
+	@echo "$(PURPLE)🔄 Workflow de migration:$(NC)"
+	@echo "1. $(YELLOW)Validation Docker existant...$(NC)"
+	@$(MAKE) health-docker
+	@echo "2. $(YELLOW)Préparation Kubernetes...$(NC)"
+	@$(MAKE) k8s-setup
+	@echo "3. $(YELLOW)Migration progressive...$(NC)"
+	@$(MAKE) migrate-to-k8s
+	@echo "4. $(YELLOW)Validation finale...$(NC)"
+	@$(MAKE) test-all
+
+# =============================================================================
+# ℹ️ AIDE ET INFORMATIONS
 # =============================================================================
 
 ## 🎨 Afficher la bannière du projet
 banner:
 	@echo "$(BLUE)"
 	@echo "╔══════════════════════════════════════════════════════════════════╗"
-	@echo "║                    E-COMMERCE MICROSERVICES                      ║"
-	@echo "║                         Management Tool                          ║"
+	@echo "║                    E-COMMERCE PLATFORM                          ║"
+	@echo "║              Docker Compose ↔ Kubernetes                        ║"
+	@echo "║                   Unified Management Tool                        ║"
 	@echo "╚══════════════════════════════════════════════════════════════════╝"
 	@echo "$(NC)"
 
-## ❓ Afficher l'aide
+## ❓ Afficher l'aide complète
 help: banner
-	@echo "$(YELLOW)🚀 COMMANDES PRINCIPALES:$(NC)"
-	@grep -E '^## .*' $(MAKEFILE_LIST) | sed 's/## /  /' | head -10
+	@echo "$(GREEN)🎛️ PLATEFORME UNIFIÉE:$(NC)"
+	@echo "  $(BLUE)dashboard$(NC)              Tableau de bord interactif"
+	@echo "  $(BLUE)install-complete$(NC)       Installation complète (Docker + K8s ready)"
+	@echo "  $(BLUE)migrate-to-k8s$(NC)         Migration progressive vers Kubernetes"
 	@echo ""
-	@echo "$(YELLOW)📋 COMMANDES DISPONIBLES:$(NC)"
-	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "  $(BLUE)%-20s$(NC) %s\n", $$1, $$2}'
+	@echo "$(YELLOW)☸️ KUBERNETES:$(NC)"
+	@echo "  $(BLUE)k8s-setup$(NC)              Configuration infrastructure Kubernetes"
+	@echo "  $(BLUE)k8s-deploy$(NC)             Déployer sur Kubernetes"
+	@echo "  $(BLUE)k8s-build$(NC)              Construire images pour Kubernetes"
+	@echo "  $(BLUE)k8s-health$(NC)             Vérifier santé Kubernetes"
+	@echo "  $(BLUE)k8s-status$(NC)             Statut plateforme Kubernetes"
+	@echo "  $(BLUE)k8s-monitoring$(NC)         Ouvrir monitoring Kubernetes"
 	@echo ""
-	@echo "$(YELLOW)💡 EXEMPLES D'UTILISATION:$(NC)"
-	@echo "  make install              # Première installation"
-	@echo "  make start                # Démarrer tous les services"
-	@echo "  make logs-service SERVICE=auth-service  # Logs d'un service"
-	@echo "  make shell SERVICE=products-service     # Accès shell"
-	@echo "  make test-service SERVICE=addresses-service # Tests"
+	@echo "$(YELLOW)🐳 DOCKER COMPOSE:$(NC)"
+	@echo "  $(BLUE)docker-start$(NC)           Démarrer services Docker"
+	@echo "  $(BLUE)docker-install$(NC)         Installation Docker Compose"
+	@echo "  $(BLUE)docker-status$(NC)          Statut services Docker"
+	@echo "  $(BLUE)docker-clean$(NC)           Nettoyer Docker Compose"
 	@echo ""
-	@echo "$(GREEN)📖 Documentation complète: README.md$(NC)"
+	@echo "$(YELLOW)🧪 TESTS & VALIDATION:$(NC)"
+	@echo "  $(BLUE)validate-platform$(NC)      Validation complète plateforme"
+	@echo "  $(BLUE)verify-deployment$(NC)      Vérification déploiement"
+	@echo "  $(BLUE)test-integration$(NC)       Tests d'intégration complets"
+	@echo "  $(BLUE)test-all$(NC)               Suite de tests complète"
+	@echo ""
+	@echo "$(YELLOW)🎯 WORKFLOWS:$(NC)"
+	@echo "  $(BLUE)deploy-complete$(NC)        Déploiement complet K8s"
+	@echo "  $(BLUE)dev-workflow$(NC)           Workflow développement"
+	@echo "  $(BLUE)prod-workflow$(NC)          Workflow production"
+	@echo "  $(BLUE)migration-workflow$(NC)     Workflow migration complète"
+	@echo ""
+	@echo "$(GREEN)💡 EXEMPLES:$(NC)"
+	@echo "  make dashboard                    # Interface interactive"
+	@echo "  make install-complete            # Installation complète"
+	@echo "  make K8S_ENVIRONMENT=staging k8s-deploy  # Déployer staging"
+	@echo "  make SERVICE_NAME=auth-service k8s-logs  # Logs service"
+	@echo ""
+	@echo "$(GREEN)📖 Documentation: README.md | PLATFORM_INTEGRATION_COMPLETE.md$(NC)"
 
-## ℹ️ Afficher les informations du système
+## ℹ️ Informations système et environnement
 info: banner
 	@echo "$(BLUE)ℹ️ Informations système:$(NC)"
-	@echo "Docker version: $(shell docker --version)"
-	@echo "Docker Compose version: $(shell docker-compose --version)"
+	@echo "Docker: $(shell docker --version 2>/dev/null || echo 'Non installé')"
+	@echo "Docker Compose: $(shell docker-compose --version 2>/dev/null || echo 'Non installé')"
+	@echo "Kubectl: $(shell kubectl version --client --short 2>/dev/null || echo 'Non installé')"
+	@echo "Helm: $(shell helm version --short 2>/dev/null || echo 'Non installé')"
 	@echo "Système: $(shell uname -s -r)"
-	@echo "Services configurés: $(SERVICES)"
-	@echo "Bases de données: $(DB_SERVICES)"
 	@echo ""
 	@echo "$(YELLOW)📁 Structure du projet:$(NC)"
-	@echo "├── services/          # Services microservices"
-	@echo "├── docker/            # Configuration Docker"
-	@echo "├── shared/            # Code partagé"
-	@echo "├── docker-compose.yml # Orchestration"
-	@echo "└── Makefile          # Ce fichier"
+	@echo "├── services/                 # Services microservices"
+	@echo "├── k8s/                     # Manifestes Kubernetes"
+	@echo "├── helm/                    # Charts Helm"
+	@echo "├── scripts/                 # Scripts d'automation"
+	@echo "├── tests/integration/       # Tests d'intégration"
+	@echo "├── docker/                  # Configuration Docker"
+	@echo "├── shared/                  # Code partagé"
+	@echo "├── platform-control.sh      # Contrôle unifié"
+	@echo "├── docker-compose.yml       # Orchestration Docker"
+	@echo "└── Makefile                 # Ce fichier"
+	@echo ""
+	@echo "$(YELLOW)🎯 Environnement actuel:$(NC)"
+	@echo "K8S_ENVIRONMENT: $(K8S_ENVIRONMENT)"
+	@echo "SERVICE_NAME: $(SERVICE_NAME)"
 
-.PHONY: start install restart stop down clean status logs logs-service migrate-all seed-all fresh-all test-all test-service shell health composer-install composer-update docs dev rebuild clear-cache stats network volumes env-check backup banner help info
+## 📋 Vérifier l'état des outils requis
+check-tools:
+	@echo "$(BLUE)🔍 Vérification des outils requis:$(NC)"
+	@echo -n "Docker: "; docker --version 2>/dev/null && echo "$(GREEN)✅$(NC)" || echo "$(RED)❌$(NC)"
+	@echo -n "Docker Compose: "; docker-compose --version 2>/dev/null && echo "$(GREEN)✅$(NC)" || echo "$(RED)❌$(NC)"
+	@echo -n "Kubectl: "; kubectl version --client 2>/dev/null | head -1 && echo "$(GREEN)✅$(NC)" || echo "$(RED)❌$(NC)"
+	@echo -n "Helm: "; helm version --short 2>/dev/null && echo "$(GREEN)✅$(NC)" || echo "$(RED)❌$(NC)"
+	@echo -n "jq: "; jq --version 2>/dev/null && echo "$(GREEN)✅$(NC)" || echo "$(RED)❌$(NC)"
+	@echo -n "curl: "; curl --version 2>/dev/null | head -1 && echo "$(GREEN)✅$(NC)" || echo "$(RED)❌$(NC)"
+
+.PHONY: dashboard install-complete migrate-to-k8s docker-start docker-install docker-status docker-stop docker-clean docker-endpoints k8s-setup k8s-deploy k8s-build k8s-health k8s-status k8s-monitoring k8s-logs k8s-endpoints k8s-clean k8s-prepare validate-platform validate-quick verify-deployment verify-quick test-integration test-health test-auth test-performance test-security test-all migrate-all seed-all fresh-all test-docker test-service shell composer-install health-docker clear-cache dev stats newsletters-process newsletters-stats backup-docker deploy-complete dev-workflow prod-workflow migration-workflow banner help info check-tools

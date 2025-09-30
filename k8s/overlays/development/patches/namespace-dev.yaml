@@ -1,0 +1,20 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: e-commerce
+  labels:
+    environment: development
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: e-commerce-monitoring
+  labels:
+    environment: development
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: e-commerce-messaging
+  labels:
+    environment: development

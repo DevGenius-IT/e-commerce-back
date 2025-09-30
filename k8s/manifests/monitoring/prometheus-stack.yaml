@@ -1,0 +1,327 @@
+# Prometheus Operator and Stack
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: monitoring
+  labels:
+    name: monitoring
+---
+# Prometheus CRDs (would be installed via Helm in real deployment)
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: prometheus-stack
+  namespace: argocd
+spec:
+  project: default
+  source:
+    repoURL: https://prometheus-community.github.io/helm-charts
+    chart: kube-prometheus-stack
+    targetRevision: "45.8.1"
+    helm:
+      values: |
+        # Global configuration
+        global:
+          imageRegistry: ""
+          imagePullSecrets: []
+
+        # Prometheus configuration
+        prometheus:
+          prometheusSpec:
+            replicas: 2
+            retention: 30d
+            retentionSize: 50GiB
+            storageSpec:
+              volumeClaimTemplate:
+                spec:
+                  storageClassName: ""
+                  accessModes: ["ReadWriteOnce"]
+                  resources:
+                    requests:
+                      storage: 50Gi
+            
+            # Resource allocation
+            resources:
+              requests:
+                memory: 2Gi
+                cpu: 1000m
+              limits:
+                memory: 4Gi
+                cpu: 2000m
+            
+            # Security context
+            securityContext:
+              runAsNonRoot: true
+              runAsUser: 1000
+              fsGroup: 2000
+            
+            # Service monitor selectors
+            serviceMonitorSelectorNilUsesHelmValues: false
+            serviceMonitorSelector:
+              matchLabels:
+                prometheus: kube-prometheus
+            
+            # Rule selectors
+            ruleSelectorNilUsesHelmValues: false
+            ruleSelector:
+              matchLabels:
+                prometheus: kube-prometheus
+            
+            # Additional scrape configs for custom metrics
+            additionalScrapeConfigs:
+              - job_name: 'e-commerce-services'
+                kubernetes_sd_configs:
+                  - role: endpoints
+                    namespaces:
+                      names:
+                        - e-commerce
+                        - e-commerce-dev
+                        - e-commerce-staging
+                        - e-commerce-prod
+                relabel_configs:
+                  - source_labels: [__meta_kubernetes_service_annotation_prometheus_io_scrape]
+                    action: keep
+                    regex: true
+                  - source_labels: [__meta_kubernetes_service_annotation_prometheus_io_path]
+                    action: replace
+                    target_label: __metrics_path__
+                    regex: (.+)
+
+        # Grafana configuration
+        grafana:
+          enabled: true
+          replicas: 1
+          
+          # Admin credentials
+          adminPassword: admin
+          
+          # Persistence
+          persistence:
+            enabled: true
+            storageClassName: ""
+            size: 10Gi
+          
+          # Resources
+          resources:
+            requests:
+              memory: 256Mi
+              cpu: 250m
+            limits:
+              memory: 512Mi
+              cpu: 500m
+          
+          # Grafana configuration
+          grafana.ini:
+            server:
+              root_url: https://grafana.yourcompany.com
+            security:
+              disable_initial_admin_creation: false
+            auth:
+              disable_login_form: false
+            auth.anonymous:
+              enabled: false
+            smtp:
+              enabled: true
+              host: smtp.yourcompany.com:587
+              user: grafana@yourcompany.com
+              from_address: grafana@yourcompany.com
+              from_name: E-commerce Monitoring
+          
+          # Datasources
+          datasources:
+            datasources.yaml:
+              apiVersion: 1
+              datasources:
+                - name: Prometheus
+                  type: prometheus
+                  url: http://prometheus-operated:9090
+                  access: proxy
+                  isDefault: true
+                - name: Loki
+                  type: loki
+                  url: http://loki:3100
+                  access: proxy
+          
+          # Dashboard providers
+          dashboardProviders:
+            dashboardproviders.yaml:
+              apiVersion: 1
+              providers:
+                - name: 'e-commerce'
+                  orgId: 1
+                  folder: 'E-commerce'
+                  type: file
+                  disableDeletion: false
+                  editable: true
+                  options:
+                    path: /var/lib/grafana/dashboards/e-commerce
+          
+          # Dashboards configmap
+          dashboardsConfigMaps:
+            e-commerce: e-commerce-dashboards
+
+        # Alertmanager configuration
+        alertmanager:
+          alertmanagerSpec:
+            replicas: 2
+            retention: 120h
+            
+            # Storage
+            storage:
+              volumeClaimTemplate:
+                spec:
+                  storageClassName: ""
+                  accessModes: ["ReadWriteOnce"]
+                  resources:
+                    requests:
+                      storage: 5Gi
+            
+            # Resources
+            resources:
+              requests:
+                memory: 256Mi
+                cpu: 100m
+              limits:
+                memory: 512Mi
+                cpu: 200m
+            
+            # Configuration
+            config:
+              global:
+                smtp_smarthost: 'smtp.yourcompany.com:587'
+                smtp_from: 'alerts@yourcompany.com'
+                smtp_auth_username: 'alerts@yourcompany.com'
+                smtp_auth_password: 'password'
+              
+              route:
+                group_by: ['alertname', 'cluster', 'service']
+                group_wait: 10s
+                group_interval: 10s
+                repeat_interval: 1h
+                receiver: 'web.hook'
+                routes:
+                  - match:
+                      alertname: Watchdog
+                    receiver: 'null'
+                  - match:
+                      severity: critical
+                    receiver: 'critical-alerts'
+                  - match:
+                      severity: warning
+                    receiver: 'warning-alerts'
+              
+              receivers:
+                - name: 'null'
+                - name: 'web.hook'
+                  webhook_configs:
+                    - url: 'http://localhost:5001/'
+                - name: 'critical-alerts'
+                  email_configs:
+                    - to: 'oncall@yourcompany.com'
+                      subject: 'CRITICAL: {{ .GroupLabels.alertname }}'
+                      body: |
+                        {{ range .Alerts }}
+                        Alert: {{ .Annotations.summary }}
+                        Description: {{ .Annotations.description }}
+                        {{ end }}
+                  slack_configs:
+                    - api_url: 'YOUR_SLACK_WEBHOOK_URL'
+                      channel: '#alerts-critical'
+                      title: 'Critical Alert: {{ .GroupLabels.alertname }}'
+                      text: '{{ range .Alerts }}{{ .Annotations.summary }}{{ end }}'
+                - name: 'warning-alerts'
+                  email_configs:
+                    - to: 'team@yourcompany.com'
+                      subject: 'WARNING: {{ .GroupLabels.alertname }}'
+
+        # Node Exporter
+        nodeExporter:
+          enabled: true
+
+        # Kube State Metrics
+        kubeStateMetrics:
+          enabled: true
+
+        # Prometheus Node Exporter
+        prometheus-node-exporter:
+          enabled: true
+
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: monitoring
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
+
+---
+# ServiceMonitor for E-commerce services
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: e-commerce-services
+  namespace: monitoring
+  labels:
+    prometheus: kube-prometheus
+    app: e-commerce
+spec:
+  namespaceSelector:
+    matchNames:
+      - e-commerce
+      - e-commerce-dev
+      - e-commerce-staging
+      - e-commerce-prod
+  selector:
+    matchLabels:
+      component: microservice
+  endpoints:
+    - port: metrics
+      path: /metrics
+      interval: 30s
+      scrapeTimeout: 10s
+
+---
+# ServiceMonitor for RabbitMQ
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: rabbitmq-monitoring
+  namespace: monitoring
+  labels:
+    prometheus: kube-prometheus
+    app: rabbitmq
+spec:
+  namespaceSelector:
+    matchNames:
+      - e-commerce-messaging
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: rabbitmq-cluster
+  endpoints:
+    - port: prometheus
+      path: /metrics
+      interval: 30s
+
+---
+# ServiceMonitor for MySQL
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: mysql-monitoring
+  namespace: monitoring
+  labels:
+    prometheus: kube-prometheus
+    app: mysql
+spec:
+  namespaceSelector:
+    matchNames:
+      - e-commerce
+  selector:
+    matchLabels:
+      mysql.oracle.com/cluster: mysql-cluster
+  endpoints:
+    - port: metrics
+      path: /metrics
+      interval: 30s

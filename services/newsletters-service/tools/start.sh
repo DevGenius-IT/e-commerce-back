@@ -4,7 +4,7 @@ echo "🚀 Starting Newsletters Service..."
 
 # Wait for database connection
 echo "⏳ Waiting for database connection..."
-while ! nc -z $DB_HOST 3306; do
+while ! nc -z newsletters-service-mysql.e-commerce.svc.cluster.local 3306; do
   echo "Database not ready, waiting 2 seconds..."
   sleep 2
 done
@@ -46,4 +46,4 @@ chmod -R 775 /var/www/newsletters-service/bootstrap/cache
 echo "✅ Newsletters Service is ready!"
 
 # Start PHP-FPM
-exec php artisan serve --host=0.0.0.0 --port=8007
+exec php artisan serve --host=0.0.0.0 --port=8000
