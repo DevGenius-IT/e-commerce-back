@@ -14,6 +14,7 @@ Route::group([], function () {
     Route::get('test-rabbitmq', function () {
         try {
             $rabbitMQClient = new \Shared\Services\RabbitMQClientService();
+            $rabbitMQClient->connect();
             $isConnected = $rabbitMQClient->isConnected();
             return response()->json([
                 'status' => 'success',
@@ -49,6 +50,8 @@ Route::group([], function () {
         $router = new \App\Services\GatewayRouterService();
         return response()->json($router->getAvailableServices());
     });
+
+
 
     // Legacy direct auth routes (keeping for backwards compatibility)
     Route::post("login", [AuthController::class, "login"]);

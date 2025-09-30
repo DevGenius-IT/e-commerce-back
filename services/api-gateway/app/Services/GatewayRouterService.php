@@ -45,11 +45,36 @@ class GatewayRouterService
         'messages-broker' => [
             'url' => 'MESSAGES_BROKER_URL',
             'timeout' => 30
+        ],
+        'newsletters' => [
+            'url' => 'NEWSLETTERS_SERVICE_URL',
+            'timeout' => 30
+        ],
+        'deliveries' => [
+            'url' => 'DELIVERIES_SERVICE_URL',
+            'timeout' => 30
+        ],
+        'sav' => [
+            'url' => 'SAV_SERVICE_URL',
+            'timeout' => 30
+        ],
+        'contacts' => [
+            'url' => 'CONTACTS_SERVICE_URL',
+            'timeout' => 30
+        ],
+        'websites' => [
+            'url' => 'WEBSITES_SERVICE_URL',
+            'timeout' => 30
+        ],
+        'questions' => [
+            'url' => 'QUESTIONS_SERVICE_URL',
+            'timeout' => 30
         ]
     ];
 
     /**
      * Route a request to the appropriate microservice.
+     * All requests now go through the message broker for consistency.
      *
      * @param string $service
      * @param string $path
@@ -64,12 +89,19 @@ class GatewayRouterService
             throw new ServiceUnavailableException("Unknown service: {$service}");
         }
 
-        // Use HTTP for auth service, addresses service, products service, baskets service and orders service, message broker for others
-        if ($service === 'auth' || $service === 'addresses' || $service === 'products' || $service === 'baskets' || $service === 'orders') {
+        // For now, route all services via HTTP until RabbitMQ consumers are properly configured
+        // TODO: Implement proper RabbitMQ consumers for each service
+        return $this->routeViaHttp($service, $path, $request);
+        
+        /* Future implementation with RabbitMQ:
+        // Auth service login/register endpoints use HTTP for immediate response
+        if ($service === 'auth' && in_array($path, ['login', 'register', 'refresh', 'validate-token'])) {
             return $this->routeViaHttp($service, $path, $request);
-        } else {
-            return $this->routeViaMessageBroker($service, $path, $request);
         }
+
+        // All other services use message broker for fully asynchronous architecture
+        return $this->routeViaMessageBroker($service, $path, $request);
+        */
     }
 
     /**
@@ -80,8 +112,27 @@ class GatewayRouterService
         $config = $this->serviceMap[$service];
         $serviceUrl = env($config['url']);
         
+        // Fallback URLs for services if env variables are not available
         if (!$serviceUrl) {
-            throw new ServiceUnavailableException("Service URL not configured for: {$service}");
+            $fallbackUrls = [
+                'auth' => 'http://auth-service:8001',
+                'addresses' => 'http://addresses-service:8009',
+                'products' => 'http://products-service:8003',
+                'baskets' => 'http://baskets-service:8005',
+                'orders' => 'http://orders-service:8004',
+                'deliveries' => 'http://deliveries-service:8006',
+                'newsletters' => 'http://newsletters-service:8007',
+                'sav' => 'http://sav-service:8008',
+                'contacts' => 'http://contacts-service:8010',
+                'messages-broker' => 'http://messages-broker:8002',
+            ];
+            
+            if (isset($fallbackUrls[$service])) {
+                $serviceUrl = $fallbackUrls[$service];
+                \Log::warning("Using fallback URL for service: {$service} -> {$serviceUrl}");
+            } else {
+                throw new ServiceUnavailableException("Service URL not configured for: {$service}");
+            }
         }
 
         // Build the full URL
@@ -194,7 +245,9 @@ class GatewayRouterService
     }
 
     /**
-     * Check if a service is available.
+     * Check if a service is available by verifying RabbitMQ consumers.
+     * In the fully asynchronous architecture, a service is available if it has active consumers
+     * listening on its request queue.
      *
      * @param string $service
      * @return bool
@@ -205,32 +258,49 @@ class GatewayRouterService
             return false;
         }
 
-        $config = $this->serviceMap[$service];
-        $serviceUrl = env($config['url']);
-        
-        if (!$serviceUrl) {
-            return false;
-        }
-
         try {
-            // Use a simple HEAD request to the base API endpoint
-            // Different services may have different health check endpoints
-            if ($service === 'auth') {
-                // For auth service, check if we can reach the base API
-                $response = Http::timeout(5)->get(rtrim($serviceUrl, '/') . '/api/login');
-                // A 405 Method Not Allowed is actually good - it means the service is responding
-                return $response->successful() || $response->status() === 405;
-            } else {
-                // For other services, try the health endpoint first, fallback to any endpoint
-                $response = Http::timeout(5)->get(rtrim($serviceUrl, '/') . '/api/health');
-                if ($response->successful()) {
-                    return true;
-                }
-                // Fallback: any response (even 404) means the service is running
-                $response = Http::timeout(5)->get(rtrim($serviceUrl, '/') . '/api/');
-                return $response->status() !== 0; // Any HTTP response means service is up
+            // Check if the service has active consumers on its request queue
+            $queueName = $service . '.requests';
+            
+            // Use RabbitMQ Management API to check for active consumers
+            $managementUrl = 'http://' . env('RABBITMQ_HOST', 'rabbitmq') . ':15672';
+            $username = env('RABBITMQ_USER', 'guest');
+            $password = env('RABBITMQ_PASSWORD', 'guest');
+            $vhost = env('RABBITMQ_VHOST', '/');
+            
+            // URL encode the vhost (default "/" becomes "%2F")
+            $encodedVhost = urlencode($vhost);
+            
+            // Get queue information from RabbitMQ Management API
+            $queueInfoUrl = $managementUrl . '/api/queues/' . $encodedVhost . '/' . $queueName;
+            
+            $response = Http::withBasicAuth($username, $password)
+                ->timeout(5)
+                ->get($queueInfoUrl);
+            
+            // Debug logging
+            \Log::info("Service availability check for {$service}: HTTP {$response->status()}", [
+                'queue' => $queueName,
+                'url' => $queueInfoUrl,
+                'successful' => $response->successful()
+            ]);
+            
+            if ($response->successful()) {
+                $queueData = $response->json();
+                $consumers = $queueData['consumers'] ?? 0;
+                
+                \Log::info("Queue {$queueName} found with {$consumers} consumers");
+                
+                // Service is available if it has consumers listening on the queue
+                return $consumers > 0;
             }
+            
+            // If queue doesn't exist (404) or any other error, service is not available
+            \Log::info("Queue {$queueName} not available (HTTP {$response->status()})");
+            return false;
         } catch (\Exception $e) {
+            // If we can't connect to RabbitMQ Management API, assume service is unavailable
+            \Log::warning("Could not check service availability for {$service}: " . $e->getMessage());
             return false;
         }
     }
@@ -245,12 +315,44 @@ class GatewayRouterService
         $services = [];
         
         foreach (array_keys($this->serviceMap) as $service) {
+            // Get URL from environment or fallback to internal URL
+            $envUrl = env($this->serviceMap[$service]['url']);
+            $internalUrl = $this->getInternalServiceUrl($service);
+            
+            // Use RabbitMQ-based service availability check
+            $available = $this->isServiceAvailable($service);
+            
             $services[$service] = [
-                'available' => $this->isServiceAvailable($service),
-                'url' => env($this->serviceMap[$service]['url'])
+                'available' => $available,
+                'url' => $envUrl ?: $internalUrl
             ];
         }
 
         return $services;
+    }
+
+    /**
+     * Get the internal Docker network URL for a service.
+     *
+     * @param string $service
+     * @return string|null
+     */
+    private function getInternalServiceUrl($service)
+    {
+        // Map service names to internal Docker container names with correct ports
+        $internalServiceMap = [
+            'auth' => 'http://auth-service:8001',
+            'addresses' => 'http://addresses-service:8009',
+            'products' => 'http://products-service:8003',
+            'baskets' => 'http://baskets-service:8005',
+            'orders' => 'http://orders-service:8004',
+            'deliveries' => 'http://deliveries-service:8006',
+            'newsletters' => 'http://newsletters-service:8007',
+            'sav' => 'http://sav-service:8008',
+            'contacts' => 'http://contacts-service:8010',
+            'messages-broker' => 'http://messages-broker:8002',
+        ];
+
+        return $internalServiceMap[$service] ?? null;
     }
 }

@@ -30,12 +30,12 @@ class ListenRabbitMQRequestsCommand extends Command
      */
     public function handle()
     {
-        $this->info('Starting RabbitMQ Request Listener for products-service...');
+        $this->info('Starting RabbitMQ Request Listener for baskets-service...');
 
         try {
             // Initialize the request handler for this service
-            $serviceUrl = env('APP_URL', 'http://localhost:8003');
-            $this->requestHandler = new RabbitMQRequestHandlerService('products', $serviceUrl);
+            $serviceUrl = env('APP_URL', 'http://localhost:8005');
+            $this->requestHandler = new RabbitMQRequestHandlerService('baskets', $serviceUrl);
 
             // Set up graceful shutdown
             $this->setupSignalHandlers();
@@ -51,7 +51,7 @@ class ListenRabbitMQRequestsCommand extends Command
                 $this->setupTimeout($timeout);
             }
 
-            $this->info('Listening for requests on queue: products.requests');
+            $this->info('Listening for requests on queue: baskets.requests');
             $this->info('Press Ctrl+C to stop...');
 
             // Start listening for requests

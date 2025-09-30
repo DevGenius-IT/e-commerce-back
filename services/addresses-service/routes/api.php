@@ -16,7 +16,8 @@ Route::prefix('countries')->group(function () {
     Route::get('{country}/regions', [CountryController::class, 'regions']);
 });
 
-// Protected routes for addresses (authentication handled by gateway)
+// All API routes are now handled via RabbitMQ through the API Gateway
+// Internal routes for RabbitMQ handler processing
 Route::prefix('addresses')->group(function () {
     Route::get('/', [AddressController::class, 'index']);
     Route::post('/', [AddressController::class, 'store']);

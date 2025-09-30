@@ -43,14 +43,20 @@ class RabbitMQRequestHandlerService
             
             $this->channel = $this->connection->channel();
             
-            // Declare the request queue for this service
+            // Declare the request queue for this service with dead letter exchange
             $queueName = "{$this->serviceName}.requests";
+            $arguments = [
+                'x-dead-letter-exchange' => ['S', 'microservices.dlx'],
+                'x-dead-letter-routing-key' => ['S', 'dead_letter']
+            ];
             $this->channel->queue_declare(
                 $queueName,
                 false, // passive
                 true,  // durable
                 false, // exclusive
-                false  // auto_delete
+                false, // auto_delete
+                false, // nowait
+                $arguments
             );
 
             // Set QoS to handle one message at a time

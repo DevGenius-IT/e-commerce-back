@@ -126,6 +126,8 @@ class GatewayController extends Controller
             'products' => ['*'], // All product routes are public (browsing catalog)
             'addresses' => ['countries'], // Public country/region data
             'messages' => ['api'], // Messages service health and stats
+            'newsletters' => ['newsletters/subscribe', 'newsletters/confirm', 'newsletters/unsubscribe', 'health'], // Public newsletter routes
+            'sav' => ['public', 'health'], // Public SAV routes for customer tickets
         ];
 
         // Check if service has any public routes

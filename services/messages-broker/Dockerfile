@@ -1,24 +1,24 @@
-FROM php:8.2-fpm-alpine
+FROM php:8.3-fpm
 
 # Set working directory
 WORKDIR /var/www
 
 # Install system dependencies
-RUN apk add --no-cache \
+RUN apt-get update && apt-get install -y \
     git \
     curl \
     libpng-dev \
-    oniguruma-dev \
+    libonig-dev \
     libxml2-dev \
     zip \
     unzip \
-    bash \
-    rabbitmq-c-dev \
+    netcat-traditional \
+    librabbitmq-dev \
     autoconf \
     g++ \
     make \
-    netcat-openbsd \
-    linux-headers
+    pkg-config \
+    && rm -rf /var/lib/apt/lists/*
 
 # Install PHP extensions
 RUN docker-php-ext-install pdo_mysql mbstring exif pcntl bcmath gd sockets
@@ -31,7 +31,7 @@ RUN pecl install amqp && \
 COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 
 # Add user for Laravel application
-RUN adduser -D -s /bin/bash -u 1000 api-gateway
+RUN useradd -ms /bin/bash -u 1000 api-gateway
 
 # Ensure proper directory permissions
 RUN mkdir -p /var/www/messages-broker && chown -R api-gateway:api-gateway /var/www/messages-broker
@@ -42,7 +42,7 @@ WORKDIR /var/www/messages-broker
 COPY --chown=api-gateway:api-gateway services/messages-broker .
 COPY --chown=api-gateway:api-gateway shared/ ../../shared
 
-RUN composer install --no-interaction --optimize-autoloader
+RUN composer update --no-interaction --optimize-autoloader
 
 EXPOSE 8002
 

@@ -43,7 +43,7 @@ fi
 # Clear and cache config
 echo "🧹 Clearing and caching configuration..."
 php artisan config:clear
-php artisan cache:clear
+# Skip cache:clear since we don't have cache table
 php artisan config:cache
 
 echo "🎉 deliveries-service started successfully!"

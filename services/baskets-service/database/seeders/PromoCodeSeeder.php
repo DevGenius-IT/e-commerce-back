@@ -106,7 +106,19 @@ class PromoCodeSeeder extends Seeder
         ];
 
         foreach ($promoCodes as $promoCode) {
-            PromoCode::create($promoCode);
+            // Check if a soft-deleted record exists and restore it, or create new
+            $existing = PromoCode::withTrashed()->where('code', $promoCode['code'])->first();
+            
+            if ($existing) {
+                if ($existing->trashed()) {
+                    // Restore and update the soft-deleted record
+                    $existing->restore();
+                }
+                $existing->update($promoCode);
+            } else {
+                // Create new record
+                PromoCode::create($promoCode);
+            }
         }
     }
 }

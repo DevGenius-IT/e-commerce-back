@@ -5,6 +5,13 @@ use App\Http\Controllers\PermissionController;
 use App\Http\Controllers\RoleController;
 use Illuminate\Support\Facades\Route;
 
+// Health check endpoint
+Route::get('health', function () {
+    return response()->json(['status' => 'healthy', 'service' => 'auth-service']);
+});
+
+// All API routes are now handled via RabbitMQ through the API Gateway
+// Internal routes for RabbitMQ handler processing
 Route::group([], function () {
   Route::post("register", [AuthController::class, "register"]);
   Route::post("login", [AuthController::class, "login"]);

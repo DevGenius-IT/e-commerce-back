@@ -13,8 +13,7 @@ class ListenRabbitMQRequestsCommand extends Command
      *
      * @var string
      */
-    protected $signature = 'rabbitmq:listen-requests 
-                            {--timeout=0 : Maximum execution time in seconds (0 = no timeout)}';
+    protected $signature = 'rabbitmq:listen-requests {--timeout=0 : Maximum execution time in seconds (0 = no timeout)}';
 
     /**
      * The console command description.
@@ -30,12 +29,12 @@ class ListenRabbitMQRequestsCommand extends Command
      */
     public function handle()
     {
-        $this->info('Starting RabbitMQ Request Listener for products-service...');
+        $this->info('Starting RabbitMQ Request Listener for orders-service...');
 
         try {
             // Initialize the request handler for this service
-            $serviceUrl = env('APP_URL', 'http://localhost:8003');
-            $this->requestHandler = new RabbitMQRequestHandlerService('products', $serviceUrl);
+            $serviceUrl = env('APP_URL', 'http://localhost:8004');
+            $this->requestHandler = new RabbitMQRequestHandlerService('orders', $serviceUrl);
 
             // Set up graceful shutdown
             $this->setupSignalHandlers();
@@ -51,7 +50,7 @@ class ListenRabbitMQRequestsCommand extends Command
                 $this->setupTimeout($timeout);
             }
 
-            $this->info('Listening for requests on queue: products.requests');
+            $this->info('Listening for requests on queue: orders.requests');
             $this->info('Press Ctrl+C to stop...');
 
             // Start listening for requests

@@ -6,8 +6,8 @@
 
 # Variables de configuration
 COMPOSE_FILE = docker-compose.yml
-SERVICES = api-gateway auth-service messages-broker addresses-service products-service
-DB_SERVICES = auth-db messages-broker-db addresses-db products-db
+SERVICES = api-gateway auth-service messages-broker addresses-service products-service baskets-service orders-service deliveries-service newsletters-service sav-service contacts-service websites-service questions-service
+DB_SERVICES = auth-db messages-broker-db addresses-db products-db baskets-db orders-db deliveries-db newsletters-db sav-db contacts-db websites-db questions-db
 NETWORK = e-commerce-back_microservices-network
 
 # Couleurs pour l'affichage
@@ -97,6 +97,13 @@ migrate-all: banner
 	@docker-compose exec auth-service php artisan migrate --force
 	@docker-compose exec addresses-service php artisan migrate --force
 	@docker-compose exec products-service php artisan migrate --force
+	@docker-compose exec baskets-service php artisan migrate --force
+	@docker-compose exec orders-service php artisan migrate --force
+	@docker-compose exec deliveries-service php artisan migrate --force
+	@docker-compose exec newsletters-service php artisan migrate --force
+	@docker-compose exec sav-service php artisan migrate --force
+	@docker-compose exec contacts-service php artisan migrate --force
+	@docker-compose exec questions-service php artisan migrate --force
 	@echo "$(GREEN)✅ Migrations terminées$(NC)"
 
 ## 🌱 Exécuter tous les seeders
@@ -105,6 +112,13 @@ seed-all: banner
 	@docker-compose exec auth-service php artisan db:seed --force
 	@docker-compose exec addresses-service php artisan db:seed --force
 	@docker-compose exec products-service php artisan db:seed --force
+	@docker-compose exec baskets-service php artisan db:seed --force
+	@docker-compose exec orders-service php artisan db:seed --force
+	@docker-compose exec deliveries-service php artisan db:seed --force
+	@docker-compose exec newsletters-service php artisan db:seed --force
+	@docker-compose exec sav-service php artisan db:seed --force
+	@docker-compose exec contacts-service php artisan db:seed --force
+	@docker-compose exec questions-service php artisan db:seed --force
 	@echo "$(GREEN)✅ Seeders terminés$(NC)"
 
 ## 🔄 Réinitialiser toutes les bases de données (fresh + seed)
@@ -113,6 +127,13 @@ fresh-all: banner
 	@docker-compose exec auth-service php artisan migrate:fresh --seed --force
 	@docker-compose exec addresses-service php artisan migrate:fresh --seed --force
 	@docker-compose exec products-service php artisan migrate:fresh --seed --force
+	@docker-compose exec baskets-service php artisan migrate:fresh --seed --force
+	@docker-compose exec orders-service php artisan migrate:fresh --seed --force
+	@docker-compose exec deliveries-service php artisan migrate:fresh --seed --force
+	@docker-compose exec newsletters-service php artisan migrate:fresh --seed --force
+	@docker-compose exec sav-service php artisan migrate:fresh --seed --force
+	@docker-compose exec contacts-service php artisan migrate:fresh --seed --force
+	@docker-compose exec questions-service php artisan migrate:fresh --seed --force
 	@echo "$(GREEN)✅ Bases de données réinitialisées$(NC)"
 
 # =============================================================================
@@ -125,6 +146,13 @@ test-all: banner
 	@docker-compose exec auth-service php artisan test
 	@docker-compose exec addresses-service php artisan test
 	@docker-compose exec products-service php artisan test
+	@docker-compose exec baskets-service php artisan test
+	@docker-compose exec orders-service php artisan test
+	@docker-compose exec deliveries-service php artisan test
+	@docker-compose exec newsletters-service php artisan test
+	@docker-compose exec sav-service php artisan test
+	@docker-compose exec contacts-service php artisan test
+	@docker-compose exec questions-service php artisan test
 	@echo "$(GREEN)✅ Tests terminés$(NC)"
 
 ## 🧪 Tester un service spécifique (make test-service SERVICE=auth-service)
@@ -150,6 +178,18 @@ health: banner
 	@curl -s http://localhost/api/addresses/health | jq . || echo "❌ Non disponible"
 	@echo "$(YELLOW)Products Service:$(NC)"
 	@curl -s http://localhost/api/products/health | jq . || echo "❌ Non disponible"
+	@echo "$(YELLOW)Baskets Service:$(NC)"
+	@curl -s http://localhost/api/baskets/health | jq . || echo "❌ Non disponible"
+	@echo "$(YELLOW)Orders Service:$(NC)"
+	@curl -s http://localhost/api/orders/health | jq . || echo "❌ Non disponible"
+	@echo "$(YELLOW)Deliveries Service:$(NC)"
+	@curl -s http://localhost/api/deliveries/health | jq . || echo "❌ Non disponible"
+	@echo "$(YELLOW)Newsletters Service:$(NC)"
+	@curl -s http://localhost/api/newsletters/health | jq . || echo "❌ Non disponible"
+	@echo "$(YELLOW)SAV Service:$(NC)"
+	@curl -s http://localhost/api/sav/health | jq . || echo "❌ Non disponible"
+	@echo "$(YELLOW)Questions Service:$(NC)"
+	@curl -s http://localhost/api/questions/health | jq . || echo "❌ Non disponible"
 
 ## 🔧 Installer les dépendances Composer pour un service
 composer-install:
@@ -188,7 +228,42 @@ clear-cache:
 	@docker-compose exec auth-service php artisan cache:clear
 	@docker-compose exec addresses-service php artisan cache:clear
 	@docker-compose exec products-service php artisan cache:clear
+	@docker-compose exec baskets-service php artisan cache:clear
+	@docker-compose exec orders-service php artisan cache:clear
+	@docker-compose exec deliveries-service php artisan cache:clear
+	@docker-compose exec newsletters-service php artisan cache:clear
+	@docker-compose exec sav-service php artisan cache:clear
+	@docker-compose exec contacts-service php artisan cache:clear
+	@docker-compose exec questions-service php artisan cache:clear
 	@echo "$(GREEN)✅ Caches nettoyés$(NC)"
+
+# =============================================================================
+# Commandes spécifiques aux newsletters
+# =============================================================================
+
+## 📧 Traiter les campagnes programmées
+newsletters-process:
+	@echo "$(YELLOW)📧 Traitement des campagnes programmées...$(NC)"
+	@docker-compose exec newsletters-service php artisan newsletters:process-scheduled
+	@echo "$(GREEN)✅ Campagnes traitées$(NC)"
+
+## 📊 Statistiques des newsletters
+newsletters-stats:
+	@echo "$(BLUE)📊 Statistiques des newsletters:$(NC)"
+	@curl -s http://localhost/api/newsletters/stats | jq . || echo "❌ Service non disponible"
+
+## 📧 Tester l'envoi d'email (make newsletters-test EMAIL=test@example.com CAMPAIGN_ID=1)
+newsletters-test:
+	@echo "$(YELLOW)📧 Test d'envoi d'email...$(NC)"
+	@curl -X POST http://localhost/api/newsletters/campaigns/$(CAMPAIGN_ID)/test-send \
+		-H "Content-Type: application/json" \
+		-d '{"test_email":"$(EMAIL)"}' | jq .
+
+## 🔄 Synchroniser les templates d'email
+newsletters-sync-templates:
+	@echo "$(YELLOW)🔄 Synchronisation des templates d'email...$(NC)"
+	@docker-compose exec newsletters-service php artisan db:seed --class=EmailTemplateSeeder --force
+	@echo "$(GREEN)✅ Templates synchronisés$(NC)"
 
 # =============================================================================
 # Monitoring et debug

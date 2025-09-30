@@ -226,7 +226,10 @@ class SalePointSeeder extends Seeder
         ];
 
         foreach ($salePoints as $salePoint) {
-            SalePoint::create($salePoint);
+            SalePoint::updateOrCreate(
+                ['code' => $salePoint['code']],
+                $salePoint
+            );
         }
     }
 }
