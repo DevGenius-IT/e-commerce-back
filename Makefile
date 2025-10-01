@@ -97,6 +97,28 @@ docker-down:
 	@docker-compose down
 	@echo "$(GREEN)✅ Services Docker arrêtés et supprimés$(NC)"
 
+## 📦 Exporter les fichiers .env en ZIP
+export-env:
+	@echo "$(YELLOW)📦 Export des fichiers .env...$(NC)"
+	@mkdir -p exports
+	@zip -r exports/env-backup-$$(date +%Y%m%d-%H%M%S).zip \
+		.env \
+		services/api-gateway/.env \
+		services/auth-service/.env \
+		services/messages-broker/.env \
+		services/addresses-service/.env \
+		services/products-service/.env \
+		services/baskets-service/.env \
+		services/orders-service/.env \
+		services/deliveries-service/.env \
+		services/newsletters-service/.env \
+		services/sav-service/.env \
+		services/contacts-service/.env \
+		services/questions-service/.env \
+		services/websites-service/.env
+	@echo "$(GREEN)✅ Export créé dans exports/$(NC)"
+	@ls -lh exports/*.zip | tail -1
+
 ## 🗑️ Nettoyer Docker Compose
 docker-clean:
 	@echo "$(RED)🧹 Nettoyage Docker Compose...$(NC)"
