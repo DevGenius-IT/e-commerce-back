@@ -381,6 +381,11 @@ composer-install:
 	@echo "$(YELLOW)🔧 Installation Composer pour $(SERVICE_NAME)...$(NC)"
 	@docker-compose exec $(SERVICE_NAME) composer install
 
+## 🔄 Reset complet Composer (composer.lock + vendor/)
+reset-composer:
+	@echo "$(RED)🔄 Reset complet des dépendances Composer...$(NC)"
+	@./scripts/reset-composer.sh
+
 ## 📋 Vérifier la santé des services Docker
 health-docker:
 	@echo "$(BLUE)🏥 Vérification de la santé des services Docker:$(NC)"
