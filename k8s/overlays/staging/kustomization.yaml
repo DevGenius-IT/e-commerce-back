@@ -1,0 +1,44 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+metadata:
+  annotations:
+    description: Staging environment configuration for e-commerce platform
+  name: e-commerce-staging
+
+# Reference to base configuration
+resources:
+- ../../base
+
+# Staging-specific namespace
+namespace: e-commerce-staging
+
+# Staging labels
+  
+commonAnnotations:
+  cluster: staging
+  environment: staging
+
+# Staging-specific patches
+
+# Staging-specific secrets (use External Secrets in real env)
+secretGenerator:
+- literals:
+  - DB_ROOT_PASSWORD=staging-root-password-change-this
+  - JWT_SECRET=staging-jwt-secret-key-change-this
+  - RABBITMQ_PASSWORD=staging-rabbitmq-password-change-this
+  name: staging-secrets
+
+# Staging images (tagged versions for stability)
+images:
+- name: redis
+  newTag: 7.2-alpine
+labels:
+- includeSelectors: true
+  pairs:
+    environment: staging
+patches:
+- path: patches/environment-config.yaml
+- path: patches/resource-limits.yaml
+- path: patches/replica-counts.yaml
+- patch: patches/monitoring.yaml

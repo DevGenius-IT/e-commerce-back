@@ -1,0 +1,1642 @@
+{
+	"info": {
+		"_postman_id": "8b8ea201-744f-4d14-8ef2-d99cc07ee420",
+		"name": "E-commerce Microservices API - Architecture Asynchrone",
+		"description": "Collection complète pour l'API e-commerce avec architecture 100% asynchrone via RabbitMQ\n\n🎯 **NOUVELLE ARCHITECTURE FULLY ASYNCHRONE**\nToutes les communications passent par API Gateway → RabbitMQ → Services\n\n🚀 **Point d'entrée unique**: API Gateway (port 80 via Nginx)\n📡 **Communication**: 100% RabbitMQ (plus d'HTTP direct)\n🔐 **Authentification**: JWT unifié sur tous les services\n\n**Base URL**: http://localhost/api/\n**Architecture**: Client → Nginx → API Gateway → RabbitMQ → Services",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "22240109"
+	},
+	"item": [
+		{
+			"name": "🏗️ Architecture & Monitoring",
+			"description": "Endpoints pour monitorer l'architecture asynchrone et l'état des services",
+			"item": [
+				{
+					"name": "API Gateway Health",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Accept",
+								"value": "application/json"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/health",
+							"host": ["{{base_url}}"],
+							"path": ["api", "health"]
+						},
+						"description": "Health check de l'API Gateway - Point d'entrée unique de l'architecture"
+					}
+				},
+				{
+					"name": "RabbitMQ Connection Test",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Accept",
+								"value": "application/json"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/test-rabbitmq",
+							"host": ["{{base_url}}"],
+							"path": ["api", "test-rabbitmq"]
+						},
+						"description": "Test de la connexion RabbitMQ depuis l'API Gateway"
+					}
+				},
+				{
+					"name": "Services Status",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Accept",
+								"value": "application/json"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/services/status",
+							"host": ["{{base_url}}"],
+							"path": ["api", "services", "status"]
+						},
+						"description": "État de tous les microservices via l'API Gateway"
+					}
+				}
+			]
+		},
+		{
+			"name": "🔐 Authentication Service",
+			"description": "Authentification centralisée avec JWT pour tous les services",
+			"item": [
+				{
+					"name": "Login",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"if (responseCode.code === 200) {",
+									"    const response = JSON.parse(responseBody);",
+									"    if (response.token) {",
+									"        pm.environment.set('jwt_token', response.token);",
+									"        pm.environment.set('user_id', response.user.id);",
+									"        console.log('JWT Token saved:', response.token);",
+									"    }",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "Accept",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"email\": \"kylian@collect-verything.com\",\n    \"password\": \"password\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/auth/login",
+							"host": ["{{base_url}}"],
+							"path": ["api", "auth", "login"]
+						},
+						"description": "Connexion utilisateur - génère un JWT Token pour authentification"
+					}
+				},
+				{
+					"name": "User Profile",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Accept",
+								"value": "application/json"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{jwt_token}}"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/auth/me",
+							"host": ["{{base_url}}"],
+							"path": ["api", "auth", "me"]
+						},
+						"description": "Récupération du profil utilisateur authentifié"
+					}
+				},
+				{
+					"name": "Logout",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Accept",
+								"value": "application/json"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{jwt_token}}"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/auth/logout",
+							"host": ["{{base_url}}"],
+							"path": ["api", "auth", "logout"]
+						},
+						"description": "Déconnexion utilisateur - invalide le JWT Token"
+					}
+				}
+			]
+		},
+		{
+			"name": "🛍️ Products Service",
+			"description": "Catalogue produits - Routes publiques pour navigation",
+			"item": [
+				{
+					"name": "Products Health",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Accept",
+								"value": "application/json"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/products/health",
+							"host": ["{{base_url}}"],
+							"path": ["api", "products", "health"]
+						},
+						"description": "Health check du service produits via RabbitMQ"
+					}
+				},
+				{
+					"name": "List Products",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Accept",
+								"value": "application/json"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/products/products",
+							"host": ["{{base_url}}"],
+							"path": ["api", "products", "products"]
+						},
+						"description": "Liste tous les produits disponibles (accès public)"
+					}
+				},
+				{
+					"name": "Get Product",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Accept",
+								"value": "application/json"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/products/products/{{test_product_id}}",
+							"host": ["{{base_url}}"],
+							"path": ["api", "products", "products", "{{test_product_id}}"]
+						},
+						"description": "Détails d'un produit spécifique"
+					}
+				},
+				{
+					"name": "List Brands",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Accept",
+								"value": "application/json"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/products/brands",
+							"host": ["{{base_url}}"],
+							"path": ["api", "products", "brands"]
+						},
+						"description": "Liste des marques disponibles"
+					}
+				},
+				{
+					"name": "List Categories",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Accept",
+								"value": "application/json"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/products/categories",
+							"host": ["{{base_url}}"],
+							"path": ["api", "products", "categories"]
+						},
+						"description": "Liste des catégories de produits"
+					}
+				}
+			]
+		},
+		{
+			"name": "🛒 Baskets Service",
+			"description": "Gestion des paniers utilisateurs et codes promotionnels",
+			"item": [
+				{
+					"name": "Get Current Basket",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Accept",
+								"value": "application/json"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{jwt_token}}"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/baskets/baskets/current",
+							"host": ["{{base_url}}"],
+							"path": ["api", "baskets", "baskets", "current"]
+						},
+						"description": "Récupération du panier actuel de l'utilisateur connecté"
+					}
+				},
+				{
+					"name": "Add Item to Basket",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "Accept",
+								"value": "application/json"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{jwt_token}}"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"product_id\": {{test_product_id}},\n    \"quantity\": 2\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/baskets/baskets/items",
+							"host": ["{{base_url}}"],
+							"path": ["api", "baskets", "baskets", "items"]
+						},
+						"description": "Ajouter un produit au panier"
+					}
+				},
+				{
+					"name": "Apply Promo Code",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "Accept",
+								"value": "application/json"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{jwt_token}}"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"code\": \"WELCOME10\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/baskets/baskets/promo-codes",
+							"host": ["{{base_url}}"],
+							"path": ["api", "baskets", "baskets", "promo-codes"]
+						},
+						"description": "Appliquer un code promotionnel au panier"
+					}
+				},
+				{
+					"name": "Validate Promo Code",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "Accept",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"code\": \"WELCOME10\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/baskets/promo-codes/validate",
+							"host": ["{{base_url}}"],
+							"path": ["api", "baskets", "promo-codes", "validate"]
+						},
+						"description": "Validation d'un code promo (accès public)"
+					}
+				}
+			]
+		},
+		{
+			"name": "📋 Orders Service",
+			"description": "Gestion des commandes utilisateurs",
+			"item": [
+				{
+					"name": "List My Orders",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Accept",
+								"value": "application/json"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{jwt_token}}"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/orders/orders",
+							"host": ["{{base_url}}"],
+							"path": ["api", "orders", "orders"]
+						},
+						"description": "Liste des commandes de l'utilisateur connecté"
+					}
+				},
+				{
+					"name": "Get Order Details",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Accept",
+								"value": "application/json"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{jwt_token}}"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/orders/orders/1",
+							"host": ["{{base_url}}"],
+							"path": ["api", "orders", "orders", "1"]
+						},
+						"description": "Détails d'une commande spécifique"
+					}
+				},
+				{
+					"name": "Create Order from Basket",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"if (responseCode.code === 201) {",
+									"    const response = JSON.parse(responseBody);",
+									"    if (response.order && response.order.id) {",
+									"        pm.environment.set('test_order_id', response.order.id);",
+									"        console.log('Order ID saved:', response.order.id);",
+									"    }",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "Accept",
+								"value": "application/json"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{jwt_token}}"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"address_id\": 1,\n    \"payment_method\": \"credit_card\",\n    \"notes\": \"Commande de test via API asynchrone\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/orders/orders/create-from-basket",
+							"host": ["{{base_url}}"],
+							"path": ["api", "orders", "orders", "create-from-basket"]
+						},
+						"description": "Créer une commande depuis le panier actuel"
+					}
+				},
+				{
+					"name": "List Order Status",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Accept",
+								"value": "application/json"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/orders/order-status",
+							"host": ["{{base_url}}"],
+							"path": ["api", "orders", "order-status"]
+						},
+						"description": "Liste des statuts de commandes disponibles (accès public)"
+					}
+				}
+			]
+		},
+		{
+			"name": "🚚 Deliveries Service",
+			"description": "Gestion des livraisons et points de retrait",
+			"item": [
+				{
+					"name": "Track Delivery",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Accept",
+								"value": "application/json"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/deliveries/track/DLV-20241225-0001",
+							"host": ["{{base_url}}"],
+							"path": ["api", "deliveries", "track", "DLV-20241225-0001"]
+						},
+						"description": "Suivi d'une livraison par numéro de tracking (accès public)"
+					}
+				},
+				{
+					"name": "List Sale Points",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Accept",
+								"value": "application/json"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/deliveries/sale-points",
+							"host": ["{{base_url}}"],
+							"path": ["api", "deliveries", "sale-points"]
+						},
+						"description": "Liste des points de retrait disponibles"
+					}
+				},
+				{
+					"name": "Find Nearby Sale Points",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Accept",
+								"value": "application/json"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/deliveries/sale-points/nearby?lat=48.8566&lng=2.3522&radius=10",
+							"host": ["{{base_url}}"],
+							"path": ["api", "deliveries", "sale-points", "nearby"],
+							"query": [
+								{
+									"key": "lat",
+									"value": "48.8566",
+									"description": "Latitude (Paris)"
+								},
+								{
+									"key": "lng",
+									"value": "2.3522",
+									"description": "Longitude (Paris)"
+								},
+								{
+									"key": "radius",
+									"value": "10",
+									"description": "Rayon de recherche en km"
+								}
+							]
+						},
+						"description": "Points de retrait à proximité d'une localisation"
+					}
+				},
+				{
+					"name": "Create Delivery from Order",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "Accept",
+								"value": "application/json"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{jwt_token}}"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"order_id\": {{test_order_id}},\n    \"carrier\": \"Chronopost\",\n    \"delivery_method\": \"home\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/deliveries/from-order",
+							"host": ["{{base_url}}"],
+							"path": ["api", "deliveries", "from-order"]
+						},
+						"description": "Créer une livraison depuis une commande existante"
+					}
+				},
+				{
+					"name": "List My Deliveries",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Accept",
+								"value": "application/json"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{jwt_token}}"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/deliveries/deliveries",
+							"host": ["{{base_url}}"],
+							"path": ["api", "deliveries", "deliveries"]
+						},
+						"description": "Liste des livraisons de l'utilisateur connecté"
+					}
+				}
+			]
+		},
+		{
+			"name": "🏠 Addresses Service",
+			"description": "Gestion des adresses de livraison et facturation",
+			"item": [
+				{
+					"name": "List Countries",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Accept",
+								"value": "application/json"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/addresses/countries",
+							"host": ["{{base_url}}"],
+							"path": ["api", "addresses", "countries"]
+						},
+						"description": "Liste des pays disponibles (accès public)"
+					}
+				},
+				{
+					"name": "List My Addresses",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Accept",
+								"value": "application/json"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{jwt_token}}"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/addresses/addresses",
+							"host": ["{{base_url}}"],
+							"path": ["api", "addresses", "addresses"]
+						},
+						"description": "Mes adresses de livraison et facturation"
+					}
+				},
+				{
+					"name": "Create Address",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "Accept",
+								"value": "application/json"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{jwt_token}}"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"street\": \"123 Rue de la Paix\",\n    \"zip_code\": \"75001\",\n    \"city\": \"Paris\",\n    \"country_id\": 1,\n    \"type_id\": 1\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/addresses/addresses",
+							"host": ["{{base_url}}"],
+							"path": ["api", "addresses", "addresses"]
+						},
+						"description": "Ajouter une nouvelle adresse"
+					}
+				}
+			]
+		},
+		{
+			"name": "🛠️ Support Service (SAV)",
+			"description": "Service après-vente et support client",
+			"item": [
+				{
+					"name": "Create Support Ticket (Public)",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "Accept",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"email\": \"customer@example.com\",\n    \"subject\": \"Problème avec ma commande\",\n    \"message\": \"Bonjour, j'ai un problème avec ma commande #123. Pouvez-vous m'aider ?\",\n    \"priority\": \"medium\",\n    \"category\": \"Order Issue\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/sav/public/tickets",
+							"host": ["{{base_url}}"],
+							"path": ["api", "sav", "public", "tickets"]
+						},
+						"description": "Créer un ticket de support (accès public pour les clients)"
+					}
+				},
+				{
+					"name": "List My Tickets",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Accept",
+								"value": "application/json"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{jwt_token}}"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/sav/tickets",
+							"host": ["{{base_url}}"],
+							"path": ["api", "sav", "tickets"]
+						},
+						"description": "Mes tickets de support"
+					}
+				},
+				{
+					"name": "Get Ticket Details",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Accept",
+								"value": "application/json"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{jwt_token}}"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/sav/tickets/1",
+							"host": ["{{base_url}}"],
+							"path": ["api", "sav", "tickets", "1"]
+						},
+						"description": "Détails d'un ticket de support"
+					}
+				}
+			]
+		},
+		{
+			"name": "❓ Questions Service",
+			"description": "Service de FAQ et gestion des questions-réponses",
+			"item": [
+				{
+					"name": "Get All Questions (Public)",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Accept",
+								"value": "application/json"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/questions/public/questions",
+							"host": ["{{base_url}}"],
+							"path": ["questions", "public", "questions"]
+						},
+						"description": "Récupère toutes les questions publiques (FAQ)"
+					}
+				},
+				{
+					"name": "Get Question by ID (Public)",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Accept",
+								"value": "application/json"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/questions/public/questions/{{question_id}}",
+							"host": ["{{base_url}}"],
+							"path": ["questions", "public", "questions", "{{question_id}}"]
+						},
+						"description": "Récupère une question spécifique avec ses réponses"
+					}
+				},
+				{
+					"name": "Search Questions (Public)",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Accept",
+								"value": "application/json"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/questions/public/search?q={{search_query}}",
+							"host": ["{{base_url}}"],
+							"path": ["questions", "public", "search"],
+							"query": [
+								{
+									"key": "q",
+									"value": "{{search_query}}"
+								}
+							]
+						},
+						"description": "Recherche dans les questions et réponses"
+					}
+				},
+				{
+					"name": "Create Question (Admin)",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{admin_token}}"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"title\": \"Comment puis-je suivre ma commande ?\",\n    \"body\": \"Je voudrais savoir comment faire le suivi de ma commande après l'avoir passée.\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/questions/questions",
+							"host": ["{{base_url}}"],
+							"path": ["questions", "questions"]
+						},
+						"description": "Créer une nouvelle question (admin seulement)"
+					}
+				},
+				{
+					"name": "Update Question (Admin)",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{admin_token}}"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"title\": \"Comment puis-je suivre ma commande ?\",\n    \"body\": \"Vous pouvez suivre votre commande en vous connectant à votre compte et en accédant à la section 'Mes commandes'.\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/questions/questions/{{question_id}}",
+							"host": ["{{base_url}}"],
+							"path": ["questions", "questions", "{{question_id}}"]
+						},
+						"description": "Mettre à jour une question existante"
+					}
+				},
+				{
+					"name": "Delete Question (Admin)",
+					"request": {
+						"method": "DELETE",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{admin_token}}"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/questions/questions/{{question_id}}",
+							"host": ["{{base_url}}"],
+							"path": ["questions", "questions", "{{question_id}}"]
+						},
+						"description": "Supprimer une question"
+					}
+				},
+				{
+					"name": "Create Answer (Admin)",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{admin_token}}"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"body\": \"Vous pouvez suivre votre commande en vous connectant à votre compte et en accédant à la section 'Mes commandes'. Vous y trouverez le statut de livraison en temps réel.\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/questions/questions/{{question_id}}/answers",
+							"host": ["{{base_url}}"],
+							"path": ["questions", "questions", "{{question_id}}", "answers"]
+						},
+						"description": "Ajouter une réponse à une question"
+					}
+				},
+				{
+					"name": "Update Answer (Admin)",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{admin_token}}"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"body\": \"Vous pouvez suivre votre commande de plusieurs façons : 1) Connexion à votre compte > Mes commandes, 2) Email de confirmation avec lien de suivi, 3) SMS avec numéro de suivi.\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/questions/questions/{{question_id}}/answers/{{answer_id}}",
+							"host": ["{{base_url}}"],
+							"path": ["questions", "questions", "{{question_id}}", "answers", "{{answer_id}}"]
+						},
+						"description": "Mettre à jour une réponse existante"
+					}
+				},
+				{
+					"name": "Delete Answer (Admin)",
+					"request": {
+						"method": "DELETE",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{admin_token}}"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/questions/questions/{{question_id}}/answers/{{answer_id}}",
+							"host": ["{{base_url}}"],
+							"path": ["questions", "questions", "{{question_id}}", "answers", "{{answer_id}}"]
+						},
+						"description": "Supprimer une réponse"
+					}
+				},
+				{
+					"name": "Questions Service Health",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Accept",
+								"value": "application/json"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/questions/health",
+							"host": ["{{base_url}}"],
+							"path": ["questions", "health"]
+						},
+						"description": "Health check du service questions"
+					}
+				}
+			]
+		},
+		{
+			"name": "🌐 Websites Service",
+			"description": "Service de gestion des sites web",
+			"item": [
+				{
+					"name": "Get All Websites (Public)",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Accept",
+								"value": "application/json"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/websites/websites?per_page=10&search=",
+							"host": ["{{base_url}}"],
+							"path": ["websites", "websites"],
+							"query": [
+								{
+									"key": "per_page",
+									"value": "10",
+									"description": "Nombre d'éléments par page"
+								},
+								{
+									"key": "search",
+									"value": "",
+									"description": "Recherche par nom ou domaine"
+								}
+							]
+						},
+						"description": "Récupération de tous les sites web (accès public)"
+					}
+				},
+				{
+					"name": "Get Website by ID (Public)",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Accept",
+								"value": "application/json"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/websites/websites/1",
+							"host": ["{{base_url}}"],
+							"path": ["websites", "websites", "1"]
+						},
+						"description": "Récupération d'un site web par ID (accès public)"
+					}
+				},
+				{
+					"name": "Search Websites (Public)",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Accept",
+								"value": "application/json"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/websites/websites/search?q=example&per_page=10",
+							"host": ["{{base_url}}"],
+							"path": ["websites", "websites", "search"],
+							"query": [
+								{
+									"key": "q",
+									"value": "example",
+									"description": "Terme de recherche"
+								},
+								{
+									"key": "per_page",
+									"value": "10",
+									"description": "Nombre d'éléments par page"
+								}
+							]
+						},
+						"description": "Recherche de sites web (accès public)"
+					}
+				},
+				{
+					"name": "Create Website (Protected)",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "Accept",
+								"value": "application/json"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{jwt_token}}"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"name\": \"Nouveau Site Web\",\n    \"domain\": \"nouveau.example.com\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/websites/websites",
+							"host": ["{{base_url}}"],
+							"path": ["websites", "websites"]
+						},
+						"description": "Création d'un nouveau site web (JWT requis)"
+					}
+				},
+				{
+					"name": "Update Website (Protected)",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "Accept",
+								"value": "application/json"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{jwt_token}}"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"name\": \"Site Web Modifié\",\n    \"domain\": \"modifie.example.com\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/websites/websites/1",
+							"host": ["{{base_url}}"],
+							"path": ["websites", "websites", "1"]
+						},
+						"description": "Modification d'un site web (JWT requis)"
+					}
+				},
+				{
+					"name": "Delete Website (Protected)",
+					"request": {
+						"method": "DELETE",
+						"header": [
+							{
+								"key": "Accept",
+								"value": "application/json"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{jwt_token}}"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/websites/websites/1",
+							"host": ["{{base_url}}"],
+							"path": ["websites", "websites", "1"]
+						},
+						"description": "Suppression d'un site web (JWT requis)"
+					}
+				},
+				{
+					"name": "Websites Service Health",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Accept",
+								"value": "application/json"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/websites/health",
+							"host": ["{{base_url}}"],
+							"path": ["websites", "health"]
+						},
+						"description": "Health check du service websites"
+					}
+				}
+			]
+		},
+		{
+			"name": "📧 Communication Services",
+			"description": "Newsletters et contacts",
+			"item": [
+				{
+					"name": "Subscribe Newsletter",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "Accept",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"email\": \"subscriber@example.com\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/newsletters/subscribe",
+							"host": ["{{base_url}}"],
+							"path": ["api", "newsletters", "subscribe"]
+						},
+						"description": "Inscription à la newsletter (accès public)"
+					}
+				},
+				{
+					"name": "Contact Form",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "Accept",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"email\": \"contact@example.com\",\n    \"phone\": \"+33123456789\",\n    \"subject\": \"Demande d'information\",\n    \"message\": \"Bonjour, j'aimerais avoir plus d'informations sur vos services.\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/contacts/contacts",
+							"host": ["{{base_url}}"],
+							"path": ["api", "contacts", "contacts"]
+						},
+						"description": "Formulaire de contact (accès public)"
+					}
+				}
+			]
+		},
+		{
+			"name": "👨‍💼 Administration",
+			"description": "Endpoints d'administration (nécessitent des privilèges admin)",
+			"item": [
+				{
+					"name": "🛍️ Products Admin",
+					"item": [
+						{
+							"name": "Admin - Create Product",
+							"request": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json"
+									},
+									{
+										"key": "Accept",
+										"value": "application/json"
+									},
+									{
+										"key": "Authorization",
+										"value": "Bearer {{working_jwt_token}}"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n    \"name\": \"Nouveau Produit Admin\",\n    \"ref\": \"ADMIN-001\",\n    \"price_ht\": 99.99,\n    \"stock\": 50,\n    \"brand_id\": 1,\n    \"vat_id\": 1\n}"
+								},
+								"url": {
+									"raw": "{{base_url}}/api/products/admin/products",
+									"host": ["{{base_url}}"],
+									"path": ["api", "products", "admin", "products"]
+								},
+								"description": "Créer un nouveau produit (admin uniquement)"
+							}
+						},
+						{
+							"name": "Admin - List All Products",
+							"request": {
+								"method": "GET",
+								"header": [
+									{
+										"key": "Accept",
+										"value": "application/json"
+									},
+									{
+										"key": "Authorization",
+										"value": "Bearer {{working_jwt_token}}"
+									}
+								],
+								"url": {
+									"raw": "{{base_url}}/api/products/admin/products",
+									"host": ["{{base_url}}"],
+									"path": ["api", "products", "admin", "products"]
+								},
+								"description": "Liste admin de tous les produits"
+							}
+						}
+					]
+				},
+				{
+					"name": "📋 Orders Admin",
+					"item": [
+						{
+							"name": "Admin - List All Orders",
+							"request": {
+								"method": "GET",
+								"header": [
+									{
+										"key": "Accept",
+										"value": "application/json"
+									},
+									{
+										"key": "Authorization",
+										"value": "Bearer {{working_jwt_token}}"
+									}
+								],
+								"url": {
+									"raw": "{{base_url}}/api/orders/admin/orders",
+									"host": ["{{base_url}}"],
+									"path": ["api", "orders", "admin", "orders"]
+								},
+								"description": "Liste admin de toutes les commandes"
+							}
+						},
+						{
+							"name": "Admin - Update Order Status",
+							"request": {
+								"method": "PUT",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json"
+									},
+									{
+										"key": "Accept",
+										"value": "application/json"
+									},
+									{
+										"key": "Authorization",
+										"value": "Bearer {{working_jwt_token}}"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n    \"status_id\": 3,\n    \"notes\": \"Commande traitée et expédiée\"\n}"
+								},
+								"url": {
+									"raw": "{{base_url}}/api/orders/admin/orders/1",
+									"host": ["{{base_url}}"],
+									"path": ["api", "orders", "admin", "orders", "1"]
+								},
+								"description": "Mettre à jour le statut d'une commande"
+							}
+						}
+					]
+				},
+				{
+					"name": "🚚 Deliveries Admin",
+					"item": [
+						{
+							"name": "Admin - Delivery Statistics",
+							"request": {
+								"method": "GET",
+								"header": [
+									{
+										"key": "Accept",
+										"value": "application/json"
+									},
+									{
+										"key": "Authorization",
+										"value": "Bearer {{working_jwt_token}}"
+									}
+								],
+								"url": {
+									"raw": "{{base_url}}/api/deliveries/admin/deliveries/statistics",
+									"host": ["{{base_url}}"],
+									"path": ["api", "deliveries", "admin", "deliveries", "statistics"]
+								},
+								"description": "Statistiques des livraisons pour le dashboard admin"
+							}
+						},
+						{
+							"name": "Admin - List All Deliveries",
+							"request": {
+								"method": "GET",
+								"header": [
+									{
+										"key": "Accept",
+										"value": "application/json"
+									},
+									{
+										"key": "Authorization",
+										"value": "Bearer {{working_jwt_token}}"
+									}
+								],
+								"url": {
+									"raw": "{{base_url}}/api/deliveries/admin/deliveries",
+									"host": ["{{base_url}}"],
+									"path": ["api", "deliveries", "admin", "deliveries"]
+								},
+								"description": "Liste admin de toutes les livraisons"
+							}
+						}
+					]
+				},
+				{
+					"name": "🛠️ SAV Admin",
+					"item": [
+						{
+							"name": "Admin - Support Statistics",
+							"request": {
+								"method": "GET",
+								"header": [
+									{
+										"key": "Accept",
+										"value": "application/json"
+									},
+									{
+										"key": "Authorization",
+										"value": "Bearer {{working_jwt_token}}"
+									}
+								],
+								"url": {
+									"raw": "{{base_url}}/api/sav/tickets/statistics",
+									"host": ["{{base_url}}"],
+									"path": ["api", "sav", "tickets", "statistics"]
+								},
+								"description": "Statistiques des tickets de support"
+							}
+						},
+						{
+							"name": "Admin - Assign Ticket",
+							"request": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json"
+									},
+									{
+										"key": "Accept",
+										"value": "application/json"
+									},
+									{
+										"key": "Authorization",
+										"value": "Bearer {{working_jwt_token}}"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n    \"assigned_to\": 2\n}"
+								},
+								"url": {
+									"raw": "{{base_url}}/api/sav/tickets/1/assign",
+									"host": ["{{base_url}}"],
+									"path": ["api", "sav", "tickets", "1", "assign"]
+								},
+								"description": "Assigner un ticket à un agent"
+							}
+						}
+					]
+				}
+			]
+		},
+		{
+			"name": "🧪 E2E Workflow Tests",
+			"description": "Tests de bout en bout pour valider l'architecture asynchrone complète",
+			"item": [
+				{
+					"name": "Complete Purchase Workflow",
+					"item": [
+						{
+							"name": "1. Login User",
+							"request": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json"
+									},
+									{
+										"key": "Accept",
+										"value": "application/json"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n    \"email\": \"kylian@collect-verything.com\",\n    \"password\": \"password\"\n}"
+								},
+								"url": {
+									"raw": "{{base_url}}/api/auth/login",
+									"host": ["{{base_url}}"],
+									"path": ["api", "auth", "login"]
+								}
+							}
+						},
+						{
+							"name": "2. Browse Products",
+							"request": {
+								"method": "GET",
+								"header": [
+									{
+										"key": "Accept",
+										"value": "application/json"
+									}
+								],
+								"url": {
+									"raw": "{{base_url}}/api/products/products?limit=5",
+									"host": ["{{base_url}}"],
+									"path": ["api", "products", "products"],
+									"query": [
+										{
+											"key": "limit",
+											"value": "5"
+										}
+									]
+								}
+							}
+						},
+						{
+							"name": "3. Add to Basket",
+							"request": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json"
+									},
+									{
+										"key": "Accept",
+										"value": "application/json"
+									},
+									{
+										"key": "Authorization",
+										"value": "Bearer {{jwt_token}}"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n    \"product_id\": 1,\n    \"quantity\": 1\n}"
+								},
+								"url": {
+									"raw": "{{base_url}}/api/baskets/baskets/items",
+									"host": ["{{base_url}}"],
+									"path": ["api", "baskets", "baskets", "items"]
+								}
+							}
+						},
+						{
+							"name": "4. Apply Promo Code",
+							"request": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json"
+									},
+									{
+										"key": "Accept",
+										"value": "application/json"
+									},
+									{
+										"key": "Authorization",
+										"value": "Bearer {{jwt_token}}"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n    \"code\": \"WELCOME10\"\n}"
+								},
+								"url": {
+									"raw": "{{base_url}}/api/baskets/baskets/promo-codes",
+									"host": ["{{base_url}}"],
+									"path": ["api", "baskets", "baskets", "promo-codes"]
+								}
+							}
+						},
+						{
+							"name": "5. Create Order",
+							"request": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json"
+									},
+									{
+										"key": "Accept",
+										"value": "application/json"
+									},
+									{
+										"key": "Authorization",
+										"value": "Bearer {{jwt_token}}"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n    \"address_id\": 1,\n    \"payment_method\": \"credit_card\",\n    \"notes\": \"Test E2E workflow architecture asynchrone\"\n}"
+								},
+								"url": {
+									"raw": "{{base_url}}/api/orders/orders/create-from-basket",
+									"host": ["{{base_url}}"],
+									"path": ["api", "orders", "orders", "create-from-basket"]
+								}
+							}
+						},
+						{
+							"name": "6. Track Order",
+							"request": {
+								"method": "GET",
+								"header": [
+									{
+										"key": "Accept",
+										"value": "application/json"
+									},
+									{
+										"key": "Authorization",
+										"value": "Bearer {{jwt_token}}"
+									}
+								],
+								"url": {
+									"raw": "{{base_url}}/api/orders/orders",
+									"host": ["{{base_url}}"],
+									"path": ["api", "orders", "orders"]
+								}
+							}
+						}
+					]
+				}
+			]
+		}
+	],
+	"variable": [
+		{
+			"key": "base_url",
+			"value": "http://localhost",
+			"type": "string"
+		},
+		{
+			"key": "api_version",
+			"value": "v1",
+			"type": "string"
+		}
+	]
+}

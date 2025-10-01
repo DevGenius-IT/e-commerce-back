@@ -1,0 +1,117 @@
+name: Security Scanning
+
+on:
+  schedule:
+    - cron: '0 2 * * 1'  # Weekly on Monday at 2 AM
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  # Container image security scanning
+  container-security:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        service: [api-gateway, auth-service, products-service, baskets-service, orders-service]
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Build image for scanning
+        run: |
+          docker build -t ${{ matrix.service }}:scan \
+            -f services/${{ matrix.service }}/Dockerfile .
+
+      - name: Run Trivy vulnerability scanner
+        uses: aquasecurity/trivy-action@master
+        with:
+          image-ref: '${{ matrix.service }}:scan'
+          format: 'sarif'
+          output: 'trivy-${{ matrix.service }}.sarif'
+
+      - name: Upload Trivy scan results
+        uses: github/codeql-action/upload-sarif@v2
+        if: always()
+        with:
+          sarif_file: 'trivy-${{ matrix.service }}.sarif'
+          category: 'trivy-${{ matrix.service }}'
+
+  # Kubernetes manifests security scanning
+  k8s-security:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Run kubesec scan
+        run: |
+          docker run --rm -v $(pwd):/workspace kubesec/kubesec:latest scan /workspace/k8s/base/*.yaml
+
+      - name: Run kube-score
+        run: |
+          wget https://github.com/zegl/kube-score/releases/latest/download/kube-score_linux_amd64
+          chmod +x kube-score_linux_amd64
+          ./kube-score_linux_amd64 score k8s/base/*.yaml
+
+  # Dependency vulnerability scanning
+  dependency-security:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.3'
+
+      - name: Install Composer dependencies
+        run: |
+          cd shared && composer install
+          for service in services/*/; do
+            if [ -f "$service/composer.json" ]; then
+              cd $service && composer install && cd ../..
+            fi
+          done
+
+      - name: Run security audit
+        run: |
+          cd shared && composer audit
+          for service in services/*/; do
+            if [ -f "$service/composer.json" ]; then
+              cd $service && composer audit && cd ../..
+            fi
+          done
+
+  # SAST (Static Application Security Testing)
+  sast-scan:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Initialize CodeQL
+        uses: github/codeql-action/init@v2
+        with:
+          languages: php, javascript
+
+      - name: Perform CodeQL Analysis
+        uses: github/codeql-action/analyze@v2
+
+      - name: Run Semgrep
+        uses: returntocorp/semgrep-action@v1
+        with:
+          config: >-
+            p/security-audit
+            p/secrets
+            p/php
+          generateSarif: "1"
+
+      - name: Upload Semgrep results
+        uses: github/codeql-action/upload-sarif@v2
+        if: always()
+        with:
+          sarif_file: semgrep.sarif

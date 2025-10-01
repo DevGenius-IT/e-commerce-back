@@ -73,7 +73,7 @@ class AuthService
   public function validateToken(string $token)
   {
     try {
-      $user = JWTAuth::parseToken()->authenticate();
+      $user = JWTAuth::setToken($token)->authenticate();
       return [
         "valid" => true,
         "user" => $user,

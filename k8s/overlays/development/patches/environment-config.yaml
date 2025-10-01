@@ -1,0 +1,34 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: global-config
+data:
+  # Development environment settings
+  APP_ENV: "development"
+  APP_DEBUG: "true"
+  LOG_LEVEL: "debug"
+  
+  # Development database settings (less strict)
+  DB_CONNECTION: "mysql"
+  DB_PORT: "3306"
+  
+  # Development cache (no password for simplicity)
+  CACHE_DRIVER: "array"
+  
+  # Development queue (sync for immediate processing)
+  QUEUE_CONNECTION: "sync"
+  
+  # Development JWT (shorter TTL for testing)
+  JWT_TTL: "15"
+  JWT_REFRESH_TTL: "60"
+  
+  # Development API (higher rate limit for testing)
+  API_RATE_LIMIT: "1000"
+  
+  # Development monitoring (more verbose)
+  LOG_CHANNEL: "stdout"
+  PROMETHEUS_ENABLED: "false"
+  
+  # Development domains
+  FRONTEND_URL: "http://localhost:3000"
+  API_URL: "http://localhost/api"

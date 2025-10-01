@@ -25,6 +25,53 @@ class SetupRabbitMQCommand extends Command
     ];
 
     private array $queues = [
+        // Request queues for synchronous communication via RabbitMQ
+        'auth.requests' => [
+            'durable' => true,
+            'auto_delete' => false,
+            'routing_keys' => ['auth.request']
+        ],
+        'addresses.requests' => [
+            'durable' => true,
+            'auto_delete' => false,
+            'routing_keys' => ['addresses.request']
+        ],
+        'baskets.requests' => [
+            'durable' => true,
+            'auto_delete' => false,
+            'routing_keys' => ['baskets.request']
+        ],
+        'products.requests' => [
+            'durable' => true,
+            'auto_delete' => false,
+            'routing_keys' => ['products.request']
+        ],
+        'orders.requests' => [
+            'durable' => true,
+            'auto_delete' => false,
+            'routing_keys' => ['orders.request']
+        ],
+        'newsletters.requests' => [
+            'durable' => true,
+            'auto_delete' => false,
+            'routing_keys' => ['newsletters.request']
+        ],
+        'deliveries.requests' => [
+            'durable' => true,
+            'auto_delete' => false,
+            'routing_keys' => ['deliveries.request']
+        ],
+        'sav.requests' => [
+            'durable' => true,
+            'auto_delete' => false,
+            'routing_keys' => ['sav.request']
+        ],
+        'contacts.requests' => [
+            'durable' => true,
+            'auto_delete' => false,
+            'routing_keys' => ['contacts.request']
+        ],
+        // Event queues for asynchronous communication
         'auth.events' => [
             'durable' => true,
             'auto_delete' => false,
@@ -132,9 +179,9 @@ class SetupRabbitMQCommand extends Command
                 }
             }
 
-            // Declare queue with dead letter exchange if not the DLQ itself
+            // Declare queue with dead letter exchange only for event queues
             $arguments = [];
-            if ($name !== 'dead_letter_queue') {
+            if ($name !== 'dead_letter_queue' && strpos($name, '.events') !== false) {
                 $arguments = [
                     'x-dead-letter-exchange' => ['S', 'microservices.dlx'],
                     'x-dead-letter-routing-key' => ['S', 'dead_letter']

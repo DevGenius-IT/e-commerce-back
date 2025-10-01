@@ -1,3 +1,1255 @@
 [2025-09-08 15:07:08] local.INFO: RabbitMQ connection closed  
 [2025-09-08 15:07:14] local.INFO: RabbitMQ connection closed  
 [2025-09-08 15:07:21] local.INFO: RabbitMQ connection closed  
+[2025-09-10 14:50:22] local.ERROR: Class "Spatie\LaravelIgnition\IgnitionServiceProvider" not found {"exception":"[object] (Error(code: 0): Class \"Spatie\\LaravelIgnition\\IgnitionServiceProvider\" not found at /var/www/messages-broker/vendor/laravel/framework/src/Illuminate/Foundation/Application.php:961)
+[stacktrace]
+#0 /var/www/messages-broker/vendor/laravel/framework/src/Illuminate/Foundation/Application.php(893): Illuminate\\Foundation\\Application->resolveProvider('Spatie\\\\LaravelI...')
+#1 /var/www/messages-broker/vendor/laravel/framework/src/Illuminate/Foundation/ProviderRepository.php(75): Illuminate\\Foundation\\Application->register('Spatie\\\\LaravelI...')
+#2 /var/www/messages-broker/vendor/laravel/framework/src/Illuminate/Foundation/Application.php(871): Illuminate\\Foundation\\ProviderRepository->load(Array)
+#3 /var/www/messages-broker/vendor/laravel/framework/src/Illuminate/Foundation/Bootstrap/RegisterProviders.php(37): Illuminate\\Foundation\\Application->registerConfiguredProviders()
+#4 /var/www/messages-broker/vendor/laravel/framework/src/Illuminate/Foundation/Application.php(342): Illuminate\\Foundation\\Bootstrap\\RegisterProviders->bootstrap(Object(Illuminate\\Foundation\\Application))
+#5 /var/www/messages-broker/vendor/laravel/framework/src/Illuminate/Foundation/Console/Kernel.php(474): Illuminate\\Foundation\\Application->bootstrapWith(Array)
+#6 /var/www/messages-broker/vendor/laravel/framework/src/Illuminate/Foundation/Console/Kernel.php(196): Illuminate\\Foundation\\Console\\Kernel->bootstrap()
+#7 /var/www/messages-broker/artisan(16): Illuminate\\Foundation\\Console\\Kernel->handle(Object(Symfony\\Component\\Console\\Input\\ArgvInput), Object(Symfony\\Component\\Console\\Output\\ConsoleOutput))
+#8 {main}
+"} 
+[2025-09-11 10:36:59] local.ERROR: SQLSTATE[HY000] [1045] Access denied for user 'root'@'192.168.97.10' (using password: YES) (Connection: mysql, SQL: select exists (select 1 from information_schema.tables where table_schema = 'messages_broker' and table_name = 'migrations' and table_type in ('BASE TABLE', 'SYSTEM VERSIONED')) as `exists`) {"exception":"[object] (Illuminate\\Database\\QueryException(code: 1045): SQLSTATE[HY000] [1045] Access denied for user 'root'@'192.168.97.10' (using password: YES) (Connection: mysql, SQL: select exists (select 1 from information_schema.tables where table_schema = 'messages_broker' and table_name = 'migrations' and table_type in ('BASE TABLE', 'SYSTEM VERSIONED')) as `exists`) at /var/www/messages-broker/vendor/laravel/framework/src/Illuminate/Database/Connection.php:825)
+[stacktrace]
+#0 /var/www/messages-broker/vendor/laravel/framework/src/Illuminate/Database/Connection.php(779): Illuminate\\Database\\Connection->runQueryCallback('select exists (...', Array, Object(Closure))
+#1 /var/www/messages-broker/vendor/laravel/framework/src/Illuminate/Database/Connection.php(398): Illuminate\\Database\\Connection->run('select exists (...', Array, Object(Closure))
+#2 /var/www/messages-broker/vendor/laravel/framework/src/Illuminate/Database/Connection.php(344): Illuminate\\Database\\Connection->select('select exists (...', Array, true)
+#3 /var/www/messages-broker/vendor/laravel/framework/src/Illuminate/Database/Connection.php(361): Illuminate\\Database\\Connection->selectOne('select exists (...', Array, true)
+#4 /var/www/messages-broker/vendor/laravel/framework/src/Illuminate/Database/Schema/MySqlBuilder.php(45): Illuminate\\Database\\Connection->scalar('select exists (...')
+#5 /var/www/messages-broker/vendor/laravel/framework/src/Illuminate/Database/Migrations/DatabaseMigrationRepository.php(184): Illuminate\\Database\\Schema\\MySqlBuilder->hasTable('migrations')
+#6 /var/www/messages-broker/vendor/laravel/framework/src/Illuminate/Database/Migrations/Migrator.php(742): Illuminate\\Database\\Migrations\\DatabaseMigrationRepository->repositoryExists()
+#7 /var/www/messages-broker/vendor/laravel/framework/src/Illuminate/Database/Console/Migrations/MigrateCommand.php(165): Illuminate\\Database\\Migrations\\Migrator->repositoryExists()
+#8 /var/www/messages-broker/vendor/laravel/framework/src/Illuminate/Support/helpers.php(338): Illuminate\\Database\\Console\\Migrations\\MigrateCommand->Illuminate\\Database\\Console\\Migrations\\{closure}(1)
+#9 /var/www/messages-broker/vendor/laravel/framework/src/Illuminate/Database/Console/Migrations/MigrateCommand.php(165): retry(1, Object(Closure), 0, Object(Closure))
+#10 /var/www/messages-broker/vendor/laravel/framework/src/Illuminate/Database/Console/Migrations/MigrateCommand.php(141): Illuminate\\Database\\Console\\Migrations\\MigrateCommand->repositoryExists()
+#11 /var/www/messages-broker/vendor/laravel/framework/src/Illuminate/Database/Console/Migrations/MigrateCommand.php(111): Illuminate\\Database\\Console\\Migrations\\MigrateCommand->prepareDatabase()
+#12 /var/www/messages-broker/vendor/laravel/framework/src/Illuminate/Database/Migrations/Migrator.php(658): Illuminate\\Database\\Console\\Migrations\\MigrateCommand->Illuminate\\Database\\Console\\Migrations\\{closure}()
+#13 /var/www/messages-broker/vendor/laravel/framework/src/Illuminate/Database/Console/Migrations/MigrateCommand.php(110): Illuminate\\Database\\Migrations\\Migrator->usingConnection(NULL, Object(Closure))
+#14 /var/www/messages-broker/vendor/laravel/framework/src/Illuminate/Database/Console/Migrations/MigrateCommand.php(89): Illuminate\\Database\\Console\\Migrations\\MigrateCommand->runMigrations()
+#15 /var/www/messages-broker/vendor/laravel/framework/src/Illuminate/Container/BoundMethod.php(36): Illuminate\\Database\\Console\\Migrations\\MigrateCommand->handle()
+#16 /var/www/messages-broker/vendor/laravel/framework/src/Illuminate/Container/Util.php(43): Illuminate\\Container\\BoundMethod::Illuminate\\Container\\{closure}()
+#17 /var/www/messages-broker/vendor/laravel/framework/src/Illuminate/Container/BoundMethod.php(95): Illuminate\\Container\\Util::unwrapIfClosure(Object(Closure))
+#18 /var/www/messages-broker/vendor/laravel/framework/src/Illuminate/Container/BoundMethod.php(35): Illuminate\\Container\\BoundMethod::callBoundMethod(Object(Illuminate\\Foundation\\Application), Array, Object(Closure))
+#19 /var/www/messages-broker/vendor/laravel/framework/src/Illuminate/Container/Container.php(696): Illuminate\\Container\\BoundMethod::call(Object(Illuminate\\Foundation\\Application), Array, Array, NULL)
+#20 /var/www/messages-broker/vendor/laravel/framework/src/Illuminate/Console/Command.php(213): Illuminate\\Container\\Container->call(Array)
+#21 /var/www/messages-broker/vendor/symfony/console/Command/Command.php(318): Illuminate\\Console\\Command->execute(Object(Symfony\\Component\\Console\\Input\\ArgvInput), Object(Illuminate\\Console\\OutputStyle))
+#22 /var/www/messages-broker/vendor/laravel/framework/src/Illuminate/Console/Command.php(182): Symfony\\Component\\Console\\Command\\Command->run(Object(Symfony\\Component\\Console\\Input\\ArgvInput), Object(Illuminate\\Console\\OutputStyle))
+#23 /var/www/messages-broker/vendor/symfony/console/Application.php(1110): Illuminate\\Console\\Command->run(Object(Symfony\\Component\\Console\\Input\\ArgvInput), Object(Symfony\\Component\\Console\\Output\\ConsoleOutput))
+#24 /var/www/messages-broker/vendor/symfony/console/Application.php(359): Symfony\\Component\\Console\\Application->doRunCommand(Object(Illuminate\\Database\\Console\\Migrations\\MigrateCommand), Object(Symfony\\Component\\Console\\Input\\ArgvInput), Object(Symfony\\Component\\Console\\Output\\ConsoleOutput))
+#25 /var/www/messages-broker/vendor/symfony/console/Application.php(194): Symfony\\Component\\Console\\Application->doRun(Object(Symfony\\Component\\Console\\Input\\ArgvInput), Object(Symfony\\Component\\Console\\Output\\ConsoleOutput))
+#26 /var/www/messages-broker/vendor/laravel/framework/src/Illuminate/Foundation/Console/Kernel.php(198): Symfony\\Component\\Console\\Application->run(Object(Symfony\\Component\\Console\\Input\\ArgvInput), Object(Symfony\\Component\\Console\\Output\\ConsoleOutput))
+#27 /var/www/messages-broker/artisan(16): Illuminate\\Foundation\\Console\\Kernel->handle(Object(Symfony\\Component\\Console\\Input\\ArgvInput), Object(Symfony\\Component\\Console\\Output\\ConsoleOutput))
+#28 {main}
+
+[previous exception] [object] (PDOException(code: 1045): SQLSTATE[HY000] [1045] Access denied for user 'root'@'192.168.97.10' (using password: YES) at /var/www/messages-broker/vendor/laravel/framework/src/Illuminate/Database/Connectors/Connector.php:66)
+[stacktrace]
+#0 /var/www/messages-broker/vendor/laravel/framework/src/Illuminate/Database/Connectors/Connector.php(66): PDO->__construct('mysql:host=mess...', 'root', Object(SensitiveParameterValue), Array)
+#1 /var/www/messages-broker/vendor/laravel/framework/src/Illuminate/Database/Connectors/Connector.php(44): Illuminate\\Database\\Connectors\\Connector->createPdoConnection('mysql:host=mess...', 'root', Object(SensitiveParameterValue), Array)
+#2 /var/www/messages-broker/vendor/laravel/framework/src/Illuminate/Database/Connectors/MySqlConnector.php(24): Illuminate\\Database\\Connectors\\Connector->createConnection('mysql:host=mess...', Array, Array)
+#3 /var/www/messages-broker/vendor/laravel/framework/src/Illuminate/Database/Connectors/ConnectionFactory.php(185): Illuminate\\Database\\Connectors\\MySqlConnector->connect(Array)
+#4 [internal function]: Illuminate\\Database\\Connectors\\ConnectionFactory->Illuminate\\Database\\Connectors\\{closure}()
+#5 /var/www/messages-broker/vendor/laravel/framework/src/Illuminate/Database/Connection.php(1231): call_user_func(Object(Closure))
+#6 /var/www/messages-broker/vendor/laravel/framework/src/Illuminate/Database/Connection.php(1267): Illuminate\\Database\\Connection->getPdo()
+#7 /var/www/messages-broker/vendor/laravel/framework/src/Illuminate/Database/Connection.php(512): Illuminate\\Database\\Connection->getReadPdo()
+#8 /var/www/messages-broker/vendor/laravel/framework/src/Illuminate/Database/Connection.php(407): Illuminate\\Database\\Connection->getPdoForSelect(true)
+#9 /var/www/messages-broker/vendor/laravel/framework/src/Illuminate/Database/Connection.php(812): Illuminate\\Database\\Connection->Illuminate\\Database\\{closure}('select exists (...', Array)
+#10 /var/www/messages-broker/vendor/laravel/framework/src/Illuminate/Database/Connection.php(779): Illuminate\\Database\\Connection->runQueryCallback('select exists (...', Array, Object(Closure))
+#11 /var/www/messages-broker/vendor/laravel/framework/src/Illuminate/Database/Connection.php(398): Illuminate\\Database\\Connection->run('select exists (...', Array, Object(Closure))
+#12 /var/www/messages-broker/vendor/laravel/framework/src/Illuminate/Database/Connection.php(344): Illuminate\\Database\\Connection->select('select exists (...', Array, true)
+#13 /var/www/messages-broker/vendor/laravel/framework/src/Illuminate/Database/Connection.php(361): Illuminate\\Database\\Connection->selectOne('select exists (...', Array, true)
+#14 /var/www/messages-broker/vendor/laravel/framework/src/Illuminate/Database/Schema/MySqlBuilder.php(45): Illuminate\\Database\\Connection->scalar('select exists (...')
+#15 /var/www/messages-broker/vendor/laravel/framework/src/Illuminate/Database/Migrations/DatabaseMigrationRepository.php(184): Illuminate\\Database\\Schema\\MySqlBuilder->hasTable('migrations')
+#16 /var/www/messages-broker/vendor/laravel/framework/src/Illuminate/Database/Migrations/Migrator.php(742): Illuminate\\Database\\Migrations\\DatabaseMigrationRepository->repositoryExists()
+#17 /var/www/messages-broker/vendor/laravel/framework/src/Illuminate/Database/Console/Migrations/MigrateCommand.php(165): Illuminate\\Database\\Migrations\\Migrator->repositoryExists()
+#18 /var/www/messages-broker/vendor/laravel/framework/src/Illuminate/Support/helpers.php(338): Illuminate\\Database\\Console\\Migrations\\MigrateCommand->Illuminate\\Database\\Console\\Migrations\\{closure}(1)
+#19 /var/www/messages-broker/vendor/laravel/framework/src/Illuminate/Database/Console/Migrations/MigrateCommand.php(165): retry(1, Object(Closure), 0, Object(Closure))
+#20 /var/www/messages-broker/vendor/laravel/framework/src/Illuminate/Database/Console/Migrations/MigrateCommand.php(141): Illuminate\\Database\\Console\\Migrations\\MigrateCommand->repositoryExists()
+#21 /var/www/messages-broker/vendor/laravel/framework/src/Illuminate/Database/Console/Migrations/MigrateCommand.php(111): Illuminate\\Database\\Console\\Migrations\\MigrateCommand->prepareDatabase()
+#22 /var/www/messages-broker/vendor/laravel/framework/src/Illuminate/Database/Migrations/Migrator.php(658): Illuminate\\Database\\Console\\Migrations\\MigrateCommand->Illuminate\\Database\\Console\\Migrations\\{closure}()
+#23 /var/www/messages-broker/vendor/laravel/framework/src/Illuminate/Database/Console/Migrations/MigrateCommand.php(110): Illuminate\\Database\\Migrations\\Migrator->usingConnection(NULL, Object(Closure))
+#24 /var/www/messages-broker/vendor/laravel/framework/src/Illuminate/Database/Console/Migrations/MigrateCommand.php(89): Illuminate\\Database\\Console\\Migrations\\MigrateCommand->runMigrations()
+#25 /var/www/messages-broker/vendor/laravel/framework/src/Illuminate/Container/BoundMethod.php(36): Illuminate\\Database\\Console\\Migrations\\MigrateCommand->handle()
+#26 /var/www/messages-broker/vendor/laravel/framework/src/Illuminate/Container/Util.php(43): Illuminate\\Container\\BoundMethod::Illuminate\\Container\\{closure}()
+#27 /var/www/messages-broker/vendor/laravel/framework/src/Illuminate/Container/BoundMethod.php(95): Illuminate\\Container\\Util::unwrapIfClosure(Object(Closure))
+#28 /var/www/messages-broker/vendor/laravel/framework/src/Illuminate/Container/BoundMethod.php(35): Illuminate\\Container\\BoundMethod::callBoundMethod(Object(Illuminate\\Foundation\\Application), Array, Object(Closure))
+#29 /var/www/messages-broker/vendor/laravel/framework/src/Illuminate/Container/Container.php(696): Illuminate\\Container\\BoundMethod::call(Object(Illuminate\\Foundation\\Application), Array, Array, NULL)
+#30 /var/www/messages-broker/vendor/laravel/framework/src/Illuminate/Console/Command.php(213): Illuminate\\Container\\Container->call(Array)
+#31 /var/www/messages-broker/vendor/symfony/console/Command/Command.php(318): Illuminate\\Console\\Command->execute(Object(Symfony\\Component\\Console\\Input\\ArgvInput), Object(Illuminate\\Console\\OutputStyle))
+#32 /var/www/messages-broker/vendor/laravel/framework/src/Illuminate/Console/Command.php(182): Symfony\\Component\\Console\\Command\\Command->run(Object(Symfony\\Component\\Console\\Input\\ArgvInput), Object(Illuminate\\Console\\OutputStyle))
+#33 /var/www/messages-broker/vendor/symfony/console/Application.php(1110): Illuminate\\Console\\Command->run(Object(Symfony\\Component\\Console\\Input\\ArgvInput), Object(Symfony\\Component\\Console\\Output\\ConsoleOutput))
+#34 /var/www/messages-broker/vendor/symfony/console/Application.php(359): Symfony\\Component\\Console\\Application->doRunCommand(Object(Illuminate\\Database\\Console\\Migrations\\MigrateCommand), Object(Symfony\\Component\\Console\\Input\\ArgvInput), Object(Symfony\\Component\\Console\\Output\\ConsoleOutput))
+#35 /var/www/messages-broker/vendor/symfony/console/Application.php(194): Symfony\\Component\\Console\\Application->doRun(Object(Symfony\\Component\\Console\\Input\\ArgvInput), Object(Symfony\\Component\\Console\\Output\\ConsoleOutput))
+#36 /var/www/messages-broker/vendor/laravel/framework/src/Illuminate/Foundation/Console/Kernel.php(198): Symfony\\Component\\Console\\Application->run(Object(Symfony\\Component\\Console\\Input\\ArgvInput), Object(Symfony\\Component\\Console\\Output\\ConsoleOutput))
+#37 /var/www/messages-broker/artisan(16): Illuminate\\Foundation\\Console\\Kernel->handle(Object(Symfony\\Component\\Console\\Input\\ArgvInput), Object(Symfony\\Component\\Console\\Output\\ConsoleOutput))
+#38 {main}
+"} 
+[2025-09-11 10:36:59] local.INFO: RabbitMQ connection closed  
+[2025-09-11 10:37:00] local.INFO: RabbitMQ connection established successfully  
+[2025-09-11 10:37:00] local.ERROR: Call to undefined method App\Services\RabbitMQService::getChannel() {"exception":"[object] (Error(code: 0): Call to undefined method App\\Services\\RabbitMQService::getChannel() at /var/www/messages-broker/app/Console/Commands/SetupRabbitMQCommand.php:80)
+[stacktrace]
+#0 /var/www/messages-broker/vendor/laravel/framework/src/Illuminate/Container/BoundMethod.php(36): App\\Console\\Commands\\SetupRabbitMQCommand->handle()
+#1 /var/www/messages-broker/vendor/laravel/framework/src/Illuminate/Container/Util.php(43): Illuminate\\Container\\BoundMethod::Illuminate\\Container\\{closure}()
+#2 /var/www/messages-broker/vendor/laravel/framework/src/Illuminate/Container/BoundMethod.php(95): Illuminate\\Container\\Util::unwrapIfClosure(Object(Closure))
+#3 /var/www/messages-broker/vendor/laravel/framework/src/Illuminate/Container/BoundMethod.php(35): Illuminate\\Container\\BoundMethod::callBoundMethod(Object(Illuminate\\Foundation\\Application), Array, Object(Closure))
+#4 /var/www/messages-broker/vendor/laravel/framework/src/Illuminate/Container/Container.php(696): Illuminate\\Container\\BoundMethod::call(Object(Illuminate\\Foundation\\Application), Array, Array, NULL)
+#5 /var/www/messages-broker/vendor/laravel/framework/src/Illuminate/Console/Command.php(213): Illuminate\\Container\\Container->call(Array)
+#6 /var/www/messages-broker/vendor/symfony/console/Command/Command.php(318): Illuminate\\Console\\Command->execute(Object(Symfony\\Component\\Console\\Input\\ArgvInput), Object(Illuminate\\Console\\OutputStyle))
+#7 /var/www/messages-broker/vendor/laravel/framework/src/Illuminate/Console/Command.php(182): Symfony\\Component\\Console\\Command\\Command->run(Object(Symfony\\Component\\Console\\Input\\ArgvInput), Object(Illuminate\\Console\\OutputStyle))
+#8 /var/www/messages-broker/vendor/symfony/console/Application.php(1110): Illuminate\\Console\\Command->run(Object(Symfony\\Component\\Console\\Input\\ArgvInput), Object(Symfony\\Component\\Console\\Output\\ConsoleOutput))
+#9 /var/www/messages-broker/vendor/symfony/console/Application.php(359): Symfony\\Component\\Console\\Application->doRunCommand(Object(App\\Console\\Commands\\SetupRabbitMQCommand), Object(Symfony\\Component\\Console\\Input\\ArgvInput), Object(Symfony\\Component\\Console\\Output\\ConsoleOutput))
+#10 /var/www/messages-broker/vendor/symfony/console/Application.php(194): Symfony\\Component\\Console\\Application->doRun(Object(Symfony\\Component\\Console\\Input\\ArgvInput), Object(Symfony\\Component\\Console\\Output\\ConsoleOutput))
+#11 /var/www/messages-broker/vendor/laravel/framework/src/Illuminate/Foundation/Console/Kernel.php(198): Symfony\\Component\\Console\\Application->run(Object(Symfony\\Component\\Console\\Input\\ArgvInput), Object(Symfony\\Component\\Console\\Output\\ConsoleOutput))
+#12 /var/www/messages-broker/artisan(16): Illuminate\\Foundation\\Console\\Kernel->handle(Object(Symfony\\Component\\Console\\Input\\ArgvInput), Object(Symfony\\Component\\Console\\Output\\ConsoleOutput))
+#13 {main}
+"} 
+[2025-09-11 10:37:00] local.INFO: RabbitMQ connection closed  
+[2025-09-11 10:37:00] local.ERROR: There are no commands defined in the "app" namespace. {"exception":"[object] (Symfony\\Component\\Console\\Exception\\NamespaceNotFoundException(code: 0): There are no commands defined in the \"app\" namespace. at /var/www/messages-broker/vendor/symfony/console/Application.php:677)
+[stacktrace]
+#0 /var/www/messages-broker/vendor/symfony/console/Application.php(726): Symfony\\Component\\Console\\Application->findNamespace('app')
+#1 /var/www/messages-broker/vendor/laravel/framework/src/Illuminate/Console/Command.php(247): Symfony\\Component\\Console\\Application->find('app:consume-mes...')
+#2 /var/www/messages-broker/vendor/laravel/framework/src/Illuminate/Console/Concerns/CallsCommands.php(68): Illuminate\\Console\\Command->resolveCommand('app:consume-mes...')
+#3 /var/www/messages-broker/vendor/laravel/framework/src/Illuminate/Console/Concerns/CallsCommands.php(29): Illuminate\\Console\\Command->runCommand('app:consume-mes...', Array, Object(Illuminate\\Console\\OutputStyle))
+#4 /var/www/messages-broker/routes/console.php(12): Illuminate\\Console\\Command->call('app:consume-mes...', Array)
+#5 /var/www/messages-broker/vendor/laravel/framework/src/Illuminate/Container/BoundMethod.php(36): Illuminate\\Foundation\\Console\\ClosureCommand->{closure}(NULL)
+#6 /var/www/messages-broker/vendor/laravel/framework/src/Illuminate/Container/Util.php(43): Illuminate\\Container\\BoundMethod::Illuminate\\Container\\{closure}()
+#7 /var/www/messages-broker/vendor/laravel/framework/src/Illuminate/Container/BoundMethod.php(83): Illuminate\\Container\\Util::unwrapIfClosure(Object(Closure))
+#8 /var/www/messages-broker/vendor/laravel/framework/src/Illuminate/Container/BoundMethod.php(35): Illuminate\\Container\\BoundMethod::callBoundMethod(Object(Illuminate\\Foundation\\Application), Object(Closure), Object(Closure))
+#9 /var/www/messages-broker/vendor/laravel/framework/src/Illuminate/Container/Container.php(696): Illuminate\\Container\\BoundMethod::call(Object(Illuminate\\Foundation\\Application), Object(Closure), Array, NULL)
+#10 /var/www/messages-broker/vendor/laravel/framework/src/Illuminate/Foundation/Console/ClosureCommand.php(70): Illuminate\\Container\\Container->call(Object(Closure), Array)
+#11 /var/www/messages-broker/vendor/symfony/console/Command/Command.php(318): Illuminate\\Foundation\\Console\\ClosureCommand->execute(Object(Symfony\\Component\\Console\\Input\\ArgvInput), Object(Illuminate\\Console\\OutputStyle))
+#12 /var/www/messages-broker/vendor/laravel/framework/src/Illuminate/Console/Command.php(182): Symfony\\Component\\Console\\Command\\Command->run(Object(Symfony\\Component\\Console\\Input\\ArgvInput), Object(Illuminate\\Console\\OutputStyle))
+#13 /var/www/messages-broker/vendor/symfony/console/Application.php(1110): Illuminate\\Console\\Command->run(Object(Symfony\\Component\\Console\\Input\\ArgvInput), Object(Symfony\\Component\\Console\\Output\\ConsoleOutput))
+#14 /var/www/messages-broker/vendor/symfony/console/Application.php(359): Symfony\\Component\\Console\\Application->doRunCommand(Object(Illuminate\\Foundation\\Console\\ClosureCommand), Object(Symfony\\Component\\Console\\Input\\ArgvInput), Object(Symfony\\Component\\Console\\Output\\ConsoleOutput))
+#15 /var/www/messages-broker/vendor/symfony/console/Application.php(194): Symfony\\Component\\Console\\Application->doRun(Object(Symfony\\Component\\Console\\Input\\ArgvInput), Object(Symfony\\Component\\Console\\Output\\ConsoleOutput))
+#16 /var/www/messages-broker/vendor/laravel/framework/src/Illuminate/Foundation/Console/Kernel.php(198): Symfony\\Component\\Console\\Application->run(Object(Symfony\\Component\\Console\\Input\\ArgvInput), Object(Symfony\\Component\\Console\\Output\\ConsoleOutput))
+#17 /var/www/messages-broker/artisan(16): Illuminate\\Foundation\\Console\\Kernel->handle(Object(Symfony\\Component\\Console\\Input\\ArgvInput), Object(Symfony\\Component\\Console\\Output\\ConsoleOutput))
+#18 {main}
+"} 
+[2025-09-11 10:37:00] local.INFO: RabbitMQ connection closed  
+[2025-09-11 10:39:53] local.ERROR: SQLSTATE[HY000] [1045] Access denied for user 'root'@'192.168.97.9' (using password: YES) (Connection: mysql, SQL: select exists (select 1 from information_schema.tables where table_schema = 'messages_broker' and table_name = 'migrations' and table_type in ('BASE TABLE', 'SYSTEM VERSIONED')) as `exists`) {"exception":"[object] (Illuminate\\Database\\QueryException(code: 1045): SQLSTATE[HY000] [1045] Access denied for user 'root'@'192.168.97.9' (using password: YES) (Connection: mysql, SQL: select exists (select 1 from information_schema.tables where table_schema = 'messages_broker' and table_name = 'migrations' and table_type in ('BASE TABLE', 'SYSTEM VERSIONED')) as `exists`) at /var/www/messages-broker/vendor/laravel/framework/src/Illuminate/Database/Connection.php:825)
+[stacktrace]
+#0 /var/www/messages-broker/vendor/laravel/framework/src/Illuminate/Database/Connection.php(779): Illuminate\\Database\\Connection->runQueryCallback('select exists (...', Array, Object(Closure))
+#1 /var/www/messages-broker/vendor/laravel/framework/src/Illuminate/Database/Connection.php(398): Illuminate\\Database\\Connection->run('select exists (...', Array, Object(Closure))
+#2 /var/www/messages-broker/vendor/laravel/framework/src/Illuminate/Database/Connection.php(344): Illuminate\\Database\\Connection->select('select exists (...', Array, true)
+#3 /var/www/messages-broker/vendor/laravel/framework/src/Illuminate/Database/Connection.php(361): Illuminate\\Database\\Connection->selectOne('select exists (...', Array, true)
+#4 /var/www/messages-broker/vendor/laravel/framework/src/Illuminate/Database/Schema/MySqlBuilder.php(45): Illuminate\\Database\\Connection->scalar('select exists (...')
+#5 /var/www/messages-broker/vendor/laravel/framework/src/Illuminate/Database/Migrations/DatabaseMigrationRepository.php(184): Illuminate\\Database\\Schema\\MySqlBuilder->hasTable('migrations')
+#6 /var/www/messages-broker/vendor/laravel/framework/src/Illuminate/Database/Migrations/Migrator.php(742): Illuminate\\Database\\Migrations\\DatabaseMigrationRepository->repositoryExists()
+#7 /var/www/messages-broker/vendor/laravel/framework/src/Illuminate/Database/Console/Migrations/MigrateCommand.php(165): Illuminate\\Database\\Migrations\\Migrator->repositoryExists()
+#8 /var/www/messages-broker/vendor/laravel/framework/src/Illuminate/Support/helpers.php(338): Illuminate\\Database\\Console\\Migrations\\MigrateCommand->Illuminate\\Database\\Console\\Migrations\\{closure}(1)
+#9 /var/www/messages-broker/vendor/laravel/framework/src/Illuminate/Database/Console/Migrations/MigrateCommand.php(165): retry(1, Object(Closure), 0, Object(Closure))
+#10 /var/www/messages-broker/vendor/laravel/framework/src/Illuminate/Database/Console/Migrations/MigrateCommand.php(141): Illuminate\\Database\\Console\\Migrations\\MigrateCommand->repositoryExists()
+#11 /var/www/messages-broker/vendor/laravel/framework/src/Illuminate/Database/Console/Migrations/MigrateCommand.php(111): Illuminate\\Database\\Console\\Migrations\\MigrateCommand->prepareDatabase()
+#12 /var/www/messages-broker/vendor/laravel/framework/src/Illuminate/Database/Migrations/Migrator.php(658): Illuminate\\Database\\Console\\Migrations\\MigrateCommand->Illuminate\\Database\\Console\\Migrations\\{closure}()
+#13 /var/www/messages-broker/vendor/laravel/framework/src/Illuminate/Database/Console/Migrations/MigrateCommand.php(110): Illuminate\\Database\\Migrations\\Migrator->usingConnection(NULL, Object(Closure))
+#14 /var/www/messages-broker/vendor/laravel/framework/src/Illuminate/Database/Console/Migrations/MigrateCommand.php(89): Illuminate\\Database\\Console\\Migrations\\MigrateCommand->runMigrations()
+#15 /var/www/messages-broker/vendor/laravel/framework/src/Illuminate/Container/BoundMethod.php(36): Illuminate\\Database\\Console\\Migrations\\MigrateCommand->handle()
+#16 /var/www/messages-broker/vendor/laravel/framework/src/Illuminate/Container/Util.php(43): Illuminate\\Container\\BoundMethod::Illuminate\\Container\\{closure}()
+#17 /var/www/messages-broker/vendor/laravel/framework/src/Illuminate/Container/BoundMethod.php(95): Illuminate\\Container\\Util::unwrapIfClosure(Object(Closure))
+#18 /var/www/messages-broker/vendor/laravel/framework/src/Illuminate/Container/BoundMethod.php(35): Illuminate\\Container\\BoundMethod::callBoundMethod(Object(Illuminate\\Foundation\\Application), Array, Object(Closure))
+#19 /var/www/messages-broker/vendor/laravel/framework/src/Illuminate/Container/Container.php(696): Illuminate\\Container\\BoundMethod::call(Object(Illuminate\\Foundation\\Application), Array, Array, NULL)
+#20 /var/www/messages-broker/vendor/laravel/framework/src/Illuminate/Console/Command.php(213): Illuminate\\Container\\Container->call(Array)
+#21 /var/www/messages-broker/vendor/symfony/console/Command/Command.php(318): Illuminate\\Console\\Command->execute(Object(Symfony\\Component\\Console\\Input\\ArgvInput), Object(Illuminate\\Console\\OutputStyle))
+#22 /var/www/messages-broker/vendor/laravel/framework/src/Illuminate/Console/Command.php(182): Symfony\\Component\\Console\\Command\\Command->run(Object(Symfony\\Component\\Console\\Input\\ArgvInput), Object(Illuminate\\Console\\OutputStyle))
+#23 /var/www/messages-broker/vendor/symfony/console/Application.php(1110): Illuminate\\Console\\Command->run(Object(Symfony\\Component\\Console\\Input\\ArgvInput), Object(Symfony\\Component\\Console\\Output\\ConsoleOutput))
+#24 /var/www/messages-broker/vendor/symfony/console/Application.php(359): Symfony\\Component\\Console\\Application->doRunCommand(Object(Illuminate\\Database\\Console\\Migrations\\MigrateCommand), Object(Symfony\\Component\\Console\\Input\\ArgvInput), Object(Symfony\\Component\\Console\\Output\\ConsoleOutput))
+#25 /var/www/messages-broker/vendor/symfony/console/Application.php(194): Symfony\\Component\\Console\\Application->doRun(Object(Symfony\\Component\\Console\\Input\\ArgvInput), Object(Symfony\\Component\\Console\\Output\\ConsoleOutput))
+#26 /var/www/messages-broker/vendor/laravel/framework/src/Illuminate/Foundation/Console/Kernel.php(198): Symfony\\Component\\Console\\Application->run(Object(Symfony\\Component\\Console\\Input\\ArgvInput), Object(Symfony\\Component\\Console\\Output\\ConsoleOutput))
+#27 /var/www/messages-broker/artisan(16): Illuminate\\Foundation\\Console\\Kernel->handle(Object(Symfony\\Component\\Console\\Input\\ArgvInput), Object(Symfony\\Component\\Console\\Output\\ConsoleOutput))
+#28 {main}
+
+[previous exception] [object] (PDOException(code: 1045): SQLSTATE[HY000] [1045] Access denied for user 'root'@'192.168.97.9' (using password: YES) at /var/www/messages-broker/vendor/laravel/framework/src/Illuminate/Database/Connectors/Connector.php:66)
+[stacktrace]
+#0 /var/www/messages-broker/vendor/laravel/framework/src/Illuminate/Database/Connectors/Connector.php(66): PDO->__construct('mysql:host=mess...', 'root', Object(SensitiveParameterValue), Array)
+#1 /var/www/messages-broker/vendor/laravel/framework/src/Illuminate/Database/Connectors/Connector.php(44): Illuminate\\Database\\Connectors\\Connector->createPdoConnection('mysql:host=mess...', 'root', Object(SensitiveParameterValue), Array)
+#2 /var/www/messages-broker/vendor/laravel/framework/src/Illuminate/Database/Connectors/MySqlConnector.php(24): Illuminate\\Database\\Connectors\\Connector->createConnection('mysql:host=mess...', Array, Array)
+#3 /var/www/messages-broker/vendor/laravel/framework/src/Illuminate/Database/Connectors/ConnectionFactory.php(185): Illuminate\\Database\\Connectors\\MySqlConnector->connect(Array)
+#4 [internal function]: Illuminate\\Database\\Connectors\\ConnectionFactory->Illuminate\\Database\\Connectors\\{closure}()
+#5 /var/www/messages-broker/vendor/laravel/framework/src/Illuminate/Database/Connection.php(1231): call_user_func(Object(Closure))
+#6 /var/www/messages-broker/vendor/laravel/framework/src/Illuminate/Database/Connection.php(1267): Illuminate\\Database\\Connection->getPdo()
+#7 /var/www/messages-broker/vendor/laravel/framework/src/Illuminate/Database/Connection.php(512): Illuminate\\Database\\Connection->getReadPdo()
+#8 /var/www/messages-broker/vendor/laravel/framework/src/Illuminate/Database/Connection.php(407): Illuminate\\Database\\Connection->getPdoForSelect(true)
+#9 /var/www/messages-broker/vendor/laravel/framework/src/Illuminate/Database/Connection.php(812): Illuminate\\Database\\Connection->Illuminate\\Database\\{closure}('select exists (...', Array)
+#10 /var/www/messages-broker/vendor/laravel/framework/src/Illuminate/Database/Connection.php(779): Illuminate\\Database\\Connection->runQueryCallback('select exists (...', Array, Object(Closure))
+#11 /var/www/messages-broker/vendor/laravel/framework/src/Illuminate/Database/Connection.php(398): Illuminate\\Database\\Connection->run('select exists (...', Array, Object(Closure))
+#12 /var/www/messages-broker/vendor/laravel/framework/src/Illuminate/Database/Connection.php(344): Illuminate\\Database\\Connection->select('select exists (...', Array, true)
+#13 /var/www/messages-broker/vendor/laravel/framework/src/Illuminate/Database/Connection.php(361): Illuminate\\Database\\Connection->selectOne('select exists (...', Array, true)
+#14 /var/www/messages-broker/vendor/laravel/framework/src/Illuminate/Database/Schema/MySqlBuilder.php(45): Illuminate\\Database\\Connection->scalar('select exists (...')
+#15 /var/www/messages-broker/vendor/laravel/framework/src/Illuminate/Database/Migrations/DatabaseMigrationRepository.php(184): Illuminate\\Database\\Schema\\MySqlBuilder->hasTable('migrations')
+#16 /var/www/messages-broker/vendor/laravel/framework/src/Illuminate/Database/Migrations/Migrator.php(742): Illuminate\\Database\\Migrations\\DatabaseMigrationRepository->repositoryExists()
+#17 /var/www/messages-broker/vendor/laravel/framework/src/Illuminate/Database/Console/Migrations/MigrateCommand.php(165): Illuminate\\Database\\Migrations\\Migrator->repositoryExists()
+#18 /var/www/messages-broker/vendor/laravel/framework/src/Illuminate/Support/helpers.php(338): Illuminate\\Database\\Console\\Migrations\\MigrateCommand->Illuminate\\Database\\Console\\Migrations\\{closure}(1)
+#19 /var/www/messages-broker/vendor/laravel/framework/src/Illuminate/Database/Console/Migrations/MigrateCommand.php(165): retry(1, Object(Closure), 0, Object(Closure))
+#20 /var/www/messages-broker/vendor/laravel/framework/src/Illuminate/Database/Console/Migrations/MigrateCommand.php(141): Illuminate\\Database\\Console\\Migrations\\MigrateCommand->repositoryExists()
+#21 /var/www/messages-broker/vendor/laravel/framework/src/Illuminate/Database/Console/Migrations/MigrateCommand.php(111): Illuminate\\Database\\Console\\Migrations\\MigrateCommand->prepareDatabase()
+#22 /var/www/messages-broker/vendor/laravel/framework/src/Illuminate/Database/Migrations/Migrator.php(658): Illuminate\\Database\\Console\\Migrations\\MigrateCommand->Illuminate\\Database\\Console\\Migrations\\{closure}()
+#23 /var/www/messages-broker/vendor/laravel/framework/src/Illuminate/Database/Console/Migrations/MigrateCommand.php(110): Illuminate\\Database\\Migrations\\Migrator->usingConnection(NULL, Object(Closure))
+#24 /var/www/messages-broker/vendor/laravel/framework/src/Illuminate/Database/Console/Migrations/MigrateCommand.php(89): Illuminate\\Database\\Console\\Migrations\\MigrateCommand->runMigrations()
+#25 /var/www/messages-broker/vendor/laravel/framework/src/Illuminate/Container/BoundMethod.php(36): Illuminate\\Database\\Console\\Migrations\\MigrateCommand->handle()
+#26 /var/www/messages-broker/vendor/laravel/framework/src/Illuminate/Container/Util.php(43): Illuminate\\Container\\BoundMethod::Illuminate\\Container\\{closure}()
+#27 /var/www/messages-broker/vendor/laravel/framework/src/Illuminate/Container/BoundMethod.php(95): Illuminate\\Container\\Util::unwrapIfClosure(Object(Closure))
+#28 /var/www/messages-broker/vendor/laravel/framework/src/Illuminate/Container/BoundMethod.php(35): Illuminate\\Container\\BoundMethod::callBoundMethod(Object(Illuminate\\Foundation\\Application), Array, Object(Closure))
+#29 /var/www/messages-broker/vendor/laravel/framework/src/Illuminate/Container/Container.php(696): Illuminate\\Container\\BoundMethod::call(Object(Illuminate\\Foundation\\Application), Array, Array, NULL)
+#30 /var/www/messages-broker/vendor/laravel/framework/src/Illuminate/Console/Command.php(213): Illuminate\\Container\\Container->call(Array)
+#31 /var/www/messages-broker/vendor/symfony/console/Command/Command.php(318): Illuminate\\Console\\Command->execute(Object(Symfony\\Component\\Console\\Input\\ArgvInput), Object(Illuminate\\Console\\OutputStyle))
+#32 /var/www/messages-broker/vendor/laravel/framework/src/Illuminate/Console/Command.php(182): Symfony\\Component\\Console\\Command\\Command->run(Object(Symfony\\Component\\Console\\Input\\ArgvInput), Object(Illuminate\\Console\\OutputStyle))
+#33 /var/www/messages-broker/vendor/symfony/console/Application.php(1110): Illuminate\\Console\\Command->run(Object(Symfony\\Component\\Console\\Input\\ArgvInput), Object(Symfony\\Component\\Console\\Output\\ConsoleOutput))
+#34 /var/www/messages-broker/vendor/symfony/console/Application.php(359): Symfony\\Component\\Console\\Application->doRunCommand(Object(Illuminate\\Database\\Console\\Migrations\\MigrateCommand), Object(Symfony\\Component\\Console\\Input\\ArgvInput), Object(Symfony\\Component\\Console\\Output\\ConsoleOutput))
+#35 /var/www/messages-broker/vendor/symfony/console/Application.php(194): Symfony\\Component\\Console\\Application->doRun(Object(Symfony\\Component\\Console\\Input\\ArgvInput), Object(Symfony\\Component\\Console\\Output\\ConsoleOutput))
+#36 /var/www/messages-broker/vendor/laravel/framework/src/Illuminate/Foundation/Console/Kernel.php(198): Symfony\\Component\\Console\\Application->run(Object(Symfony\\Component\\Console\\Input\\ArgvInput), Object(Symfony\\Component\\Console\\Output\\ConsoleOutput))
+#37 /var/www/messages-broker/artisan(16): Illuminate\\Foundation\\Console\\Kernel->handle(Object(Symfony\\Component\\Console\\Input\\ArgvInput), Object(Symfony\\Component\\Console\\Output\\ConsoleOutput))
+#38 {main}
+"} 
+[2025-09-11 10:39:53] local.INFO: RabbitMQ connection closed  
+[2025-09-11 10:39:53] local.INFO: RabbitMQ connection established successfully  
+[2025-09-11 10:39:53] local.ERROR: Call to undefined method App\Services\RabbitMQService::getChannel() {"exception":"[object] (Error(code: 0): Call to undefined method App\\Services\\RabbitMQService::getChannel() at /var/www/messages-broker/app/Console/Commands/SetupRabbitMQCommand.php:80)
+[stacktrace]
+#0 /var/www/messages-broker/vendor/laravel/framework/src/Illuminate/Container/BoundMethod.php(36): App\\Console\\Commands\\SetupRabbitMQCommand->handle()
+#1 /var/www/messages-broker/vendor/laravel/framework/src/Illuminate/Container/Util.php(43): Illuminate\\Container\\BoundMethod::Illuminate\\Container\\{closure}()
+#2 /var/www/messages-broker/vendor/laravel/framework/src/Illuminate/Container/BoundMethod.php(95): Illuminate\\Container\\Util::unwrapIfClosure(Object(Closure))
+#3 /var/www/messages-broker/vendor/laravel/framework/src/Illuminate/Container/BoundMethod.php(35): Illuminate\\Container\\BoundMethod::callBoundMethod(Object(Illuminate\\Foundation\\Application), Array, Object(Closure))
+#4 /var/www/messages-broker/vendor/laravel/framework/src/Illuminate/Container/Container.php(696): Illuminate\\Container\\BoundMethod::call(Object(Illuminate\\Foundation\\Application), Array, Array, NULL)
+#5 /var/www/messages-broker/vendor/laravel/framework/src/Illuminate/Console/Command.php(213): Illuminate\\Container\\Container->call(Array)
+#6 /var/www/messages-broker/vendor/symfony/console/Command/Command.php(318): Illuminate\\Console\\Command->execute(Object(Symfony\\Component\\Console\\Input\\ArgvInput), Object(Illuminate\\Console\\OutputStyle))
+#7 /var/www/messages-broker/vendor/laravel/framework/src/Illuminate/Console/Command.php(182): Symfony\\Component\\Console\\Command\\Command->run(Object(Symfony\\Component\\Console\\Input\\ArgvInput), Object(Illuminate\\Console\\OutputStyle))
+#8 /var/www/messages-broker/vendor/symfony/console/Application.php(1110): Illuminate\\Console\\Command->run(Object(Symfony\\Component\\Console\\Input\\ArgvInput), Object(Symfony\\Component\\Console\\Output\\ConsoleOutput))
+#9 /var/www/messages-broker/vendor/symfony/console/Application.php(359): Symfony\\Component\\Console\\Application->doRunCommand(Object(App\\Console\\Commands\\SetupRabbitMQCommand), Object(Symfony\\Component\\Console\\Input\\ArgvInput), Object(Symfony\\Component\\Console\\Output\\ConsoleOutput))
+#10 /var/www/messages-broker/vendor/symfony/console/Application.php(194): Symfony\\Component\\Console\\Application->doRun(Object(Symfony\\Component\\Console\\Input\\ArgvInput), Object(Symfony\\Component\\Console\\Output\\ConsoleOutput))
+#11 /var/www/messages-broker/vendor/laravel/framework/src/Illuminate/Foundation/Console/Kernel.php(198): Symfony\\Component\\Console\\Application->run(Object(Symfony\\Component\\Console\\Input\\ArgvInput), Object(Symfony\\Component\\Console\\Output\\ConsoleOutput))
+#12 /var/www/messages-broker/artisan(16): Illuminate\\Foundation\\Console\\Kernel->handle(Object(Symfony\\Component\\Console\\Input\\ArgvInput), Object(Symfony\\Component\\Console\\Output\\ConsoleOutput))
+#13 {main}
+"} 
+[2025-09-11 10:39:53] local.INFO: RabbitMQ connection closed  
+[2025-09-11 10:39:53] local.ERROR: There are no commands defined in the "app" namespace. {"exception":"[object] (Symfony\\Component\\Console\\Exception\\NamespaceNotFoundException(code: 0): There are no commands defined in the \"app\" namespace. at /var/www/messages-broker/vendor/symfony/console/Application.php:677)
+[stacktrace]
+#0 /var/www/messages-broker/vendor/symfony/console/Application.php(726): Symfony\\Component\\Console\\Application->findNamespace('app')
+#1 /var/www/messages-broker/vendor/laravel/framework/src/Illuminate/Console/Command.php(247): Symfony\\Component\\Console\\Application->find('app:consume-mes...')
+#2 /var/www/messages-broker/vendor/laravel/framework/src/Illuminate/Console/Concerns/CallsCommands.php(68): Illuminate\\Console\\Command->resolveCommand('app:consume-mes...')
+#3 /var/www/messages-broker/vendor/laravel/framework/src/Illuminate/Console/Concerns/CallsCommands.php(29): Illuminate\\Console\\Command->runCommand('app:consume-mes...', Array, Object(Illuminate\\Console\\OutputStyle))
+#4 /var/www/messages-broker/routes/console.php(12): Illuminate\\Console\\Command->call('app:consume-mes...', Array)
+#5 /var/www/messages-broker/vendor/laravel/framework/src/Illuminate/Container/BoundMethod.php(36): Illuminate\\Foundation\\Console\\ClosureCommand->{closure}(NULL)
+#6 /var/www/messages-broker/vendor/laravel/framework/src/Illuminate/Container/Util.php(43): Illuminate\\Container\\BoundMethod::Illuminate\\Container\\{closure}()
+#7 /var/www/messages-broker/vendor/laravel/framework/src/Illuminate/Container/BoundMethod.php(83): Illuminate\\Container\\Util::unwrapIfClosure(Object(Closure))
+#8 /var/www/messages-broker/vendor/laravel/framework/src/Illuminate/Container/BoundMethod.php(35): Illuminate\\Container\\BoundMethod::callBoundMethod(Object(Illuminate\\Foundation\\Application), Object(Closure), Object(Closure))
+#9 /var/www/messages-broker/vendor/laravel/framework/src/Illuminate/Container/Container.php(696): Illuminate\\Container\\BoundMethod::call(Object(Illuminate\\Foundation\\Application), Object(Closure), Array, NULL)
+#10 /var/www/messages-broker/vendor/laravel/framework/src/Illuminate/Foundation/Console/ClosureCommand.php(70): Illuminate\\Container\\Container->call(Object(Closure), Array)
+#11 /var/www/messages-broker/vendor/symfony/console/Command/Command.php(318): Illuminate\\Foundation\\Console\\ClosureCommand->execute(Object(Symfony\\Component\\Console\\Input\\ArgvInput), Object(Illuminate\\Console\\OutputStyle))
+#12 /var/www/messages-broker/vendor/laravel/framework/src/Illuminate/Console/Command.php(182): Symfony\\Component\\Console\\Command\\Command->run(Object(Symfony\\Component\\Console\\Input\\ArgvInput), Object(Illuminate\\Console\\OutputStyle))
+#13 /var/www/messages-broker/vendor/symfony/console/Application.php(1110): Illuminate\\Console\\Command->run(Object(Symfony\\Component\\Console\\Input\\ArgvInput), Object(Symfony\\Component\\Console\\Output\\ConsoleOutput))
+#14 /var/www/messages-broker/vendor/symfony/console/Application.php(359): Symfony\\Component\\Console\\Application->doRunCommand(Object(Illuminate\\Foundation\\Console\\ClosureCommand), Object(Symfony\\Component\\Console\\Input\\ArgvInput), Object(Symfony\\Component\\Console\\Output\\ConsoleOutput))
+#15 /var/www/messages-broker/vendor/symfony/console/Application.php(194): Symfony\\Component\\Console\\Application->doRun(Object(Symfony\\Component\\Console\\Input\\ArgvInput), Object(Symfony\\Component\\Console\\Output\\ConsoleOutput))
+#16 /var/www/messages-broker/vendor/laravel/framework/src/Illuminate/Foundation/Console/Kernel.php(198): Symfony\\Component\\Console\\Application->run(Object(Symfony\\Component\\Console\\Input\\ArgvInput), Object(Symfony\\Component\\Console\\Output\\ConsoleOutput))
+#17 /var/www/messages-broker/artisan(16): Illuminate\\Foundation\\Console\\Kernel->handle(Object(Symfony\\Component\\Console\\Input\\ArgvInput), Object(Symfony\\Component\\Console\\Output\\ConsoleOutput))
+#18 {main}
+"} 
+[2025-09-11 10:39:53] local.INFO: RabbitMQ connection closed  
+[2025-09-11 10:55:23] local.INFO: RabbitMQ connection closed  
+[2025-09-11 11:15:08] local.ERROR: SQLSTATE[HY000] [1045] Access denied for user 'root'@'192.168.97.11' (using password: YES) (Connection: mysql, SQL: select exists (select 1 from information_schema.tables where table_schema = 'messages_broker' and table_name = 'migrations' and table_type in ('BASE TABLE', 'SYSTEM VERSIONED')) as `exists`) {"exception":"[object] (Illuminate\\Database\\QueryException(code: 1045): SQLSTATE[HY000] [1045] Access denied for user 'root'@'192.168.97.11' (using password: YES) (Connection: mysql, SQL: select exists (select 1 from information_schema.tables where table_schema = 'messages_broker' and table_name = 'migrations' and table_type in ('BASE TABLE', 'SYSTEM VERSIONED')) as `exists`) at /var/www/messages-broker/vendor/laravel/framework/src/Illuminate/Database/Connection.php:825)
+[stacktrace]
+#0 /var/www/messages-broker/vendor/laravel/framework/src/Illuminate/Database/Connection.php(779): Illuminate\\Database\\Connection->runQueryCallback('select exists (...', Array, Object(Closure))
+#1 /var/www/messages-broker/vendor/laravel/framework/src/Illuminate/Database/Connection.php(398): Illuminate\\Database\\Connection->run('select exists (...', Array, Object(Closure))
+#2 /var/www/messages-broker/vendor/laravel/framework/src/Illuminate/Database/Connection.php(344): Illuminate\\Database\\Connection->select('select exists (...', Array, true)
+#3 /var/www/messages-broker/vendor/laravel/framework/src/Illuminate/Database/Connection.php(361): Illuminate\\Database\\Connection->selectOne('select exists (...', Array, true)
+#4 /var/www/messages-broker/vendor/laravel/framework/src/Illuminate/Database/Schema/MySqlBuilder.php(45): Illuminate\\Database\\Connection->scalar('select exists (...')
+#5 /var/www/messages-broker/vendor/laravel/framework/src/Illuminate/Database/Migrations/DatabaseMigrationRepository.php(184): Illuminate\\Database\\Schema\\MySqlBuilder->hasTable('migrations')
+#6 /var/www/messages-broker/vendor/laravel/framework/src/Illuminate/Database/Migrations/Migrator.php(742): Illuminate\\Database\\Migrations\\DatabaseMigrationRepository->repositoryExists()
+#7 /var/www/messages-broker/vendor/laravel/framework/src/Illuminate/Database/Console/Migrations/MigrateCommand.php(165): Illuminate\\Database\\Migrations\\Migrator->repositoryExists()
+#8 /var/www/messages-broker/vendor/laravel/framework/src/Illuminate/Support/helpers.php(338): Illuminate\\Database\\Console\\Migrations\\MigrateCommand->Illuminate\\Database\\Console\\Migrations\\{closure}(1)
+#9 /var/www/messages-broker/vendor/laravel/framework/src/Illuminate/Database/Console/Migrations/MigrateCommand.php(165): retry(1, Object(Closure), 0, Object(Closure))
+#10 /var/www/messages-broker/vendor/laravel/framework/src/Illuminate/Database/Console/Migrations/MigrateCommand.php(141): Illuminate\\Database\\Console\\Migrations\\MigrateCommand->repositoryExists()
+#11 /var/www/messages-broker/vendor/laravel/framework/src/Illuminate/Database/Console/Migrations/MigrateCommand.php(111): Illuminate\\Database\\Console\\Migrations\\MigrateCommand->prepareDatabase()
+#12 /var/www/messages-broker/vendor/laravel/framework/src/Illuminate/Database/Migrations/Migrator.php(658): Illuminate\\Database\\Console\\Migrations\\MigrateCommand->Illuminate\\Database\\Console\\Migrations\\{closure}()
+#13 /var/www/messages-broker/vendor/laravel/framework/src/Illuminate/Database/Console/Migrations/MigrateCommand.php(110): Illuminate\\Database\\Migrations\\Migrator->usingConnection(NULL, Object(Closure))
+#14 /var/www/messages-broker/vendor/laravel/framework/src/Illuminate/Database/Console/Migrations/MigrateCommand.php(89): Illuminate\\Database\\Console\\Migrations\\MigrateCommand->runMigrations()
+#15 /var/www/messages-broker/vendor/laravel/framework/src/Illuminate/Container/BoundMethod.php(36): Illuminate\\Database\\Console\\Migrations\\MigrateCommand->handle()
+#16 /var/www/messages-broker/vendor/laravel/framework/src/Illuminate/Container/Util.php(43): Illuminate\\Container\\BoundMethod::Illuminate\\Container\\{closure}()
+#17 /var/www/messages-broker/vendor/laravel/framework/src/Illuminate/Container/BoundMethod.php(95): Illuminate\\Container\\Util::unwrapIfClosure(Object(Closure))
+#18 /var/www/messages-broker/vendor/laravel/framework/src/Illuminate/Container/BoundMethod.php(35): Illuminate\\Container\\BoundMethod::callBoundMethod(Object(Illuminate\\Foundation\\Application), Array, Object(Closure))
+#19 /var/www/messages-broker/vendor/laravel/framework/src/Illuminate/Container/Container.php(696): Illuminate\\Container\\BoundMethod::call(Object(Illuminate\\Foundation\\Application), Array, Array, NULL)
+#20 /var/www/messages-broker/vendor/laravel/framework/src/Illuminate/Console/Command.php(213): Illuminate\\Container\\Container->call(Array)
+#21 /var/www/messages-broker/vendor/symfony/console/Command/Command.php(318): Illuminate\\Console\\Command->execute(Object(Symfony\\Component\\Console\\Input\\ArgvInput), Object(Illuminate\\Console\\OutputStyle))
+#22 /var/www/messages-broker/vendor/laravel/framework/src/Illuminate/Console/Command.php(182): Symfony\\Component\\Console\\Command\\Command->run(Object(Symfony\\Component\\Console\\Input\\ArgvInput), Object(Illuminate\\Console\\OutputStyle))
+#23 /var/www/messages-broker/vendor/symfony/console/Application.php(1110): Illuminate\\Console\\Command->run(Object(Symfony\\Component\\Console\\Input\\ArgvInput), Object(Symfony\\Component\\Console\\Output\\ConsoleOutput))
+#24 /var/www/messages-broker/vendor/symfony/console/Application.php(359): Symfony\\Component\\Console\\Application->doRunCommand(Object(Illuminate\\Database\\Console\\Migrations\\MigrateCommand), Object(Symfony\\Component\\Console\\Input\\ArgvInput), Object(Symfony\\Component\\Console\\Output\\ConsoleOutput))
+#25 /var/www/messages-broker/vendor/symfony/console/Application.php(194): Symfony\\Component\\Console\\Application->doRun(Object(Symfony\\Component\\Console\\Input\\ArgvInput), Object(Symfony\\Component\\Console\\Output\\ConsoleOutput))
+#26 /var/www/messages-broker/vendor/laravel/framework/src/Illuminate/Foundation/Console/Kernel.php(198): Symfony\\Component\\Console\\Application->run(Object(Symfony\\Component\\Console\\Input\\ArgvInput), Object(Symfony\\Component\\Console\\Output\\ConsoleOutput))
+#27 /var/www/messages-broker/artisan(16): Illuminate\\Foundation\\Console\\Kernel->handle(Object(Symfony\\Component\\Console\\Input\\ArgvInput), Object(Symfony\\Component\\Console\\Output\\ConsoleOutput))
+#28 {main}
+
+[previous exception] [object] (PDOException(code: 1045): SQLSTATE[HY000] [1045] Access denied for user 'root'@'192.168.97.11' (using password: YES) at /var/www/messages-broker/vendor/laravel/framework/src/Illuminate/Database/Connectors/Connector.php:66)
+[stacktrace]
+#0 /var/www/messages-broker/vendor/laravel/framework/src/Illuminate/Database/Connectors/Connector.php(66): PDO->__construct('mysql:host=mess...', 'root', Object(SensitiveParameterValue), Array)
+#1 /var/www/messages-broker/vendor/laravel/framework/src/Illuminate/Database/Connectors/Connector.php(44): Illuminate\\Database\\Connectors\\Connector->createPdoConnection('mysql:host=mess...', 'root', Object(SensitiveParameterValue), Array)
+#2 /var/www/messages-broker/vendor/laravel/framework/src/Illuminate/Database/Connectors/MySqlConnector.php(24): Illuminate\\Database\\Connectors\\Connector->createConnection('mysql:host=mess...', Array, Array)
+#3 /var/www/messages-broker/vendor/laravel/framework/src/Illuminate/Database/Connectors/ConnectionFactory.php(185): Illuminate\\Database\\Connectors\\MySqlConnector->connect(Array)
+#4 [internal function]: Illuminate\\Database\\Connectors\\ConnectionFactory->Illuminate\\Database\\Connectors\\{closure}()
+#5 /var/www/messages-broker/vendor/laravel/framework/src/Illuminate/Database/Connection.php(1231): call_user_func(Object(Closure))
+#6 /var/www/messages-broker/vendor/laravel/framework/src/Illuminate/Database/Connection.php(1267): Illuminate\\Database\\Connection->getPdo()
+#7 /var/www/messages-broker/vendor/laravel/framework/src/Illuminate/Database/Connection.php(512): Illuminate\\Database\\Connection->getReadPdo()
+#8 /var/www/messages-broker/vendor/laravel/framework/src/Illuminate/Database/Connection.php(407): Illuminate\\Database\\Connection->getPdoForSelect(true)
+#9 /var/www/messages-broker/vendor/laravel/framework/src/Illuminate/Database/Connection.php(812): Illuminate\\Database\\Connection->Illuminate\\Database\\{closure}('select exists (...', Array)
+#10 /var/www/messages-broker/vendor/laravel/framework/src/Illuminate/Database/Connection.php(779): Illuminate\\Database\\Connection->runQueryCallback('select exists (...', Array, Object(Closure))
+#11 /var/www/messages-broker/vendor/laravel/framework/src/Illuminate/Database/Connection.php(398): Illuminate\\Database\\Connection->run('select exists (...', Array, Object(Closure))
+#12 /var/www/messages-broker/vendor/laravel/framework/src/Illuminate/Database/Connection.php(344): Illuminate\\Database\\Connection->select('select exists (...', Array, true)
+#13 /var/www/messages-broker/vendor/laravel/framework/src/Illuminate/Database/Connection.php(361): Illuminate\\Database\\Connection->selectOne('select exists (...', Array, true)
+#14 /var/www/messages-broker/vendor/laravel/framework/src/Illuminate/Database/Schema/MySqlBuilder.php(45): Illuminate\\Database\\Connection->scalar('select exists (...')
+#15 /var/www/messages-broker/vendor/laravel/framework/src/Illuminate/Database/Migrations/DatabaseMigrationRepository.php(184): Illuminate\\Database\\Schema\\MySqlBuilder->hasTable('migrations')
+#16 /var/www/messages-broker/vendor/laravel/framework/src/Illuminate/Database/Migrations/Migrator.php(742): Illuminate\\Database\\Migrations\\DatabaseMigrationRepository->repositoryExists()
+#17 /var/www/messages-broker/vendor/laravel/framework/src/Illuminate/Database/Console/Migrations/MigrateCommand.php(165): Illuminate\\Database\\Migrations\\Migrator->repositoryExists()
+#18 /var/www/messages-broker/vendor/laravel/framework/src/Illuminate/Support/helpers.php(338): Illuminate\\Database\\Console\\Migrations\\MigrateCommand->Illuminate\\Database\\Console\\Migrations\\{closure}(1)
+#19 /var/www/messages-broker/vendor/laravel/framework/src/Illuminate/Database/Console/Migrations/MigrateCommand.php(165): retry(1, Object(Closure), 0, Object(Closure))
+#20 /var/www/messages-broker/vendor/laravel/framework/src/Illuminate/Database/Console/Migrations/MigrateCommand.php(141): Illuminate\\Database\\Console\\Migrations\\MigrateCommand->repositoryExists()
+#21 /var/www/messages-broker/vendor/laravel/framework/src/Illuminate/Database/Console/Migrations/MigrateCommand.php(111): Illuminate\\Database\\Console\\Migrations\\MigrateCommand->prepareDatabase()
+#22 /var/www/messages-broker/vendor/laravel/framework/src/Illuminate/Database/Migrations/Migrator.php(658): Illuminate\\Database\\Console\\Migrations\\MigrateCommand->Illuminate\\Database\\Console\\Migrations\\{closure}()
+#23 /var/www/messages-broker/vendor/laravel/framework/src/Illuminate/Database/Console/Migrations/MigrateCommand.php(110): Illuminate\\Database\\Migrations\\Migrator->usingConnection(NULL, Object(Closure))
+#24 /var/www/messages-broker/vendor/laravel/framework/src/Illuminate/Database/Console/Migrations/MigrateCommand.php(89): Illuminate\\Database\\Console\\Migrations\\MigrateCommand->runMigrations()
+#25 /var/www/messages-broker/vendor/laravel/framework/src/Illuminate/Container/BoundMethod.php(36): Illuminate\\Database\\Console\\Migrations\\MigrateCommand->handle()
+#26 /var/www/messages-broker/vendor/laravel/framework/src/Illuminate/Container/Util.php(43): Illuminate\\Container\\BoundMethod::Illuminate\\Container\\{closure}()
+#27 /var/www/messages-broker/vendor/laravel/framework/src/Illuminate/Container/BoundMethod.php(95): Illuminate\\Container\\Util::unwrapIfClosure(Object(Closure))
+#28 /var/www/messages-broker/vendor/laravel/framework/src/Illuminate/Container/BoundMethod.php(35): Illuminate\\Container\\BoundMethod::callBoundMethod(Object(Illuminate\\Foundation\\Application), Array, Object(Closure))
+#29 /var/www/messages-broker/vendor/laravel/framework/src/Illuminate/Container/Container.php(696): Illuminate\\Container\\BoundMethod::call(Object(Illuminate\\Foundation\\Application), Array, Array, NULL)
+#30 /var/www/messages-broker/vendor/laravel/framework/src/Illuminate/Console/Command.php(213): Illuminate\\Container\\Container->call(Array)
+#31 /var/www/messages-broker/vendor/symfony/console/Command/Command.php(318): Illuminate\\Console\\Command->execute(Object(Symfony\\Component\\Console\\Input\\ArgvInput), Object(Illuminate\\Console\\OutputStyle))
+#32 /var/www/messages-broker/vendor/laravel/framework/src/Illuminate/Console/Command.php(182): Symfony\\Component\\Console\\Command\\Command->run(Object(Symfony\\Component\\Console\\Input\\ArgvInput), Object(Illuminate\\Console\\OutputStyle))
+#33 /var/www/messages-broker/vendor/symfony/console/Application.php(1110): Illuminate\\Console\\Command->run(Object(Symfony\\Component\\Console\\Input\\ArgvInput), Object(Symfony\\Component\\Console\\Output\\ConsoleOutput))
+#34 /var/www/messages-broker/vendor/symfony/console/Application.php(359): Symfony\\Component\\Console\\Application->doRunCommand(Object(Illuminate\\Database\\Console\\Migrations\\MigrateCommand), Object(Symfony\\Component\\Console\\Input\\ArgvInput), Object(Symfony\\Component\\Console\\Output\\ConsoleOutput))
+#35 /var/www/messages-broker/vendor/symfony/console/Application.php(194): Symfony\\Component\\Console\\Application->doRun(Object(Symfony\\Component\\Console\\Input\\ArgvInput), Object(Symfony\\Component\\Console\\Output\\ConsoleOutput))
+#36 /var/www/messages-broker/vendor/laravel/framework/src/Illuminate/Foundation/Console/Kernel.php(198): Symfony\\Component\\Console\\Application->run(Object(Symfony\\Component\\Console\\Input\\ArgvInput), Object(Symfony\\Component\\Console\\Output\\ConsoleOutput))
+#37 /var/www/messages-broker/artisan(16): Illuminate\\Foundation\\Console\\Kernel->handle(Object(Symfony\\Component\\Console\\Input\\ArgvInput), Object(Symfony\\Component\\Console\\Output\\ConsoleOutput))
+#38 {main}
+"} 
+[2025-09-11 11:15:08] local.INFO: RabbitMQ connection closed  
+[2025-09-11 11:15:08] local.INFO: RabbitMQ connection established successfully  
+[2025-09-11 11:15:08] local.ERROR: Call to undefined method App\Services\RabbitMQService::getChannel() {"exception":"[object] (Error(code: 0): Call to undefined method App\\Services\\RabbitMQService::getChannel() at /var/www/messages-broker/app/Console/Commands/SetupRabbitMQCommand.php:80)
+[stacktrace]
+#0 /var/www/messages-broker/vendor/laravel/framework/src/Illuminate/Container/BoundMethod.php(36): App\\Console\\Commands\\SetupRabbitMQCommand->handle()
+#1 /var/www/messages-broker/vendor/laravel/framework/src/Illuminate/Container/Util.php(43): Illuminate\\Container\\BoundMethod::Illuminate\\Container\\{closure}()
+#2 /var/www/messages-broker/vendor/laravel/framework/src/Illuminate/Container/BoundMethod.php(95): Illuminate\\Container\\Util::unwrapIfClosure(Object(Closure))
+#3 /var/www/messages-broker/vendor/laravel/framework/src/Illuminate/Container/BoundMethod.php(35): Illuminate\\Container\\BoundMethod::callBoundMethod(Object(Illuminate\\Foundation\\Application), Array, Object(Closure))
+#4 /var/www/messages-broker/vendor/laravel/framework/src/Illuminate/Container/Container.php(696): Illuminate\\Container\\BoundMethod::call(Object(Illuminate\\Foundation\\Application), Array, Array, NULL)
+#5 /var/www/messages-broker/vendor/laravel/framework/src/Illuminate/Console/Command.php(213): Illuminate\\Container\\Container->call(Array)
+#6 /var/www/messages-broker/vendor/symfony/console/Command/Command.php(318): Illuminate\\Console\\Command->execute(Object(Symfony\\Component\\Console\\Input\\ArgvInput), Object(Illuminate\\Console\\OutputStyle))
+#7 /var/www/messages-broker/vendor/laravel/framework/src/Illuminate/Console/Command.php(182): Symfony\\Component\\Console\\Command\\Command->run(Object(Symfony\\Component\\Console\\Input\\ArgvInput), Object(Illuminate\\Console\\OutputStyle))
+#8 /var/www/messages-broker/vendor/symfony/console/Application.php(1110): Illuminate\\Console\\Command->run(Object(Symfony\\Component\\Console\\Input\\ArgvInput), Object(Symfony\\Component\\Console\\Output\\ConsoleOutput))
+#9 /var/www/messages-broker/vendor/symfony/console/Application.php(359): Symfony\\Component\\Console\\Application->doRunCommand(Object(App\\Console\\Commands\\SetupRabbitMQCommand), Object(Symfony\\Component\\Console\\Input\\ArgvInput), Object(Symfony\\Component\\Console\\Output\\ConsoleOutput))
+#10 /var/www/messages-broker/vendor/symfony/console/Application.php(194): Symfony\\Component\\Console\\Application->doRun(Object(Symfony\\Component\\Console\\Input\\ArgvInput), Object(Symfony\\Component\\Console\\Output\\ConsoleOutput))
+#11 /var/www/messages-broker/vendor/laravel/framework/src/Illuminate/Foundation/Console/Kernel.php(198): Symfony\\Component\\Console\\Application->run(Object(Symfony\\Component\\Console\\Input\\ArgvInput), Object(Symfony\\Component\\Console\\Output\\ConsoleOutput))
+#12 /var/www/messages-broker/artisan(16): Illuminate\\Foundation\\Console\\Kernel->handle(Object(Symfony\\Component\\Console\\Input\\ArgvInput), Object(Symfony\\Component\\Console\\Output\\ConsoleOutput))
+#13 {main}
+"} 
+[2025-09-11 11:15:08] local.INFO: RabbitMQ connection closed  
+[2025-09-11 11:15:08] local.ERROR: There are no commands defined in the "app" namespace. {"exception":"[object] (Symfony\\Component\\Console\\Exception\\NamespaceNotFoundException(code: 0): There are no commands defined in the \"app\" namespace. at /var/www/messages-broker/vendor/symfony/console/Application.php:677)
+[stacktrace]
+#0 /var/www/messages-broker/vendor/symfony/console/Application.php(726): Symfony\\Component\\Console\\Application->findNamespace('app')
+#1 /var/www/messages-broker/vendor/laravel/framework/src/Illuminate/Console/Command.php(247): Symfony\\Component\\Console\\Application->find('app:consume-mes...')
+#2 /var/www/messages-broker/vendor/laravel/framework/src/Illuminate/Console/Concerns/CallsCommands.php(68): Illuminate\\Console\\Command->resolveCommand('app:consume-mes...')
+#3 /var/www/messages-broker/vendor/laravel/framework/src/Illuminate/Console/Concerns/CallsCommands.php(29): Illuminate\\Console\\Command->runCommand('app:consume-mes...', Array, Object(Illuminate\\Console\\OutputStyle))
+#4 /var/www/messages-broker/routes/console.php(12): Illuminate\\Console\\Command->call('app:consume-mes...', Array)
+#5 /var/www/messages-broker/vendor/laravel/framework/src/Illuminate/Container/BoundMethod.php(36): Illuminate\\Foundation\\Console\\ClosureCommand->{closure}(NULL)
+#6 /var/www/messages-broker/vendor/laravel/framework/src/Illuminate/Container/Util.php(43): Illuminate\\Container\\BoundMethod::Illuminate\\Container\\{closure}()
+#7 /var/www/messages-broker/vendor/laravel/framework/src/Illuminate/Container/BoundMethod.php(83): Illuminate\\Container\\Util::unwrapIfClosure(Object(Closure))
+#8 /var/www/messages-broker/vendor/laravel/framework/src/Illuminate/Container/BoundMethod.php(35): Illuminate\\Container\\BoundMethod::callBoundMethod(Object(Illuminate\\Foundation\\Application), Object(Closure), Object(Closure))
+#9 /var/www/messages-broker/vendor/laravel/framework/src/Illuminate/Container/Container.php(696): Illuminate\\Container\\BoundMethod::call(Object(Illuminate\\Foundation\\Application), Object(Closure), Array, NULL)
+#10 /var/www/messages-broker/vendor/laravel/framework/src/Illuminate/Foundation/Console/ClosureCommand.php(70): Illuminate\\Container\\Container->call(Object(Closure), Array)
+#11 /var/www/messages-broker/vendor/symfony/console/Command/Command.php(318): Illuminate\\Foundation\\Console\\ClosureCommand->execute(Object(Symfony\\Component\\Console\\Input\\ArgvInput), Object(Illuminate\\Console\\OutputStyle))
+#12 /var/www/messages-broker/vendor/laravel/framework/src/Illuminate/Console/Command.php(182): Symfony\\Component\\Console\\Command\\Command->run(Object(Symfony\\Component\\Console\\Input\\ArgvInput), Object(Illuminate\\Console\\OutputStyle))
+#13 /var/www/messages-broker/vendor/symfony/console/Application.php(1110): Illuminate\\Console\\Command->run(Object(Symfony\\Component\\Console\\Input\\ArgvInput), Object(Symfony\\Component\\Console\\Output\\ConsoleOutput))
+#14 /var/www/messages-broker/vendor/symfony/console/Application.php(359): Symfony\\Component\\Console\\Application->doRunCommand(Object(Illuminate\\Foundation\\Console\\ClosureCommand), Object(Symfony\\Component\\Console\\Input\\ArgvInput), Object(Symfony\\Component\\Console\\Output\\ConsoleOutput))
+#15 /var/www/messages-broker/vendor/symfony/console/Application.php(194): Symfony\\Component\\Console\\Application->doRun(Object(Symfony\\Component\\Console\\Input\\ArgvInput), Object(Symfony\\Component\\Console\\Output\\ConsoleOutput))
+#16 /var/www/messages-broker/vendor/laravel/framework/src/Illuminate/Foundation/Console/Kernel.php(198): Symfony\\Component\\Console\\Application->run(Object(Symfony\\Component\\Console\\Input\\ArgvInput), Object(Symfony\\Component\\Console\\Output\\ConsoleOutput))
+#17 /var/www/messages-broker/artisan(16): Illuminate\\Foundation\\Console\\Kernel->handle(Object(Symfony\\Component\\Console\\Input\\ArgvInput), Object(Symfony\\Component\\Console\\Output\\ConsoleOutput))
+#18 {main}
+"} 
+[2025-09-11 11:15:08] local.INFO: RabbitMQ connection closed  
+[2025-09-11 11:16:31] local.ERROR: SQLSTATE[HY000] [1045] Access denied for user 'root'@'192.168.97.11' (using password: YES) (Connection: mysql, SQL: select exists (select 1 from information_schema.tables where table_schema = 'messages_broker' and table_name = 'migrations' and table_type in ('BASE TABLE', 'SYSTEM VERSIONED')) as `exists`) {"exception":"[object] (Illuminate\\Database\\QueryException(code: 1045): SQLSTATE[HY000] [1045] Access denied for user 'root'@'192.168.97.11' (using password: YES) (Connection: mysql, SQL: select exists (select 1 from information_schema.tables where table_schema = 'messages_broker' and table_name = 'migrations' and table_type in ('BASE TABLE', 'SYSTEM VERSIONED')) as `exists`) at /var/www/messages-broker/vendor/laravel/framework/src/Illuminate/Database/Connection.php:825)
+[stacktrace]
+#0 /var/www/messages-broker/vendor/laravel/framework/src/Illuminate/Database/Connection.php(779): Illuminate\\Database\\Connection->runQueryCallback('select exists (...', Array, Object(Closure))
+#1 /var/www/messages-broker/vendor/laravel/framework/src/Illuminate/Database/Connection.php(398): Illuminate\\Database\\Connection->run('select exists (...', Array, Object(Closure))
+#2 /var/www/messages-broker/vendor/laravel/framework/src/Illuminate/Database/Connection.php(344): Illuminate\\Database\\Connection->select('select exists (...', Array, true)
+#3 /var/www/messages-broker/vendor/laravel/framework/src/Illuminate/Database/Connection.php(361): Illuminate\\Database\\Connection->selectOne('select exists (...', Array, true)
+#4 /var/www/messages-broker/vendor/laravel/framework/src/Illuminate/Database/Schema/MySqlBuilder.php(45): Illuminate\\Database\\Connection->scalar('select exists (...')
+#5 /var/www/messages-broker/vendor/laravel/framework/src/Illuminate/Database/Migrations/DatabaseMigrationRepository.php(184): Illuminate\\Database\\Schema\\MySqlBuilder->hasTable('migrations')
+#6 /var/www/messages-broker/vendor/laravel/framework/src/Illuminate/Database/Migrations/Migrator.php(742): Illuminate\\Database\\Migrations\\DatabaseMigrationRepository->repositoryExists()
+#7 /var/www/messages-broker/vendor/laravel/framework/src/Illuminate/Database/Console/Migrations/MigrateCommand.php(165): Illuminate\\Database\\Migrations\\Migrator->repositoryExists()
+#8 /var/www/messages-broker/vendor/laravel/framework/src/Illuminate/Support/helpers.php(338): Illuminate\\Database\\Console\\Migrations\\MigrateCommand->Illuminate\\Database\\Console\\Migrations\\{closure}(1)
+#9 /var/www/messages-broker/vendor/laravel/framework/src/Illuminate/Database/Console/Migrations/MigrateCommand.php(165): retry(1, Object(Closure), 0, Object(Closure))
+#10 /var/www/messages-broker/vendor/laravel/framework/src/Illuminate/Database/Console/Migrations/MigrateCommand.php(141): Illuminate\\Database\\Console\\Migrations\\MigrateCommand->repositoryExists()
+#11 /var/www/messages-broker/vendor/laravel/framework/src/Illuminate/Database/Console/Migrations/MigrateCommand.php(111): Illuminate\\Database\\Console\\Migrations\\MigrateCommand->prepareDatabase()
+#12 /var/www/messages-broker/vendor/laravel/framework/src/Illuminate/Database/Migrations/Migrator.php(658): Illuminate\\Database\\Console\\Migrations\\MigrateCommand->Illuminate\\Database\\Console\\Migrations\\{closure}()
+#13 /var/www/messages-broker/vendor/laravel/framework/src/Illuminate/Database/Console/Migrations/MigrateCommand.php(110): Illuminate\\Database\\Migrations\\Migrator->usingConnection(NULL, Object(Closure))
+#14 /var/www/messages-broker/vendor/laravel/framework/src/Illuminate/Database/Console/Migrations/MigrateCommand.php(89): Illuminate\\Database\\Console\\Migrations\\MigrateCommand->runMigrations()
+#15 /var/www/messages-broker/vendor/laravel/framework/src/Illuminate/Container/BoundMethod.php(36): Illuminate\\Database\\Console\\Migrations\\MigrateCommand->handle()
+#16 /var/www/messages-broker/vendor/laravel/framework/src/Illuminate/Container/Util.php(43): Illuminate\\Container\\BoundMethod::Illuminate\\Container\\{closure}()
+#17 /var/www/messages-broker/vendor/laravel/framework/src/Illuminate/Container/BoundMethod.php(95): Illuminate\\Container\\Util::unwrapIfClosure(Object(Closure))
+#18 /var/www/messages-broker/vendor/laravel/framework/src/Illuminate/Container/BoundMethod.php(35): Illuminate\\Container\\BoundMethod::callBoundMethod(Object(Illuminate\\Foundation\\Application), Array, Object(Closure))
+#19 /var/www/messages-broker/vendor/laravel/framework/src/Illuminate/Container/Container.php(696): Illuminate\\Container\\BoundMethod::call(Object(Illuminate\\Foundation\\Application), Array, Array, NULL)
+#20 /var/www/messages-broker/vendor/laravel/framework/src/Illuminate/Console/Command.php(213): Illuminate\\Container\\Container->call(Array)
+#21 /var/www/messages-broker/vendor/symfony/console/Command/Command.php(318): Illuminate\\Console\\Command->execute(Object(Symfony\\Component\\Console\\Input\\ArgvInput), Object(Illuminate\\Console\\OutputStyle))
+#22 /var/www/messages-broker/vendor/laravel/framework/src/Illuminate/Console/Command.php(182): Symfony\\Component\\Console\\Command\\Command->run(Object(Symfony\\Component\\Console\\Input\\ArgvInput), Object(Illuminate\\Console\\OutputStyle))
+#23 /var/www/messages-broker/vendor/symfony/console/Application.php(1110): Illuminate\\Console\\Command->run(Object(Symfony\\Component\\Console\\Input\\ArgvInput), Object(Symfony\\Component\\Console\\Output\\ConsoleOutput))
+#24 /var/www/messages-broker/vendor/symfony/console/Application.php(359): Symfony\\Component\\Console\\Application->doRunCommand(Object(Illuminate\\Database\\Console\\Migrations\\MigrateCommand), Object(Symfony\\Component\\Console\\Input\\ArgvInput), Object(Symfony\\Component\\Console\\Output\\ConsoleOutput))
+#25 /var/www/messages-broker/vendor/symfony/console/Application.php(194): Symfony\\Component\\Console\\Application->doRun(Object(Symfony\\Component\\Console\\Input\\ArgvInput), Object(Symfony\\Component\\Console\\Output\\ConsoleOutput))
+#26 /var/www/messages-broker/vendor/laravel/framework/src/Illuminate/Foundation/Console/Kernel.php(198): Symfony\\Component\\Console\\Application->run(Object(Symfony\\Component\\Console\\Input\\ArgvInput), Object(Symfony\\Component\\Console\\Output\\ConsoleOutput))
+#27 /var/www/messages-broker/artisan(16): Illuminate\\Foundation\\Console\\Kernel->handle(Object(Symfony\\Component\\Console\\Input\\ArgvInput), Object(Symfony\\Component\\Console\\Output\\ConsoleOutput))
+#28 {main}
+
+[previous exception] [object] (PDOException(code: 1045): SQLSTATE[HY000] [1045] Access denied for user 'root'@'192.168.97.11' (using password: YES) at /var/www/messages-broker/vendor/laravel/framework/src/Illuminate/Database/Connectors/Connector.php:66)
+[stacktrace]
+#0 /var/www/messages-broker/vendor/laravel/framework/src/Illuminate/Database/Connectors/Connector.php(66): PDO->__construct('mysql:host=mess...', 'root', Object(SensitiveParameterValue), Array)
+#1 /var/www/messages-broker/vendor/laravel/framework/src/Illuminate/Database/Connectors/Connector.php(44): Illuminate\\Database\\Connectors\\Connector->createPdoConnection('mysql:host=mess...', 'root', Object(SensitiveParameterValue), Array)
+#2 /var/www/messages-broker/vendor/laravel/framework/src/Illuminate/Database/Connectors/MySqlConnector.php(24): Illuminate\\Database\\Connectors\\Connector->createConnection('mysql:host=mess...', Array, Array)
+#3 /var/www/messages-broker/vendor/laravel/framework/src/Illuminate/Database/Connectors/ConnectionFactory.php(185): Illuminate\\Database\\Connectors\\MySqlConnector->connect(Array)
+#4 [internal function]: Illuminate\\Database\\Connectors\\ConnectionFactory->Illuminate\\Database\\Connectors\\{closure}()
+#5 /var/www/messages-broker/vendor/laravel/framework/src/Illuminate/Database/Connection.php(1231): call_user_func(Object(Closure))
+#6 /var/www/messages-broker/vendor/laravel/framework/src/Illuminate/Database/Connection.php(1267): Illuminate\\Database\\Connection->getPdo()
+#7 /var/www/messages-broker/vendor/laravel/framework/src/Illuminate/Database/Connection.php(512): Illuminate\\Database\\Connection->getReadPdo()
+#8 /var/www/messages-broker/vendor/laravel/framework/src/Illuminate/Database/Connection.php(407): Illuminate\\Database\\Connection->getPdoForSelect(true)
+#9 /var/www/messages-broker/vendor/laravel/framework/src/Illuminate/Database/Connection.php(812): Illuminate\\Database\\Connection->Illuminate\\Database\\{closure}('select exists (...', Array)
+#10 /var/www/messages-broker/vendor/laravel/framework/src/Illuminate/Database/Connection.php(779): Illuminate\\Database\\Connection->runQueryCallback('select exists (...', Array, Object(Closure))
+#11 /var/www/messages-broker/vendor/laravel/framework/src/Illuminate/Database/Connection.php(398): Illuminate\\Database\\Connection->run('select exists (...', Array, Object(Closure))
+#12 /var/www/messages-broker/vendor/laravel/framework/src/Illuminate/Database/Connection.php(344): Illuminate\\Database\\Connection->select('select exists (...', Array, true)
+#13 /var/www/messages-broker/vendor/laravel/framework/src/Illuminate/Database/Connection.php(361): Illuminate\\Database\\Connection->selectOne('select exists (...', Array, true)
+#14 /var/www/messages-broker/vendor/laravel/framework/src/Illuminate/Database/Schema/MySqlBuilder.php(45): Illuminate\\Database\\Connection->scalar('select exists (...')
+#15 /var/www/messages-broker/vendor/laravel/framework/src/Illuminate/Database/Migrations/DatabaseMigrationRepository.php(184): Illuminate\\Database\\Schema\\MySqlBuilder->hasTable('migrations')
+#16 /var/www/messages-broker/vendor/laravel/framework/src/Illuminate/Database/Migrations/Migrator.php(742): Illuminate\\Database\\Migrations\\DatabaseMigrationRepository->repositoryExists()
+#17 /var/www/messages-broker/vendor/laravel/framework/src/Illuminate/Database/Console/Migrations/MigrateCommand.php(165): Illuminate\\Database\\Migrations\\Migrator->repositoryExists()
+#18 /var/www/messages-broker/vendor/laravel/framework/src/Illuminate/Support/helpers.php(338): Illuminate\\Database\\Console\\Migrations\\MigrateCommand->Illuminate\\Database\\Console\\Migrations\\{closure}(1)
+#19 /var/www/messages-broker/vendor/laravel/framework/src/Illuminate/Database/Console/Migrations/MigrateCommand.php(165): retry(1, Object(Closure), 0, Object(Closure))
+#20 /var/www/messages-broker/vendor/laravel/framework/src/Illuminate/Database/Console/Migrations/MigrateCommand.php(141): Illuminate\\Database\\Console\\Migrations\\MigrateCommand->repositoryExists()
+#21 /var/www/messages-broker/vendor/laravel/framework/src/Illuminate/Database/Console/Migrations/MigrateCommand.php(111): Illuminate\\Database\\Console\\Migrations\\MigrateCommand->prepareDatabase()
+#22 /var/www/messages-broker/vendor/laravel/framework/src/Illuminate/Database/Migrations/Migrator.php(658): Illuminate\\Database\\Console\\Migrations\\MigrateCommand->Illuminate\\Database\\Console\\Migrations\\{closure}()
+#23 /var/www/messages-broker/vendor/laravel/framework/src/Illuminate/Database/Console/Migrations/MigrateCommand.php(110): Illuminate\\Database\\Migrations\\Migrator->usingConnection(NULL, Object(Closure))
+#24 /var/www/messages-broker/vendor/laravel/framework/src/Illuminate/Database/Console/Migrations/MigrateCommand.php(89): Illuminate\\Database\\Console\\Migrations\\MigrateCommand->runMigrations()
+#25 /var/www/messages-broker/vendor/laravel/framework/src/Illuminate/Container/BoundMethod.php(36): Illuminate\\Database\\Console\\Migrations\\MigrateCommand->handle()
+#26 /var/www/messages-broker/vendor/laravel/framework/src/Illuminate/Container/Util.php(43): Illuminate\\Container\\BoundMethod::Illuminate\\Container\\{closure}()
+#27 /var/www/messages-broker/vendor/laravel/framework/src/Illuminate/Container/BoundMethod.php(95): Illuminate\\Container\\Util::unwrapIfClosure(Object(Closure))
+#28 /var/www/messages-broker/vendor/laravel/framework/src/Illuminate/Container/BoundMethod.php(35): Illuminate\\Container\\BoundMethod::callBoundMethod(Object(Illuminate\\Foundation\\Application), Array, Object(Closure))
+#29 /var/www/messages-broker/vendor/laravel/framework/src/Illuminate/Container/Container.php(696): Illuminate\\Container\\BoundMethod::call(Object(Illuminate\\Foundation\\Application), Array, Array, NULL)
+#30 /var/www/messages-broker/vendor/laravel/framework/src/Illuminate/Console/Command.php(213): Illuminate\\Container\\Container->call(Array)
+#31 /var/www/messages-broker/vendor/symfony/console/Command/Command.php(318): Illuminate\\Console\\Command->execute(Object(Symfony\\Component\\Console\\Input\\ArgvInput), Object(Illuminate\\Console\\OutputStyle))
+#32 /var/www/messages-broker/vendor/laravel/framework/src/Illuminate/Console/Command.php(182): Symfony\\Component\\Console\\Command\\Command->run(Object(Symfony\\Component\\Console\\Input\\ArgvInput), Object(Illuminate\\Console\\OutputStyle))
+#33 /var/www/messages-broker/vendor/symfony/console/Application.php(1110): Illuminate\\Console\\Command->run(Object(Symfony\\Component\\Console\\Input\\ArgvInput), Object(Symfony\\Component\\Console\\Output\\ConsoleOutput))
+#34 /var/www/messages-broker/vendor/symfony/console/Application.php(359): Symfony\\Component\\Console\\Application->doRunCommand(Object(Illuminate\\Database\\Console\\Migrations\\MigrateCommand), Object(Symfony\\Component\\Console\\Input\\ArgvInput), Object(Symfony\\Component\\Console\\Output\\ConsoleOutput))
+#35 /var/www/messages-broker/vendor/symfony/console/Application.php(194): Symfony\\Component\\Console\\Application->doRun(Object(Symfony\\Component\\Console\\Input\\ArgvInput), Object(Symfony\\Component\\Console\\Output\\ConsoleOutput))
+#36 /var/www/messages-broker/vendor/laravel/framework/src/Illuminate/Foundation/Console/Kernel.php(198): Symfony\\Component\\Console\\Application->run(Object(Symfony\\Component\\Console\\Input\\ArgvInput), Object(Symfony\\Component\\Console\\Output\\ConsoleOutput))
+#37 /var/www/messages-broker/artisan(16): Illuminate\\Foundation\\Console\\Kernel->handle(Object(Symfony\\Component\\Console\\Input\\ArgvInput), Object(Symfony\\Component\\Console\\Output\\ConsoleOutput))
+#38 {main}
+"} 
+[2025-09-11 11:16:31] local.INFO: RabbitMQ connection closed  
+[2025-09-11 11:16:31] local.INFO: RabbitMQ connection established successfully  
+[2025-09-11 11:16:31] local.ERROR: Call to undefined method App\Services\RabbitMQService::getChannel() {"exception":"[object] (Error(code: 0): Call to undefined method App\\Services\\RabbitMQService::getChannel() at /var/www/messages-broker/app/Console/Commands/SetupRabbitMQCommand.php:80)
+[stacktrace]
+#0 /var/www/messages-broker/vendor/laravel/framework/src/Illuminate/Container/BoundMethod.php(36): App\\Console\\Commands\\SetupRabbitMQCommand->handle()
+#1 /var/www/messages-broker/vendor/laravel/framework/src/Illuminate/Container/Util.php(43): Illuminate\\Container\\BoundMethod::Illuminate\\Container\\{closure}()
+#2 /var/www/messages-broker/vendor/laravel/framework/src/Illuminate/Container/BoundMethod.php(95): Illuminate\\Container\\Util::unwrapIfClosure(Object(Closure))
+#3 /var/www/messages-broker/vendor/laravel/framework/src/Illuminate/Container/BoundMethod.php(35): Illuminate\\Container\\BoundMethod::callBoundMethod(Object(Illuminate\\Foundation\\Application), Array, Object(Closure))
+#4 /var/www/messages-broker/vendor/laravel/framework/src/Illuminate/Container/Container.php(696): Illuminate\\Container\\BoundMethod::call(Object(Illuminate\\Foundation\\Application), Array, Array, NULL)
+#5 /var/www/messages-broker/vendor/laravel/framework/src/Illuminate/Console/Command.php(213): Illuminate\\Container\\Container->call(Array)
+#6 /var/www/messages-broker/vendor/symfony/console/Command/Command.php(318): Illuminate\\Console\\Command->execute(Object(Symfony\\Component\\Console\\Input\\ArgvInput), Object(Illuminate\\Console\\OutputStyle))
+#7 /var/www/messages-broker/vendor/laravel/framework/src/Illuminate/Console/Command.php(182): Symfony\\Component\\Console\\Command\\Command->run(Object(Symfony\\Component\\Console\\Input\\ArgvInput), Object(Illuminate\\Console\\OutputStyle))
+#8 /var/www/messages-broker/vendor/symfony/console/Application.php(1110): Illuminate\\Console\\Command->run(Object(Symfony\\Component\\Console\\Input\\ArgvInput), Object(Symfony\\Component\\Console\\Output\\ConsoleOutput))
+#9 /var/www/messages-broker/vendor/symfony/console/Application.php(359): Symfony\\Component\\Console\\Application->doRunCommand(Object(App\\Console\\Commands\\SetupRabbitMQCommand), Object(Symfony\\Component\\Console\\Input\\ArgvInput), Object(Symfony\\Component\\Console\\Output\\ConsoleOutput))
+#10 /var/www/messages-broker/vendor/symfony/console/Application.php(194): Symfony\\Component\\Console\\Application->doRun(Object(Symfony\\Component\\Console\\Input\\ArgvInput), Object(Symfony\\Component\\Console\\Output\\ConsoleOutput))
+#11 /var/www/messages-broker/vendor/laravel/framework/src/Illuminate/Foundation/Console/Kernel.php(198): Symfony\\Component\\Console\\Application->run(Object(Symfony\\Component\\Console\\Input\\ArgvInput), Object(Symfony\\Component\\Console\\Output\\ConsoleOutput))
+#12 /var/www/messages-broker/artisan(16): Illuminate\\Foundation\\Console\\Kernel->handle(Object(Symfony\\Component\\Console\\Input\\ArgvInput), Object(Symfony\\Component\\Console\\Output\\ConsoleOutput))
+#13 {main}
+"} 
+[2025-09-11 11:16:31] local.INFO: RabbitMQ connection closed  
+[2025-09-11 11:16:31] local.ERROR: There are no commands defined in the "app" namespace. {"exception":"[object] (Symfony\\Component\\Console\\Exception\\NamespaceNotFoundException(code: 0): There are no commands defined in the \"app\" namespace. at /var/www/messages-broker/vendor/symfony/console/Application.php:677)
+[stacktrace]
+#0 /var/www/messages-broker/vendor/symfony/console/Application.php(726): Symfony\\Component\\Console\\Application->findNamespace('app')
+#1 /var/www/messages-broker/vendor/laravel/framework/src/Illuminate/Console/Command.php(247): Symfony\\Component\\Console\\Application->find('app:consume-mes...')
+#2 /var/www/messages-broker/vendor/laravel/framework/src/Illuminate/Console/Concerns/CallsCommands.php(68): Illuminate\\Console\\Command->resolveCommand('app:consume-mes...')
+#3 /var/www/messages-broker/vendor/laravel/framework/src/Illuminate/Console/Concerns/CallsCommands.php(29): Illuminate\\Console\\Command->runCommand('app:consume-mes...', Array, Object(Illuminate\\Console\\OutputStyle))
+#4 /var/www/messages-broker/routes/console.php(12): Illuminate\\Console\\Command->call('app:consume-mes...', Array)
+#5 /var/www/messages-broker/vendor/laravel/framework/src/Illuminate/Container/BoundMethod.php(36): Illuminate\\Foundation\\Console\\ClosureCommand->{closure}(NULL)
+#6 /var/www/messages-broker/vendor/laravel/framework/src/Illuminate/Container/Util.php(43): Illuminate\\Container\\BoundMethod::Illuminate\\Container\\{closure}()
+#7 /var/www/messages-broker/vendor/laravel/framework/src/Illuminate/Container/BoundMethod.php(83): Illuminate\\Container\\Util::unwrapIfClosure(Object(Closure))
+#8 /var/www/messages-broker/vendor/laravel/framework/src/Illuminate/Container/BoundMethod.php(35): Illuminate\\Container\\BoundMethod::callBoundMethod(Object(Illuminate\\Foundation\\Application), Object(Closure), Object(Closure))
+#9 /var/www/messages-broker/vendor/laravel/framework/src/Illuminate/Container/Container.php(696): Illuminate\\Container\\BoundMethod::call(Object(Illuminate\\Foundation\\Application), Object(Closure), Array, NULL)
+#10 /var/www/messages-broker/vendor/laravel/framework/src/Illuminate/Foundation/Console/ClosureCommand.php(70): Illuminate\\Container\\Container->call(Object(Closure), Array)
+#11 /var/www/messages-broker/vendor/symfony/console/Command/Command.php(318): Illuminate\\Foundation\\Console\\ClosureCommand->execute(Object(Symfony\\Component\\Console\\Input\\ArgvInput), Object(Illuminate\\Console\\OutputStyle))
+#12 /var/www/messages-broker/vendor/laravel/framework/src/Illuminate/Console/Command.php(182): Symfony\\Component\\Console\\Command\\Command->run(Object(Symfony\\Component\\Console\\Input\\ArgvInput), Object(Illuminate\\Console\\OutputStyle))
+#13 /var/www/messages-broker/vendor/symfony/console/Application.php(1110): Illuminate\\Console\\Command->run(Object(Symfony\\Component\\Console\\Input\\ArgvInput), Object(Symfony\\Component\\Console\\Output\\ConsoleOutput))
+#14 /var/www/messages-broker/vendor/symfony/console/Application.php(359): Symfony\\Component\\Console\\Application->doRunCommand(Object(Illuminate\\Foundation\\Console\\ClosureCommand), Object(Symfony\\Component\\Console\\Input\\ArgvInput), Object(Symfony\\Component\\Console\\Output\\ConsoleOutput))
+#15 /var/www/messages-broker/vendor/symfony/console/Application.php(194): Symfony\\Component\\Console\\Application->doRun(Object(Symfony\\Component\\Console\\Input\\ArgvInput), Object(Symfony\\Component\\Console\\Output\\ConsoleOutput))
+#16 /var/www/messages-broker/vendor/laravel/framework/src/Illuminate/Foundation/Console/Kernel.php(198): Symfony\\Component\\Console\\Application->run(Object(Symfony\\Component\\Console\\Input\\ArgvInput), Object(Symfony\\Component\\Console\\Output\\ConsoleOutput))
+#17 /var/www/messages-broker/artisan(16): Illuminate\\Foundation\\Console\\Kernel->handle(Object(Symfony\\Component\\Console\\Input\\ArgvInput), Object(Symfony\\Component\\Console\\Output\\ConsoleOutput))
+#18 {main}
+"} 
+[2025-09-11 11:16:31] local.INFO: RabbitMQ connection closed  
+[2025-09-11 11:25:51] local.INFO: RabbitMQ connection closed  
+[2025-09-11 11:25:51] local.INFO: RabbitMQ connection established successfully  
+[2025-09-11 11:25:51] local.ERROR: Call to undefined method App\Services\RabbitMQService::getChannel() {"exception":"[object] (Error(code: 0): Call to undefined method App\\Services\\RabbitMQService::getChannel() at /var/www/messages-broker/app/Console/Commands/SetupRabbitMQCommand.php:80)
+[stacktrace]
+#0 /var/www/messages-broker/vendor/laravel/framework/src/Illuminate/Container/BoundMethod.php(36): App\\Console\\Commands\\SetupRabbitMQCommand->handle()
+#1 /var/www/messages-broker/vendor/laravel/framework/src/Illuminate/Container/Util.php(43): Illuminate\\Container\\BoundMethod::Illuminate\\Container\\{closure}()
+#2 /var/www/messages-broker/vendor/laravel/framework/src/Illuminate/Container/BoundMethod.php(95): Illuminate\\Container\\Util::unwrapIfClosure(Object(Closure))
+#3 /var/www/messages-broker/vendor/laravel/framework/src/Illuminate/Container/BoundMethod.php(35): Illuminate\\Container\\BoundMethod::callBoundMethod(Object(Illuminate\\Foundation\\Application), Array, Object(Closure))
+#4 /var/www/messages-broker/vendor/laravel/framework/src/Illuminate/Container/Container.php(696): Illuminate\\Container\\BoundMethod::call(Object(Illuminate\\Foundation\\Application), Array, Array, NULL)
+#5 /var/www/messages-broker/vendor/laravel/framework/src/Illuminate/Console/Command.php(213): Illuminate\\Container\\Container->call(Array)
+#6 /var/www/messages-broker/vendor/symfony/console/Command/Command.php(318): Illuminate\\Console\\Command->execute(Object(Symfony\\Component\\Console\\Input\\ArgvInput), Object(Illuminate\\Console\\OutputStyle))
+#7 /var/www/messages-broker/vendor/laravel/framework/src/Illuminate/Console/Command.php(182): Symfony\\Component\\Console\\Command\\Command->run(Object(Symfony\\Component\\Console\\Input\\ArgvInput), Object(Illuminate\\Console\\OutputStyle))
+#8 /var/www/messages-broker/vendor/symfony/console/Application.php(1110): Illuminate\\Console\\Command->run(Object(Symfony\\Component\\Console\\Input\\ArgvInput), Object(Symfony\\Component\\Console\\Output\\ConsoleOutput))
+#9 /var/www/messages-broker/vendor/symfony/console/Application.php(359): Symfony\\Component\\Console\\Application->doRunCommand(Object(App\\Console\\Commands\\SetupRabbitMQCommand), Object(Symfony\\Component\\Console\\Input\\ArgvInput), Object(Symfony\\Component\\Console\\Output\\ConsoleOutput))
+#10 /var/www/messages-broker/vendor/symfony/console/Application.php(194): Symfony\\Component\\Console\\Application->doRun(Object(Symfony\\Component\\Console\\Input\\ArgvInput), Object(Symfony\\Component\\Console\\Output\\ConsoleOutput))
+#11 /var/www/messages-broker/vendor/laravel/framework/src/Illuminate/Foundation/Console/Kernel.php(198): Symfony\\Component\\Console\\Application->run(Object(Symfony\\Component\\Console\\Input\\ArgvInput), Object(Symfony\\Component\\Console\\Output\\ConsoleOutput))
+#12 /var/www/messages-broker/artisan(16): Illuminate\\Foundation\\Console\\Kernel->handle(Object(Symfony\\Component\\Console\\Input\\ArgvInput), Object(Symfony\\Component\\Console\\Output\\ConsoleOutput))
+#13 {main}
+"} 
+[2025-09-11 11:25:51] local.INFO: RabbitMQ connection closed  
+[2025-09-11 11:25:51] local.ERROR: There are no commands defined in the "app" namespace. {"exception":"[object] (Symfony\\Component\\Console\\Exception\\NamespaceNotFoundException(code: 0): There are no commands defined in the \"app\" namespace. at /var/www/messages-broker/vendor/symfony/console/Application.php:677)
+[stacktrace]
+#0 /var/www/messages-broker/vendor/symfony/console/Application.php(726): Symfony\\Component\\Console\\Application->findNamespace('app')
+#1 /var/www/messages-broker/vendor/laravel/framework/src/Illuminate/Console/Command.php(247): Symfony\\Component\\Console\\Application->find('app:consume-mes...')
+#2 /var/www/messages-broker/vendor/laravel/framework/src/Illuminate/Console/Concerns/CallsCommands.php(68): Illuminate\\Console\\Command->resolveCommand('app:consume-mes...')
+#3 /var/www/messages-broker/vendor/laravel/framework/src/Illuminate/Console/Concerns/CallsCommands.php(29): Illuminate\\Console\\Command->runCommand('app:consume-mes...', Array, Object(Illuminate\\Console\\OutputStyle))
+#4 /var/www/messages-broker/routes/console.php(12): Illuminate\\Console\\Command->call('app:consume-mes...', Array)
+#5 /var/www/messages-broker/vendor/laravel/framework/src/Illuminate/Container/BoundMethod.php(36): Illuminate\\Foundation\\Console\\ClosureCommand->{closure}(NULL)
+#6 /var/www/messages-broker/vendor/laravel/framework/src/Illuminate/Container/Util.php(43): Illuminate\\Container\\BoundMethod::Illuminate\\Container\\{closure}()
+#7 /var/www/messages-broker/vendor/laravel/framework/src/Illuminate/Container/BoundMethod.php(83): Illuminate\\Container\\Util::unwrapIfClosure(Object(Closure))
+#8 /var/www/messages-broker/vendor/laravel/framework/src/Illuminate/Container/BoundMethod.php(35): Illuminate\\Container\\BoundMethod::callBoundMethod(Object(Illuminate\\Foundation\\Application), Object(Closure), Object(Closure))
+#9 /var/www/messages-broker/vendor/laravel/framework/src/Illuminate/Container/Container.php(696): Illuminate\\Container\\BoundMethod::call(Object(Illuminate\\Foundation\\Application), Object(Closure), Array, NULL)
+#10 /var/www/messages-broker/vendor/laravel/framework/src/Illuminate/Foundation/Console/ClosureCommand.php(70): Illuminate\\Container\\Container->call(Object(Closure), Array)
+#11 /var/www/messages-broker/vendor/symfony/console/Command/Command.php(318): Illuminate\\Foundation\\Console\\ClosureCommand->execute(Object(Symfony\\Component\\Console\\Input\\ArgvInput), Object(Illuminate\\Console\\OutputStyle))
+#12 /var/www/messages-broker/vendor/laravel/framework/src/Illuminate/Console/Command.php(182): Symfony\\Component\\Console\\Command\\Command->run(Object(Symfony\\Component\\Console\\Input\\ArgvInput), Object(Illuminate\\Console\\OutputStyle))
+#13 /var/www/messages-broker/vendor/symfony/console/Application.php(1110): Illuminate\\Console\\Command->run(Object(Symfony\\Component\\Console\\Input\\ArgvInput), Object(Symfony\\Component\\Console\\Output\\ConsoleOutput))
+#14 /var/www/messages-broker/vendor/symfony/console/Application.php(359): Symfony\\Component\\Console\\Application->doRunCommand(Object(Illuminate\\Foundation\\Console\\ClosureCommand), Object(Symfony\\Component\\Console\\Input\\ArgvInput), Object(Symfony\\Component\\Console\\Output\\ConsoleOutput))
+#15 /var/www/messages-broker/vendor/symfony/console/Application.php(194): Symfony\\Component\\Console\\Application->doRun(Object(Symfony\\Component\\Console\\Input\\ArgvInput), Object(Symfony\\Component\\Console\\Output\\ConsoleOutput))
+#16 /var/www/messages-broker/vendor/laravel/framework/src/Illuminate/Foundation/Console/Kernel.php(198): Symfony\\Component\\Console\\Application->run(Object(Symfony\\Component\\Console\\Input\\ArgvInput), Object(Symfony\\Component\\Console\\Output\\ConsoleOutput))
+#17 /var/www/messages-broker/artisan(16): Illuminate\\Foundation\\Console\\Kernel->handle(Object(Symfony\\Component\\Console\\Input\\ArgvInput), Object(Symfony\\Component\\Console\\Output\\ConsoleOutput))
+#18 {main}
+"} 
+[2025-09-11 11:25:51] local.INFO: RabbitMQ connection closed  
+[2025-09-11 11:26:53] local.INFO: RabbitMQ connection closed  
+[2025-09-11 11:26:53] local.INFO: RabbitMQ connection established successfully  
+[2025-09-11 11:26:53] local.ERROR: Call to undefined method App\Services\RabbitMQService::getChannel() {"exception":"[object] (Error(code: 0): Call to undefined method App\\Services\\RabbitMQService::getChannel() at /var/www/messages-broker/app/Console/Commands/SetupRabbitMQCommand.php:80)
+[stacktrace]
+#0 /var/www/messages-broker/vendor/laravel/framework/src/Illuminate/Container/BoundMethod.php(36): App\\Console\\Commands\\SetupRabbitMQCommand->handle()
+#1 /var/www/messages-broker/vendor/laravel/framework/src/Illuminate/Container/Util.php(43): Illuminate\\Container\\BoundMethod::Illuminate\\Container\\{closure}()
+#2 /var/www/messages-broker/vendor/laravel/framework/src/Illuminate/Container/BoundMethod.php(95): Illuminate\\Container\\Util::unwrapIfClosure(Object(Closure))
+#3 /var/www/messages-broker/vendor/laravel/framework/src/Illuminate/Container/BoundMethod.php(35): Illuminate\\Container\\BoundMethod::callBoundMethod(Object(Illuminate\\Foundation\\Application), Array, Object(Closure))
+#4 /var/www/messages-broker/vendor/laravel/framework/src/Illuminate/Container/Container.php(696): Illuminate\\Container\\BoundMethod::call(Object(Illuminate\\Foundation\\Application), Array, Array, NULL)
+#5 /var/www/messages-broker/vendor/laravel/framework/src/Illuminate/Console/Command.php(213): Illuminate\\Container\\Container->call(Array)
+#6 /var/www/messages-broker/vendor/symfony/console/Command/Command.php(318): Illuminate\\Console\\Command->execute(Object(Symfony\\Component\\Console\\Input\\ArgvInput), Object(Illuminate\\Console\\OutputStyle))
+#7 /var/www/messages-broker/vendor/laravel/framework/src/Illuminate/Console/Command.php(182): Symfony\\Component\\Console\\Command\\Command->run(Object(Symfony\\Component\\Console\\Input\\ArgvInput), Object(Illuminate\\Console\\OutputStyle))
+#8 /var/www/messages-broker/vendor/symfony/console/Application.php(1110): Illuminate\\Console\\Command->run(Object(Symfony\\Component\\Console\\Input\\ArgvInput), Object(Symfony\\Component\\Console\\Output\\ConsoleOutput))
+#9 /var/www/messages-broker/vendor/symfony/console/Application.php(359): Symfony\\Component\\Console\\Application->doRunCommand(Object(App\\Console\\Commands\\SetupRabbitMQCommand), Object(Symfony\\Component\\Console\\Input\\ArgvInput), Object(Symfony\\Component\\Console\\Output\\ConsoleOutput))
+#10 /var/www/messages-broker/vendor/symfony/console/Application.php(194): Symfony\\Component\\Console\\Application->doRun(Object(Symfony\\Component\\Console\\Input\\ArgvInput), Object(Symfony\\Component\\Console\\Output\\ConsoleOutput))
+#11 /var/www/messages-broker/vendor/laravel/framework/src/Illuminate/Foundation/Console/Kernel.php(198): Symfony\\Component\\Console\\Application->run(Object(Symfony\\Component\\Console\\Input\\ArgvInput), Object(Symfony\\Component\\Console\\Output\\ConsoleOutput))
+#12 /var/www/messages-broker/artisan(16): Illuminate\\Foundation\\Console\\Kernel->handle(Object(Symfony\\Component\\Console\\Input\\ArgvInput), Object(Symfony\\Component\\Console\\Output\\ConsoleOutput))
+#13 {main}
+"} 
+[2025-09-11 11:26:53] local.INFO: RabbitMQ connection closed  
+[2025-09-11 11:26:53] local.ERROR: There are no commands defined in the "app" namespace. {"exception":"[object] (Symfony\\Component\\Console\\Exception\\NamespaceNotFoundException(code: 0): There are no commands defined in the \"app\" namespace. at /var/www/messages-broker/vendor/symfony/console/Application.php:677)
+[stacktrace]
+#0 /var/www/messages-broker/vendor/symfony/console/Application.php(726): Symfony\\Component\\Console\\Application->findNamespace('app')
+#1 /var/www/messages-broker/vendor/laravel/framework/src/Illuminate/Console/Command.php(247): Symfony\\Component\\Console\\Application->find('app:consume-mes...')
+#2 /var/www/messages-broker/vendor/laravel/framework/src/Illuminate/Console/Concerns/CallsCommands.php(68): Illuminate\\Console\\Command->resolveCommand('app:consume-mes...')
+#3 /var/www/messages-broker/vendor/laravel/framework/src/Illuminate/Console/Concerns/CallsCommands.php(29): Illuminate\\Console\\Command->runCommand('app:consume-mes...', Array, Object(Illuminate\\Console\\OutputStyle))
+#4 /var/www/messages-broker/routes/console.php(12): Illuminate\\Console\\Command->call('app:consume-mes...', Array)
+#5 /var/www/messages-broker/vendor/laravel/framework/src/Illuminate/Container/BoundMethod.php(36): Illuminate\\Foundation\\Console\\ClosureCommand->{closure}(NULL)
+#6 /var/www/messages-broker/vendor/laravel/framework/src/Illuminate/Container/Util.php(43): Illuminate\\Container\\BoundMethod::Illuminate\\Container\\{closure}()
+#7 /var/www/messages-broker/vendor/laravel/framework/src/Illuminate/Container/BoundMethod.php(83): Illuminate\\Container\\Util::unwrapIfClosure(Object(Closure))
+#8 /var/www/messages-broker/vendor/laravel/framework/src/Illuminate/Container/BoundMethod.php(35): Illuminate\\Container\\BoundMethod::callBoundMethod(Object(Illuminate\\Foundation\\Application), Object(Closure), Object(Closure))
+#9 /var/www/messages-broker/vendor/laravel/framework/src/Illuminate/Container/Container.php(696): Illuminate\\Container\\BoundMethod::call(Object(Illuminate\\Foundation\\Application), Object(Closure), Array, NULL)
+#10 /var/www/messages-broker/vendor/laravel/framework/src/Illuminate/Foundation/Console/ClosureCommand.php(70): Illuminate\\Container\\Container->call(Object(Closure), Array)
+#11 /var/www/messages-broker/vendor/symfony/console/Command/Command.php(318): Illuminate\\Foundation\\Console\\ClosureCommand->execute(Object(Symfony\\Component\\Console\\Input\\ArgvInput), Object(Illuminate\\Console\\OutputStyle))
+#12 /var/www/messages-broker/vendor/laravel/framework/src/Illuminate/Console/Command.php(182): Symfony\\Component\\Console\\Command\\Command->run(Object(Symfony\\Component\\Console\\Input\\ArgvInput), Object(Illuminate\\Console\\OutputStyle))
+#13 /var/www/messages-broker/vendor/symfony/console/Application.php(1110): Illuminate\\Console\\Command->run(Object(Symfony\\Component\\Console\\Input\\ArgvInput), Object(Symfony\\Component\\Console\\Output\\ConsoleOutput))
+#14 /var/www/messages-broker/vendor/symfony/console/Application.php(359): Symfony\\Component\\Console\\Application->doRunCommand(Object(Illuminate\\Foundation\\Console\\ClosureCommand), Object(Symfony\\Component\\Console\\Input\\ArgvInput), Object(Symfony\\Component\\Console\\Output\\ConsoleOutput))
+#15 /var/www/messages-broker/vendor/symfony/console/Application.php(194): Symfony\\Component\\Console\\Application->doRun(Object(Symfony\\Component\\Console\\Input\\ArgvInput), Object(Symfony\\Component\\Console\\Output\\ConsoleOutput))
+#16 /var/www/messages-broker/vendor/laravel/framework/src/Illuminate/Foundation/Console/Kernel.php(198): Symfony\\Component\\Console\\Application->run(Object(Symfony\\Component\\Console\\Input\\ArgvInput), Object(Symfony\\Component\\Console\\Output\\ConsoleOutput))
+#17 /var/www/messages-broker/artisan(16): Illuminate\\Foundation\\Console\\Kernel->handle(Object(Symfony\\Component\\Console\\Input\\ArgvInput), Object(Symfony\\Component\\Console\\Output\\ConsoleOutput))
+#18 {main}
+"} 
+[2025-09-11 11:26:53] local.INFO: RabbitMQ connection closed  
+[2025-09-11 11:34:20] local.INFO: RabbitMQ connection closed  
+[2025-09-11 11:34:20] local.INFO: RabbitMQ connection established successfully  
+[2025-09-11 11:34:20] local.INFO: RabbitMQ connection closed  
+[2025-09-11 11:34:20] local.INFO: RabbitMQ connection closed  
+[2025-09-11 11:34:20] local.ERROR: There are no commands defined in the "app" namespace. {"exception":"[object] (Symfony\\Component\\Console\\Exception\\NamespaceNotFoundException(code: 0): There are no commands defined in the \"app\" namespace. at /var/www/messages-broker/vendor/symfony/console/Application.php:677)
+[stacktrace]
+#0 /var/www/messages-broker/vendor/symfony/console/Application.php(726): Symfony\\Component\\Console\\Application->findNamespace('app')
+#1 /var/www/messages-broker/vendor/laravel/framework/src/Illuminate/Console/Command.php(247): Symfony\\Component\\Console\\Application->find('app:consume-mes...')
+#2 /var/www/messages-broker/vendor/laravel/framework/src/Illuminate/Console/Concerns/CallsCommands.php(68): Illuminate\\Console\\Command->resolveCommand('app:consume-mes...')
+#3 /var/www/messages-broker/vendor/laravel/framework/src/Illuminate/Console/Concerns/CallsCommands.php(29): Illuminate\\Console\\Command->runCommand('app:consume-mes...', Array, Object(Illuminate\\Console\\OutputStyle))
+#4 /var/www/messages-broker/routes/console.php(12): Illuminate\\Console\\Command->call('app:consume-mes...', Array)
+#5 /var/www/messages-broker/vendor/laravel/framework/src/Illuminate/Container/BoundMethod.php(36): Illuminate\\Foundation\\Console\\ClosureCommand->{closure}(NULL)
+#6 /var/www/messages-broker/vendor/laravel/framework/src/Illuminate/Container/Util.php(43): Illuminate\\Container\\BoundMethod::Illuminate\\Container\\{closure}()
+#7 /var/www/messages-broker/vendor/laravel/framework/src/Illuminate/Container/BoundMethod.php(83): Illuminate\\Container\\Util::unwrapIfClosure(Object(Closure))
+#8 /var/www/messages-broker/vendor/laravel/framework/src/Illuminate/Container/BoundMethod.php(35): Illuminate\\Container\\BoundMethod::callBoundMethod(Object(Illuminate\\Foundation\\Application), Object(Closure), Object(Closure))
+#9 /var/www/messages-broker/vendor/laravel/framework/src/Illuminate/Container/Container.php(696): Illuminate\\Container\\BoundMethod::call(Object(Illuminate\\Foundation\\Application), Object(Closure), Array, NULL)
+#10 /var/www/messages-broker/vendor/laravel/framework/src/Illuminate/Foundation/Console/ClosureCommand.php(70): Illuminate\\Container\\Container->call(Object(Closure), Array)
+#11 /var/www/messages-broker/vendor/symfony/console/Command/Command.php(318): Illuminate\\Foundation\\Console\\ClosureCommand->execute(Object(Symfony\\Component\\Console\\Input\\ArgvInput), Object(Illuminate\\Console\\OutputStyle))
+#12 /var/www/messages-broker/vendor/laravel/framework/src/Illuminate/Console/Command.php(182): Symfony\\Component\\Console\\Command\\Command->run(Object(Symfony\\Component\\Console\\Input\\ArgvInput), Object(Illuminate\\Console\\OutputStyle))
+#13 /var/www/messages-broker/vendor/symfony/console/Application.php(1110): Illuminate\\Console\\Command->run(Object(Symfony\\Component\\Console\\Input\\ArgvInput), Object(Symfony\\Component\\Console\\Output\\ConsoleOutput))
+#14 /var/www/messages-broker/vendor/symfony/console/Application.php(359): Symfony\\Component\\Console\\Application->doRunCommand(Object(Illuminate\\Foundation\\Console\\ClosureCommand), Object(Symfony\\Component\\Console\\Input\\ArgvInput), Object(Symfony\\Component\\Console\\Output\\ConsoleOutput))
+#15 /var/www/messages-broker/vendor/symfony/console/Application.php(194): Symfony\\Component\\Console\\Application->doRun(Object(Symfony\\Component\\Console\\Input\\ArgvInput), Object(Symfony\\Component\\Console\\Output\\ConsoleOutput))
+#16 /var/www/messages-broker/vendor/laravel/framework/src/Illuminate/Foundation/Console/Kernel.php(198): Symfony\\Component\\Console\\Application->run(Object(Symfony\\Component\\Console\\Input\\ArgvInput), Object(Symfony\\Component\\Console\\Output\\ConsoleOutput))
+#17 /var/www/messages-broker/artisan(16): Illuminate\\Foundation\\Console\\Kernel->handle(Object(Symfony\\Component\\Console\\Input\\ArgvInput), Object(Symfony\\Component\\Console\\Output\\ConsoleOutput))
+#18 {main}
+"} 
+[2025-09-11 11:34:20] local.INFO: RabbitMQ connection closed  
+[2025-09-11 11:42:25] local.INFO: RabbitMQ connection closed  
+[2025-09-11 11:42:25] local.INFO: RabbitMQ connection established successfully  
+[2025-09-11 11:42:25] local.INFO: RabbitMQ connection closed  
+[2025-09-11 11:42:25] local.INFO: RabbitMQ connection closed  
+[2025-09-11 11:42:25] local.INFO: RabbitMQ connection established successfully  
+[2025-09-11 11:42:25] local.INFO: Starting to consume messages from queue: auth.events  
+[2025-09-11 11:42:26] local.ERROR: Consumer error: The connection timed out after 1 sec while awaiting incoming data  
+[2025-09-11 11:42:26] local.INFO: RabbitMQ connection closed  
+[2025-09-23 08:22:05] local.INFO: RabbitMQ connection closed  
+[2025-09-23 08:22:05] local.INFO: RabbitMQ connection established successfully  
+[2025-09-23 08:22:05] local.INFO: RabbitMQ connection closed  
+[2025-09-23 08:22:05] local.INFO: RabbitMQ connection closed  
+[2025-09-23 08:22:05] local.INFO: RabbitMQ connection established successfully  
+[2025-09-23 08:22:05] local.INFO: Starting to consume messages from queue: auth.events  
+[2025-09-23 08:22:06] local.ERROR: Consumer error: The connection timed out after 1 sec while awaiting incoming data  
+[2025-09-23 08:22:06] local.INFO: RabbitMQ connection closed  
+[2025-09-23 09:28:41] local.INFO: RabbitMQ connection closed  
+[2025-09-23 09:28:42] local.INFO: RabbitMQ connection established successfully  
+[2025-09-23 09:28:42] local.INFO: RabbitMQ connection closed  
+[2025-09-23 09:28:42] local.INFO: RabbitMQ connection closed  
+[2025-09-23 09:28:42] local.INFO: RabbitMQ connection established successfully  
+[2025-09-23 09:28:42] local.INFO: Starting to consume messages from queue: auth.events  
+[2025-09-23 09:28:43] local.ERROR: Consumer error: The connection timed out after 1 sec while awaiting incoming data  
+[2025-09-23 09:28:43] local.INFO: RabbitMQ connection closed  
+[2025-09-23 10:21:36] local.INFO: RabbitMQ connection closed  
+[2025-09-23 10:21:36] local.INFO: RabbitMQ connection established successfully  
+[2025-09-23 10:21:36] local.INFO: RabbitMQ connection closed  
+[2025-09-23 10:21:36] local.INFO: RabbitMQ connection closed  
+[2025-09-23 10:21:36] local.INFO: RabbitMQ connection established successfully  
+[2025-09-23 10:21:36] local.INFO: Starting to consume messages from queue: auth.events  
+[2025-09-23 10:21:37] local.ERROR: Consumer error: The connection timed out after 1 sec while awaiting incoming data  
+[2025-09-23 10:21:37] local.INFO: RabbitMQ connection closed  
+[2025-09-23 10:24:28] local.INFO: RabbitMQ connection closed  
+[2025-09-23 10:24:28] local.INFO: RabbitMQ connection established successfully  
+[2025-09-23 10:24:28] local.INFO: RabbitMQ connection closed  
+[2025-09-23 10:24:28] local.INFO: RabbitMQ connection closed  
+[2025-09-23 10:24:29] local.INFO: RabbitMQ connection established successfully  
+[2025-09-23 10:24:29] local.INFO: Starting to consume messages from queue: auth.events  
+[2025-09-23 10:24:30] local.ERROR: Consumer error: The connection timed out after 1 sec while awaiting incoming data  
+[2025-09-23 10:24:30] local.INFO: RabbitMQ connection closed  
+[2025-09-23 10:27:40] local.INFO: RabbitMQ connection closed  
+[2025-09-23 10:27:40] local.INFO: RabbitMQ connection established successfully  
+[2025-09-23 10:27:40] local.INFO: RabbitMQ connection closed  
+[2025-09-23 10:27:40] local.INFO: RabbitMQ connection closed  
+[2025-09-23 10:27:40] local.INFO: RabbitMQ connection established successfully  
+[2025-09-23 10:27:40] local.INFO: Starting to consume messages from queue: auth.events  
+[2025-09-23 10:27:41] local.ERROR: Consumer error: The connection timed out after 1 sec while awaiting incoming data  
+[2025-09-23 10:27:41] local.INFO: RabbitMQ connection closed  
+[2025-09-23 11:12:02] local.INFO: RabbitMQ connection closed  
+[2025-09-23 11:12:02] local.INFO: RabbitMQ connection established successfully  
+[2025-09-23 11:12:02] local.INFO: RabbitMQ connection closed  
+[2025-09-23 11:12:02] local.INFO: RabbitMQ connection closed  
+[2025-09-23 11:12:02] local.INFO: RabbitMQ connection established successfully  
+[2025-09-23 11:12:02] local.INFO: Starting to consume messages from queue: auth.events  
+[2025-09-23 11:12:03] local.ERROR: Consumer error: The connection timed out after 1 sec while awaiting incoming data  
+[2025-09-23 11:12:03] local.INFO: RabbitMQ connection closed  
+[2025-09-23 11:15:43] local.INFO: RabbitMQ connection closed  
+[2025-09-23 11:15:43] local.INFO: RabbitMQ connection established successfully  
+[2025-09-23 11:15:43] local.INFO: RabbitMQ connection closed  
+[2025-09-23 11:15:43] local.INFO: RabbitMQ connection closed  
+[2025-09-23 11:15:43] local.INFO: RabbitMQ connection established successfully  
+[2025-09-23 11:15:43] local.INFO: Starting to consume messages from queue: auth.events  
+[2025-09-23 11:15:44] local.ERROR: Consumer error: The connection timed out after 1 sec while awaiting incoming data  
+[2025-09-23 11:15:44] local.INFO: RabbitMQ connection closed  
+[2025-09-23 11:23:40] local.INFO: RabbitMQ connection closed  
+[2025-09-23 11:23:40] local.INFO: RabbitMQ connection established successfully  
+[2025-09-23 11:23:40] local.INFO: RabbitMQ connection closed  
+[2025-09-23 11:23:40] local.INFO: RabbitMQ connection closed  
+[2025-09-23 11:23:40] local.INFO: RabbitMQ connection established successfully  
+[2025-09-23 11:23:40] local.INFO: Starting to consume messages from queue: auth.events  
+[2025-09-23 11:23:41] local.ERROR: Consumer error: The connection timed out after 1 sec while awaiting incoming data  
+[2025-09-23 11:23:41] local.INFO: RabbitMQ connection closed  
+[2025-09-23 11:35:36] local.INFO: RabbitMQ connection closed  
+[2025-09-23 11:35:36] local.INFO: RabbitMQ connection established successfully  
+[2025-09-23 11:35:36] local.INFO: RabbitMQ connection closed  
+[2025-09-23 11:35:36] local.INFO: RabbitMQ connection closed  
+[2025-09-23 11:35:36] local.INFO: RabbitMQ connection established successfully  
+[2025-09-23 11:35:36] local.INFO: Starting to consume messages from queue: auth.events  
+[2025-09-23 11:35:37] local.ERROR: Consumer error: The connection timed out after 1 sec while awaiting incoming data  
+[2025-09-23 11:35:37] local.INFO: RabbitMQ connection closed  
+[2025-09-23 11:37:59] local.INFO: RabbitMQ connection closed  
+[2025-09-23 11:37:59] local.INFO: RabbitMQ connection established successfully  
+[2025-09-23 11:37:59] local.INFO: RabbitMQ connection closed  
+[2025-09-23 11:37:59] local.INFO: RabbitMQ connection closed  
+[2025-09-23 11:37:59] local.INFO: RabbitMQ connection established successfully  
+[2025-09-23 11:37:59] local.INFO: Starting to consume messages from queue: auth.events  
+[2025-09-23 11:38:00] local.ERROR: Consumer error: The connection timed out after 1 sec while awaiting incoming data  
+[2025-09-23 11:38:00] local.INFO: RabbitMQ connection closed  
+[2025-09-23 11:57:26] local.INFO: RabbitMQ connection closed  
+[2025-09-23 11:57:26] local.INFO: RabbitMQ connection established successfully  
+[2025-09-23 11:57:26] local.INFO: RabbitMQ connection closed  
+[2025-09-23 11:57:26] local.INFO: RabbitMQ connection closed  
+[2025-09-23 11:57:26] local.INFO: RabbitMQ connection established successfully  
+[2025-09-23 11:57:26] local.INFO: Starting to consume messages from queue: auth.events  
+[2025-09-23 11:57:27] local.ERROR: Consumer error: The connection timed out after 1 sec while awaiting incoming data  
+[2025-09-23 11:57:27] local.INFO: RabbitMQ connection closed  
+[2025-09-23 11:59:45] local.INFO: RabbitMQ connection closed  
+[2025-09-23 11:59:46] local.INFO: RabbitMQ connection established successfully  
+[2025-09-23 11:59:46] local.INFO: RabbitMQ connection closed  
+[2025-09-23 11:59:46] local.INFO: RabbitMQ connection closed  
+[2025-09-23 11:59:46] local.INFO: RabbitMQ connection established successfully  
+[2025-09-23 11:59:46] local.INFO: Starting to consume messages from queue: auth.events  
+[2025-09-23 11:59:47] local.ERROR: Consumer error: The connection timed out after 1 sec while awaiting incoming data  
+[2025-09-23 11:59:47] local.INFO: RabbitMQ connection closed  
+[2025-09-23 12:14:32] local.INFO: RabbitMQ connection closed  
+[2025-09-23 12:14:32] local.INFO: RabbitMQ connection established successfully  
+[2025-09-23 12:14:32] local.INFO: RabbitMQ connection closed  
+[2025-09-23 12:14:32] local.INFO: RabbitMQ connection closed  
+[2025-09-23 12:14:32] local.INFO: RabbitMQ connection established successfully  
+[2025-09-23 12:14:32] local.INFO: Starting to consume messages from queue: auth.events  
+[2025-09-23 12:14:33] local.ERROR: Consumer error: The connection timed out after 1 sec while awaiting incoming data  
+[2025-09-23 12:14:33] local.INFO: RabbitMQ connection closed  
+[2025-09-23 12:15:45] local.INFO: RabbitMQ connection closed  
+[2025-09-23 12:15:45] local.INFO: RabbitMQ connection established successfully  
+[2025-09-23 12:15:45] local.INFO: RabbitMQ connection closed  
+[2025-09-23 12:15:45] local.INFO: RabbitMQ connection closed  
+[2025-09-23 12:15:45] local.INFO: RabbitMQ connection established successfully  
+[2025-09-23 12:15:45] local.INFO: Starting to consume messages from queue: auth.events  
+[2025-09-23 12:15:46] local.ERROR: Consumer error: The connection timed out after 1 sec while awaiting incoming data  
+[2025-09-23 12:15:46] local.INFO: RabbitMQ connection closed  
+[2025-09-23 12:38:58] local.INFO: RabbitMQ connection closed  
+[2025-09-23 12:38:58] local.INFO: RabbitMQ connection established successfully  
+[2025-09-23 12:38:58] local.INFO: RabbitMQ connection closed  
+[2025-09-23 12:38:58] local.INFO: RabbitMQ connection closed  
+[2025-09-23 12:38:58] local.INFO: RabbitMQ connection established successfully  
+[2025-09-23 12:38:58] local.INFO: Starting to consume messages from queue: auth.events  
+[2025-09-23 12:38:59] local.ERROR: Consumer error: The connection timed out after 1 sec while awaiting incoming data  
+[2025-09-23 12:38:59] local.INFO: RabbitMQ connection closed  
+[2025-09-23 12:43:20] local.INFO: RabbitMQ connection closed  
+[2025-09-23 12:43:20] local.INFO: RabbitMQ connection established successfully  
+[2025-09-23 12:43:20] local.INFO: RabbitMQ connection closed  
+[2025-09-23 12:43:20] local.INFO: RabbitMQ connection closed  
+[2025-09-23 12:43:20] local.INFO: RabbitMQ connection established successfully  
+[2025-09-23 12:43:20] local.INFO: Starting to consume messages from queue: auth.events  
+[2025-09-23 12:43:21] local.ERROR: Consumer error: The connection timed out after 1 sec while awaiting incoming data  
+[2025-09-23 12:43:21] local.INFO: RabbitMQ connection closed  
+[2025-09-23 22:47:42] local.INFO: RabbitMQ connection closed  
+[2025-09-23 22:47:43] local.INFO: RabbitMQ connection established successfully  
+[2025-09-23 22:47:43] local.INFO: RabbitMQ connection closed  
+[2025-09-23 22:47:43] local.INFO: RabbitMQ connection closed  
+[2025-09-23 22:47:43] local.INFO: RabbitMQ connection established successfully  
+[2025-09-23 22:47:43] local.INFO: Starting to consume messages from queue: auth.events  
+[2025-09-23 22:47:44] local.ERROR: Consumer error: The connection timed out after 1 sec while awaiting incoming data  
+[2025-09-23 22:47:44] local.INFO: RabbitMQ connection closed  
+[2025-09-23 23:12:00] local.INFO: RabbitMQ connection closed  
+[2025-09-23 23:12:00] local.INFO: RabbitMQ connection established successfully  
+[2025-09-23 23:12:00] local.INFO: RabbitMQ connection closed  
+[2025-09-23 23:12:00] local.INFO: RabbitMQ connection closed  
+[2025-09-23 23:12:00] local.INFO: RabbitMQ connection established successfully  
+[2025-09-23 23:12:00] local.INFO: Starting to consume messages from queue: auth.events  
+[2025-09-23 23:12:01] local.ERROR: Consumer error: The connection timed out after 1 sec while awaiting incoming data  
+[2025-09-23 23:12:01] local.INFO: RabbitMQ connection closed  
+[2025-09-23 23:14:22] local.INFO: RabbitMQ connection closed  
+[2025-09-23 23:14:22] local.INFO: RabbitMQ connection established successfully  
+[2025-09-23 23:14:22] local.INFO: RabbitMQ connection closed  
+[2025-09-23 23:14:22] local.INFO: RabbitMQ connection closed  
+[2025-09-23 23:14:22] local.INFO: RabbitMQ connection established successfully  
+[2025-09-23 23:14:22] local.INFO: Starting to consume messages from queue: auth.events  
+[2025-09-23 23:14:23] local.ERROR: Consumer error: The connection timed out after 1 sec while awaiting incoming data  
+[2025-09-23 23:14:23] local.INFO: RabbitMQ connection closed  
+[2025-09-23 23:25:11] local.INFO: RabbitMQ connection closed  
+[2025-09-23 23:25:11] local.INFO: RabbitMQ connection established successfully  
+[2025-09-23 23:25:11] local.INFO: RabbitMQ connection closed  
+[2025-09-23 23:25:11] local.INFO: RabbitMQ connection closed  
+[2025-09-23 23:25:11] local.INFO: RabbitMQ connection established successfully  
+[2025-09-23 23:25:11] local.INFO: Starting to consume messages from queue: auth.events  
+[2025-09-23 23:25:12] local.ERROR: Consumer error: The connection timed out after 1 sec while awaiting incoming data  
+[2025-09-23 23:25:12] local.INFO: RabbitMQ connection closed  
+[2025-09-23 23:25:28] local.INFO: RabbitMQ connection closed  
+[2025-09-23 23:25:28] local.INFO: RabbitMQ connection established successfully  
+[2025-09-23 23:25:28] local.INFO: RabbitMQ connection closed  
+[2025-09-23 23:25:28] local.INFO: RabbitMQ connection closed  
+[2025-09-23 23:25:28] local.INFO: RabbitMQ connection established successfully  
+[2025-09-23 23:25:28] local.INFO: Starting to consume messages from queue: auth.events  
+[2025-09-23 23:25:29] local.ERROR: Consumer error: The connection timed out after 1 sec while awaiting incoming data  
+[2025-09-23 23:25:29] local.INFO: RabbitMQ connection closed  
+[2025-09-24 07:13:19] local.INFO: RabbitMQ connection closed  
+[2025-09-24 07:13:19] local.INFO: RabbitMQ connection established successfully  
+[2025-09-24 07:13:19] local.INFO: RabbitMQ connection closed  
+[2025-09-24 07:13:19] local.INFO: RabbitMQ connection closed  
+[2025-09-24 07:13:19] local.INFO: RabbitMQ connection established successfully  
+[2025-09-24 07:13:19] local.INFO: Starting to consume messages from queue: auth.events  
+[2025-09-24 07:13:20] local.ERROR: Consumer error: The connection timed out after 1 sec while awaiting incoming data  
+[2025-09-24 07:13:20] local.INFO: RabbitMQ connection closed  
+[2025-09-24 07:24:18] local.INFO: RabbitMQ connection closed  
+[2025-09-24 07:24:19] local.INFO: RabbitMQ connection established successfully  
+[2025-09-24 07:24:19] local.INFO: RabbitMQ connection closed  
+[2025-09-24 07:24:19] local.INFO: RabbitMQ connection closed  
+[2025-09-24 07:24:19] local.INFO: RabbitMQ connection established successfully  
+[2025-09-24 07:24:19] local.INFO: Starting to consume messages from queue: auth.events  
+[2025-09-24 07:24:20] local.ERROR: Consumer error: The connection timed out after 1 sec while awaiting incoming data  
+[2025-09-24 07:24:20] local.INFO: RabbitMQ connection closed  
+[2025-09-24 07:25:24] local.INFO: RabbitMQ connection closed  
+[2025-09-24 07:25:24] local.INFO: RabbitMQ connection established successfully  
+[2025-09-24 07:25:24] local.INFO: RabbitMQ connection closed  
+[2025-09-24 07:25:24] local.INFO: RabbitMQ connection closed  
+[2025-09-24 07:25:24] local.INFO: RabbitMQ connection established successfully  
+[2025-09-24 07:25:24] local.INFO: Starting to consume messages from queue: auth.events  
+[2025-09-24 07:25:25] local.ERROR: Consumer error: The connection timed out after 1 sec while awaiting incoming data  
+[2025-09-24 07:25:25] local.INFO: RabbitMQ connection closed  
+[2025-09-24 07:25:42] local.INFO: RabbitMQ connection closed  
+[2025-09-24 07:25:43] local.INFO: RabbitMQ connection established successfully  
+[2025-09-24 07:25:43] local.INFO: RabbitMQ connection closed  
+[2025-09-24 07:25:43] local.INFO: RabbitMQ connection closed  
+[2025-09-24 07:25:43] local.INFO: RabbitMQ connection established successfully  
+[2025-09-24 07:25:43] local.INFO: Starting to consume messages from queue: auth.events  
+[2025-09-24 07:25:44] local.ERROR: Consumer error: The connection timed out after 1 sec while awaiting incoming data  
+[2025-09-24 07:25:44] local.INFO: RabbitMQ connection closed  
+[2025-09-24 11:22:47] local.INFO: RabbitMQ connection closed  
+[2025-09-24 11:22:47] local.INFO: RabbitMQ connection established successfully  
+[2025-09-24 11:22:47] local.INFO: RabbitMQ connection closed  
+[2025-09-24 11:22:47] local.INFO: RabbitMQ connection closed  
+[2025-09-24 11:22:47] local.INFO: RabbitMQ connection established successfully  
+[2025-09-24 11:22:47] local.INFO: Starting to consume messages from queue: auth.events  
+[2025-09-24 11:22:48] local.ERROR: Consumer error: The connection timed out after 1 sec while awaiting incoming data  
+[2025-09-24 11:22:48] local.INFO: RabbitMQ connection closed  
+[2025-09-24 11:59:54] local.INFO: RabbitMQ connection closed  
+[2025-09-24 11:59:54] local.INFO: RabbitMQ connection established successfully  
+[2025-09-24 11:59:54] local.INFO: RabbitMQ connection closed  
+[2025-09-24 11:59:54] local.INFO: RabbitMQ connection closed  
+[2025-09-24 11:59:54] local.INFO: RabbitMQ connection established successfully  
+[2025-09-24 11:59:54] local.INFO: Starting to consume messages from queue: auth.events  
+[2025-09-24 11:59:55] local.ERROR: Consumer error: The connection timed out after 1 sec while awaiting incoming data  
+[2025-09-24 11:59:55] local.INFO: RabbitMQ connection closed  
+[2025-09-24 12:00:12] local.INFO: RabbitMQ connection closed  
+[2025-09-24 12:00:12] local.INFO: RabbitMQ connection established successfully  
+[2025-09-24 12:00:12] local.INFO: RabbitMQ connection closed  
+[2025-09-24 12:00:12] local.INFO: RabbitMQ connection closed  
+[2025-09-24 12:00:12] local.INFO: RabbitMQ connection established successfully  
+[2025-09-24 12:00:12] local.INFO: Starting to consume messages from queue: auth.events  
+[2025-09-24 12:00:13] local.ERROR: Consumer error: The connection timed out after 1 sec while awaiting incoming data  
+[2025-09-24 12:00:13] local.INFO: RabbitMQ connection closed  
+[2025-09-24 16:20:30] local.INFO: RabbitMQ connection closed  
+[2025-09-24 16:20:30] local.INFO: RabbitMQ connection established successfully  
+[2025-09-24 16:20:30] local.INFO: RabbitMQ connection closed  
+[2025-09-24 16:20:30] local.INFO: RabbitMQ connection closed  
+[2025-09-24 16:20:30] local.INFO: RabbitMQ connection established successfully  
+[2025-09-24 16:20:30] local.INFO: Starting to consume messages from queue: auth.events  
+[2025-09-24 16:20:31] local.ERROR: Consumer error: The connection timed out after 1 sec while awaiting incoming data  
+[2025-09-24 16:20:31] local.INFO: RabbitMQ connection closed  
+[2025-09-24 16:20:49] local.INFO: RabbitMQ connection closed  
+[2025-09-24 16:20:49] local.INFO: RabbitMQ connection established successfully  
+[2025-09-24 16:20:49] local.INFO: RabbitMQ connection closed  
+[2025-09-24 16:20:49] local.INFO: RabbitMQ connection closed  
+[2025-09-24 16:20:49] local.INFO: RabbitMQ connection established successfully  
+[2025-09-24 16:20:49] local.INFO: Starting to consume messages from queue: auth.events  
+[2025-09-24 16:20:50] local.ERROR: Consumer error: The connection timed out after 1 sec while awaiting incoming data  
+[2025-09-24 16:20:50] local.INFO: RabbitMQ connection closed  
+[2025-09-24 17:02:43] local.INFO: RabbitMQ connection closed  
+[2025-09-24 17:02:43] local.INFO: RabbitMQ connection established successfully  
+[2025-09-24 17:02:43] local.INFO: RabbitMQ connection closed  
+[2025-09-24 17:02:43] local.INFO: RabbitMQ connection closed  
+[2025-09-24 17:02:43] local.INFO: RabbitMQ connection established successfully  
+[2025-09-24 17:02:43] local.INFO: Starting to consume messages from queue: auth.events  
+[2025-09-24 17:02:44] local.ERROR: Consumer error: The connection timed out after 1 sec while awaiting incoming data  
+[2025-09-24 17:02:44] local.INFO: RabbitMQ connection closed  
+[2025-09-24 22:55:25] local.INFO: RabbitMQ connection closed  
+[2025-09-24 22:55:26] local.INFO: RabbitMQ connection established successfully  
+[2025-09-24 22:55:26] local.INFO: RabbitMQ connection closed  
+[2025-09-24 22:55:26] local.INFO: RabbitMQ connection closed  
+[2025-09-24 22:55:26] local.INFO: RabbitMQ connection established successfully  
+[2025-09-24 22:55:26] local.INFO: Starting to consume messages from queue: auth.events  
+[2025-09-24 22:55:27] local.ERROR: Consumer error: The connection timed out after 1 sec while awaiting incoming data  
+[2025-09-24 22:55:27] local.INFO: RabbitMQ connection closed  
+[2025-09-24 22:56:49] local.INFO: RabbitMQ connection closed  
+[2025-09-24 22:56:50] local.INFO: RabbitMQ connection established successfully  
+[2025-09-24 22:56:50] local.INFO: RabbitMQ connection closed  
+[2025-09-24 22:56:50] local.INFO: RabbitMQ connection closed  
+[2025-09-24 22:56:50] local.INFO: RabbitMQ connection established successfully  
+[2025-09-24 22:56:50] local.INFO: Starting to consume messages from queue: auth.events  
+[2025-09-24 22:56:51] local.ERROR: Consumer error: The connection timed out after 1 sec while awaiting incoming data  
+[2025-09-24 22:56:51] local.INFO: RabbitMQ connection closed  
+[2025-09-25 08:23:57] local.INFO: RabbitMQ connection closed  
+[2025-09-25 08:23:57] local.INFO: RabbitMQ connection established successfully  
+[2025-09-25 08:23:58] local.INFO: RabbitMQ connection closed  
+[2025-09-25 08:23:58] local.INFO: RabbitMQ connection closed  
+[2025-09-25 08:23:58] local.INFO: RabbitMQ connection established successfully  
+[2025-09-25 08:23:58] local.INFO: Starting to consume messages from queue: auth.events  
+[2025-09-25 08:23:59] local.ERROR: Consumer error: The connection timed out after 1 sec while awaiting incoming data  
+[2025-09-25 08:23:59] local.INFO: RabbitMQ connection closed  
+[2025-09-25 08:25:17] local.INFO: RabbitMQ connection closed  
+[2025-09-25 08:25:17] local.INFO: RabbitMQ connection established successfully  
+[2025-09-25 08:25:17] local.INFO: RabbitMQ connection closed  
+[2025-09-25 08:25:17] local.INFO: RabbitMQ connection closed  
+[2025-09-25 08:25:17] local.INFO: RabbitMQ connection established successfully  
+[2025-09-25 08:25:17] local.INFO: Starting to consume messages from queue: auth.events  
+[2025-09-25 08:25:18] local.ERROR: Consumer error: The connection timed out after 1 sec while awaiting incoming data  
+[2025-09-25 08:25:18] local.INFO: RabbitMQ connection closed  
+[2025-09-25 09:13:06] local.INFO: RabbitMQ connection closed  
+[2025-09-25 09:13:07] local.INFO: RabbitMQ connection established successfully  
+[2025-09-25 09:13:07] local.INFO: RabbitMQ connection closed  
+[2025-09-25 09:13:07] local.INFO: RabbitMQ connection closed  
+[2025-09-25 09:13:07] local.INFO: RabbitMQ connection established successfully  
+[2025-09-25 09:13:07] local.INFO: Starting to consume messages from queue: auth.events  
+[2025-09-25 09:13:08] local.ERROR: Consumer error: The connection timed out after 1 sec while awaiting incoming data  
+[2025-09-25 09:13:08] local.INFO: RabbitMQ connection closed  
+[2025-09-25 09:16:50] local.INFO: RabbitMQ connection closed  
+[2025-09-25 09:16:51] local.INFO: RabbitMQ connection established successfully  
+[2025-09-25 09:16:51] local.INFO: RabbitMQ connection closed  
+[2025-09-25 09:16:51] local.INFO: RabbitMQ connection closed  
+[2025-09-25 09:16:51] local.INFO: RabbitMQ connection established successfully  
+[2025-09-25 09:16:51] local.INFO: Starting to consume messages from queue: auth.events  
+[2025-09-25 09:16:52] local.ERROR: Consumer error: The connection timed out after 1 sec while awaiting incoming data  
+[2025-09-25 09:16:52] local.INFO: RabbitMQ connection closed  
+[2025-09-25 09:19:39] local.INFO: RabbitMQ connection closed  
+[2025-09-25 09:19:39] local.INFO: RabbitMQ connection established successfully  
+[2025-09-25 09:19:39] local.INFO: RabbitMQ connection closed  
+[2025-09-25 09:19:39] local.INFO: RabbitMQ connection closed  
+[2025-09-25 09:19:39] local.INFO: RabbitMQ connection established successfully  
+[2025-09-25 09:19:39] local.INFO: Starting to consume messages from queue: auth.events  
+[2025-09-25 09:19:40] local.ERROR: Consumer error: The connection timed out after 1 sec while awaiting incoming data  
+[2025-09-25 09:19:40] local.INFO: RabbitMQ connection closed  
+[2025-09-25 09:19:59] local.INFO: RabbitMQ connection closed  
+[2025-09-25 09:19:59] local.INFO: RabbitMQ connection established successfully  
+[2025-09-25 09:19:59] local.INFO: RabbitMQ connection closed  
+[2025-09-25 09:19:59] local.INFO: RabbitMQ connection closed  
+[2025-09-25 09:20:00] local.INFO: RabbitMQ connection established successfully  
+[2025-09-25 09:20:00] local.INFO: Starting to consume messages from queue: auth.events  
+[2025-09-25 09:20:01] local.ERROR: Consumer error: The connection timed out after 1 sec while awaiting incoming data  
+[2025-09-25 09:20:01] local.INFO: RabbitMQ connection closed  
+[2025-09-25 09:27:26] local.INFO: RabbitMQ connection closed  
+[2025-09-25 09:27:26] local.INFO: RabbitMQ connection established successfully  
+[2025-09-25 09:27:26] local.INFO: RabbitMQ connection closed  
+[2025-09-25 09:27:26] local.INFO: RabbitMQ connection closed  
+[2025-09-25 09:27:26] local.INFO: RabbitMQ connection established successfully  
+[2025-09-25 09:27:26] local.INFO: Starting to consume messages from queue: auth.events  
+[2025-09-25 09:27:27] local.ERROR: Consumer error: The connection timed out after 1 sec while awaiting incoming data  
+[2025-09-25 09:27:27] local.INFO: RabbitMQ connection closed  
+[2025-09-25 09:30:54] local.INFO: RabbitMQ connection closed  
+[2025-09-25 09:30:54] local.INFO: RabbitMQ connection established successfully  
+[2025-09-25 09:30:54] local.INFO: RabbitMQ connection closed  
+[2025-09-25 09:30:54] local.INFO: RabbitMQ connection closed  
+[2025-09-25 09:30:54] local.INFO: RabbitMQ connection established successfully  
+[2025-09-25 09:30:54] local.INFO: Starting to consume messages from queue: auth.events  
+[2025-09-25 09:30:55] local.ERROR: Consumer error: The connection timed out after 1 sec while awaiting incoming data  
+[2025-09-25 09:30:55] local.INFO: RabbitMQ connection closed  
+[2025-09-25 09:34:48] local.INFO: RabbitMQ connection closed  
+[2025-09-25 09:34:48] local.INFO: RabbitMQ connection established successfully  
+[2025-09-25 09:34:48] local.INFO: RabbitMQ connection closed  
+[2025-09-25 09:34:48] local.INFO: RabbitMQ connection closed  
+[2025-09-25 09:34:48] local.INFO: RabbitMQ connection established successfully  
+[2025-09-25 09:34:48] local.INFO: Starting to consume messages from queue: auth.events  
+[2025-09-25 09:34:49] local.ERROR: Consumer error: CONNECTION_FORCED - broker forced connection closure with reason 'shutdown'(0, 0)  
+[2025-09-25 09:34:49] local.INFO: RabbitMQ connection closed  
+[2025-09-25 09:35:02] local.INFO: RabbitMQ connection closed  
+[2025-09-25 09:35:02] local.INFO: RabbitMQ connection established successfully  
+[2025-09-25 09:35:02] local.INFO: RabbitMQ connection closed  
+[2025-09-25 09:35:02] local.INFO: RabbitMQ connection closed  
+[2025-09-25 09:35:02] local.INFO: RabbitMQ connection established successfully  
+[2025-09-25 09:35:02] local.INFO: Starting to consume messages from queue: auth.events  
+[2025-09-25 09:35:03] local.ERROR: Consumer error: The connection timed out after 1 sec while awaiting incoming data  
+[2025-09-25 09:35:03] local.INFO: RabbitMQ connection closed  
+[2025-09-25 10:34:47] local.INFO: RabbitMQ connection closed  
+[2025-09-25 10:34:47] local.INFO: RabbitMQ connection established successfully  
+[2025-09-25 10:34:47] local.INFO: RabbitMQ connection closed  
+[2025-09-25 10:34:47] local.INFO: RabbitMQ connection closed  
+[2025-09-25 10:34:47] local.INFO: RabbitMQ connection established successfully  
+[2025-09-25 10:34:47] local.INFO: Starting to consume messages from queue: auth.events  
+[2025-09-25 10:34:48] local.ERROR: Consumer error: The connection timed out after 1 sec while awaiting incoming data  
+[2025-09-25 10:34:48] local.INFO: RabbitMQ connection closed  
+[2025-09-25 10:36:35] local.INFO: RabbitMQ connection closed  
+[2025-09-25 10:36:35] local.INFO: RabbitMQ connection established successfully  
+[2025-09-25 10:36:35] local.INFO: RabbitMQ connection closed  
+[2025-09-25 10:36:35] local.INFO: RabbitMQ connection closed  
+[2025-09-25 10:36:35] local.INFO: RabbitMQ connection established successfully  
+[2025-09-25 10:36:35] local.INFO: Starting to consume messages from queue: auth.events  
+[2025-09-25 10:36:36] local.ERROR: Consumer error: The connection timed out after 1 sec while awaiting incoming data  
+[2025-09-25 10:36:36] local.INFO: RabbitMQ connection closed  
+[2025-09-25 10:37:03] local.INFO: RabbitMQ connection closed  
+[2025-09-25 10:37:03] local.INFO: RabbitMQ connection established successfully  
+[2025-09-25 10:37:03] local.INFO: RabbitMQ connection closed  
+[2025-09-25 10:37:03] local.INFO: RabbitMQ connection closed  
+[2025-09-25 10:37:04] local.INFO: RabbitMQ connection established successfully  
+[2025-09-25 10:37:04] local.INFO: Starting to consume messages from queue: auth.events  
+[2025-09-25 10:37:05] local.ERROR: Consumer error: The connection timed out after 1 sec while awaiting incoming data  
+[2025-09-25 10:37:05] local.INFO: RabbitMQ connection closed  
+[2025-09-25 10:40:37] local.INFO: RabbitMQ connection closed  
+[2025-09-25 10:40:37] local.INFO: RabbitMQ connection established successfully  
+[2025-09-25 10:40:37] local.INFO: RabbitMQ connection closed  
+[2025-09-25 10:40:37] local.INFO: RabbitMQ connection closed  
+[2025-09-25 10:40:37] local.INFO: RabbitMQ connection established successfully  
+[2025-09-25 10:40:37] local.INFO: Starting to consume messages from queue: auth.events  
+[2025-09-25 10:40:38] local.ERROR: Consumer error: The connection timed out after 1 sec while awaiting incoming data  
+[2025-09-25 10:40:38] local.INFO: RabbitMQ connection closed  
+[2025-09-25 10:41:06] local.INFO: RabbitMQ connection closed  
+[2025-09-25 10:41:06] local.INFO: RabbitMQ connection established successfully  
+[2025-09-25 10:41:06] local.INFO: RabbitMQ connection closed  
+[2025-09-25 10:41:06] local.INFO: RabbitMQ connection closed  
+[2025-09-25 10:41:06] local.INFO: RabbitMQ connection established successfully  
+[2025-09-25 10:41:06] local.INFO: Starting to consume messages from queue: auth.events  
+[2025-09-25 10:41:07] local.ERROR: Consumer error: The connection timed out after 1 sec while awaiting incoming data  
+[2025-09-25 10:41:07] local.INFO: RabbitMQ connection closed  
+[2025-09-25 10:43:48] local.INFO: RabbitMQ connection closed  
+[2025-09-25 10:43:49] local.INFO: RabbitMQ connection established successfully  
+[2025-09-25 10:43:49] local.INFO: RabbitMQ connection closed  
+[2025-09-25 10:43:49] local.INFO: RabbitMQ connection closed  
+[2025-09-25 10:43:49] local.INFO: RabbitMQ connection established successfully  
+[2025-09-25 10:43:49] local.INFO: Starting to consume messages from queue: auth.events  
+[2025-09-25 10:43:50] local.ERROR: Consumer error: The connection timed out after 1 sec while awaiting incoming data  
+[2025-09-25 10:43:50] local.INFO: RabbitMQ connection closed  
+[2025-09-25 10:44:28] local.INFO: RabbitMQ connection closed  
+[2025-09-25 10:44:28] local.INFO: RabbitMQ connection established successfully  
+[2025-09-25 10:44:28] local.INFO: RabbitMQ connection closed  
+[2025-09-25 10:44:28] local.INFO: RabbitMQ connection closed  
+[2025-09-25 10:44:28] local.INFO: RabbitMQ connection established successfully  
+[2025-09-25 10:44:28] local.INFO: Starting to consume messages from queue: auth.events  
+[2025-09-25 10:44:29] local.ERROR: Consumer error: The connection timed out after 1 sec while awaiting incoming data  
+[2025-09-25 10:44:29] local.INFO: RabbitMQ connection closed  
+[2025-09-25 10:49:55] local.INFO: RabbitMQ connection closed  
+[2025-09-25 10:49:55] local.INFO: RabbitMQ connection established successfully  
+[2025-09-25 10:49:56] local.INFO: RabbitMQ connection closed  
+[2025-09-25 10:49:56] local.INFO: RabbitMQ connection closed  
+[2025-09-25 10:49:56] local.INFO: RabbitMQ connection established successfully  
+[2025-09-25 10:49:56] local.INFO: Starting to consume messages from queue: auth.events  
+[2025-09-25 10:49:57] local.ERROR: Consumer error: The connection timed out after 1 sec while awaiting incoming data  
+[2025-09-25 10:49:57] local.INFO: RabbitMQ connection closed  
+[2025-09-25 10:50:35] local.INFO: RabbitMQ connection closed  
+[2025-09-25 10:50:35] local.INFO: RabbitMQ connection established successfully  
+[2025-09-25 10:50:35] local.INFO: RabbitMQ connection closed  
+[2025-09-25 10:50:35] local.INFO: RabbitMQ connection closed  
+[2025-09-25 10:50:35] local.INFO: RabbitMQ connection established successfully  
+[2025-09-25 10:50:35] local.INFO: Starting to consume messages from queue: auth.events  
+[2025-09-25 10:50:36] local.ERROR: Consumer error: The connection timed out after 1 sec while awaiting incoming data  
+[2025-09-25 10:50:36] local.INFO: RabbitMQ connection closed  
+[2025-09-25 14:25:01] local.INFO: RabbitMQ connection closed  
+[2025-09-25 14:25:01] local.INFO: RabbitMQ connection established successfully  
+[2025-09-25 14:25:01] local.INFO: RabbitMQ connection closed  
+[2025-09-25 14:25:01] local.INFO: RabbitMQ connection closed  
+[2025-09-25 14:25:02] local.INFO: RabbitMQ connection established successfully  
+[2025-09-25 14:25:02] local.INFO: Starting to consume messages from queue: auth.events  
+[2025-09-25 14:25:03] local.ERROR: Consumer error: The connection timed out after 1 sec while awaiting incoming data  
+[2025-09-25 14:25:03] local.INFO: RabbitMQ connection closed  
+[2025-09-25 14:26:02] local.INFO: RabbitMQ connection closed  
+[2025-09-25 14:26:03] local.INFO: RabbitMQ connection established successfully  
+[2025-09-25 14:26:03] local.INFO: RabbitMQ connection closed  
+[2025-09-25 14:26:03] local.INFO: RabbitMQ connection closed  
+[2025-09-25 14:26:03] local.INFO: RabbitMQ connection established successfully  
+[2025-09-25 14:26:03] local.INFO: Starting to consume messages from queue: auth.events  
+[2025-09-25 14:26:04] local.ERROR: Consumer error: The connection timed out after 1 sec while awaiting incoming data  
+[2025-09-25 14:26:04] local.INFO: RabbitMQ connection closed  
+[2025-09-25 14:49:41] local.INFO: RabbitMQ connection closed  
+[2025-09-25 14:49:41] local.INFO: RabbitMQ connection established successfully  
+[2025-09-25 14:49:41] local.INFO: RabbitMQ connection closed  
+[2025-09-25 14:49:41] local.INFO: RabbitMQ connection closed  
+[2025-09-25 14:49:41] local.INFO: RabbitMQ connection established successfully  
+[2025-09-25 14:49:41] local.INFO: Starting to consume messages from queue: auth.events  
+[2025-09-25 14:49:42] local.ERROR: Consumer error: The connection timed out after 1 sec while awaiting incoming data  
+[2025-09-25 14:49:42] local.INFO: RabbitMQ connection closed  
+[2025-09-25 14:50:12] local.INFO: RabbitMQ connection closed  
+[2025-09-25 14:50:12] local.INFO: RabbitMQ connection established successfully  
+[2025-09-25 14:50:12] local.INFO: RabbitMQ connection closed  
+[2025-09-25 14:50:12] local.INFO: RabbitMQ connection closed  
+[2025-09-25 14:50:13] local.INFO: RabbitMQ connection established successfully  
+[2025-09-25 14:50:13] local.INFO: Starting to consume messages from queue: auth.events  
+[2025-09-25 14:50:14] local.ERROR: Consumer error: The connection timed out after 1 sec while awaiting incoming data  
+[2025-09-25 14:50:14] local.INFO: RabbitMQ connection closed  
+[2025-09-26 03:01:59] local.INFO: RabbitMQ connection closed  
+[2025-09-26 03:02:01] local.INFO: RabbitMQ connection established successfully  
+[2025-09-26 03:02:01] local.INFO: RabbitMQ connection closed  
+[2025-09-26 03:02:01] local.INFO: RabbitMQ connection closed  
+[2025-09-26 03:02:01] local.INFO: RabbitMQ connection established successfully  
+[2025-09-26 03:02:01] local.INFO: Starting to consume messages from queue: auth.events  
+[2025-09-26 03:02:02] local.ERROR: Consumer error: The connection timed out after 1 sec while awaiting incoming data  
+[2025-09-26 03:02:02] local.INFO: RabbitMQ connection closed  
+[2025-09-26 03:45:41] local.INFO: RabbitMQ connection closed  
+[2025-09-26 03:45:41] local.INFO: RabbitMQ connection established successfully  
+[2025-09-26 03:45:41] local.INFO: RabbitMQ connection closed  
+[2025-09-26 03:45:41] local.INFO: RabbitMQ connection closed  
+[2025-09-26 03:45:42] local.INFO: RabbitMQ connection established successfully  
+[2025-09-26 03:45:42] local.INFO: Starting to consume messages from queue: auth.events  
+[2025-09-26 03:45:43] local.ERROR: Consumer error: The connection timed out after 1 sec while awaiting incoming data  
+[2025-09-26 03:45:43] local.INFO: RabbitMQ connection closed  
+[2025-09-26 03:52:21] local.INFO: RabbitMQ connection closed  
+[2025-09-26 03:52:21] local.INFO: RabbitMQ connection established successfully  
+[2025-09-26 03:52:21] local.INFO: RabbitMQ connection closed  
+[2025-09-26 03:52:21] local.INFO: RabbitMQ connection closed  
+[2025-09-26 03:52:22] local.INFO: RabbitMQ connection established successfully  
+[2025-09-26 03:52:22] local.INFO: Starting to consume messages from queue: auth.events  
+[2025-09-26 03:52:23] local.ERROR: Consumer error: The connection timed out after 1 sec while awaiting incoming data  
+[2025-09-26 03:52:23] local.INFO: RabbitMQ connection closed  
+[2025-09-26 04:18:45] local.INFO: RabbitMQ connection closed  
+[2025-09-26 04:18:46] local.INFO: RabbitMQ connection established successfully  
+[2025-09-26 04:18:46] local.INFO: RabbitMQ connection closed  
+[2025-09-26 04:18:46] local.INFO: RabbitMQ connection closed  
+[2025-09-26 04:18:46] local.INFO: RabbitMQ connection established successfully  
+[2025-09-26 04:18:46] local.INFO: Starting to consume messages from queue: auth.events  
+[2025-09-26 04:18:47] local.ERROR: Consumer error: The connection timed out after 1 sec while awaiting incoming data  
+[2025-09-26 04:18:47] local.INFO: RabbitMQ connection closed  
+[2025-09-26 04:20:33] local.INFO: RabbitMQ connection closed  
+[2025-09-26 04:20:33] local.INFO: RabbitMQ connection established successfully  
+[2025-09-26 04:20:33] local.INFO: RabbitMQ connection closed  
+[2025-09-26 04:20:33] local.INFO: RabbitMQ connection closed  
+[2025-09-26 04:20:33] local.INFO: RabbitMQ connection established successfully  
+[2025-09-26 04:20:33] local.INFO: Starting to consume messages from queue: auth.events  
+[2025-09-26 04:20:34] local.ERROR: Consumer error: The connection timed out after 1 sec while awaiting incoming data  
+[2025-09-26 04:20:34] local.INFO: RabbitMQ connection closed  
+[2025-09-26 04:21:20] local.INFO: RabbitMQ connection closed  
+[2025-09-26 04:21:20] local.INFO: RabbitMQ connection established successfully  
+[2025-09-26 04:21:20] local.INFO: RabbitMQ connection closed  
+[2025-09-26 04:21:20] local.INFO: RabbitMQ connection closed  
+[2025-09-26 04:21:21] local.INFO: RabbitMQ connection established successfully  
+[2025-09-26 04:21:21] local.INFO: Starting to consume messages from queue: auth.events  
+[2025-09-26 04:21:22] local.ERROR: Consumer error: The connection timed out after 1 sec while awaiting incoming data  
+[2025-09-26 04:21:22] local.INFO: RabbitMQ connection closed  
+[2025-09-26 11:15:44] local.INFO: RabbitMQ connection closed  
+[2025-09-26 11:15:44] local.INFO: RabbitMQ connection established successfully  
+[2025-09-26 11:15:44] local.INFO: RabbitMQ connection closed  
+[2025-09-26 11:15:44] local.INFO: RabbitMQ connection closed  
+[2025-09-26 11:15:45] local.INFO: RabbitMQ connection established successfully  
+[2025-09-26 11:15:45] local.INFO: Starting to consume messages from queue: auth.events  
+[2025-09-26 11:15:46] local.ERROR: Consumer error: The connection timed out after 1 sec while awaiting incoming data  
+[2025-09-26 11:15:46] local.INFO: RabbitMQ connection closed  
+[2025-09-29 08:47:07] local.INFO: RabbitMQ connection established successfully  
+[2025-09-29 08:47:07] local.INFO: RabbitMQ connection closed  
+[2025-09-29 08:47:07] local.INFO: RabbitMQ connection closed  
+[2025-09-29 09:03:54] local.INFO: RabbitMQ connection established successfully  
+[2025-09-29 09:03:54] local.INFO: RabbitMQ connection closed  
+[2025-09-29 09:03:54] local.INFO: RabbitMQ connection closed  
+[2025-09-29 09:22:21] local.INFO: RabbitMQ connection established successfully  
+[2025-09-29 09:22:21] local.INFO: RabbitMQ connection closed  
+[2025-09-29 09:22:21] local.INFO: RabbitMQ connection closed  
+[2025-09-29 10:26:21] local.ERROR: Command "rabbitmq:list-queues" is not defined.
+
+Did you mean one of these?
+    rabbitmq:consume
+    rabbitmq:monitor
+    rabbitmq:purge
+    rabbitmq:setup {"exception":"[object] (Symfony\\Component\\Console\\Exception\\CommandNotFoundException(code: 0): Command \"rabbitmq:list-queues\" is not defined.
+
+Did you mean one of these?
+    rabbitmq:consume
+    rabbitmq:monitor
+    rabbitmq:purge
+    rabbitmq:setup at /var/www/messages-broker/vendor/symfony/console/Application.php:743)
+[stacktrace]
+#0 /var/www/messages-broker/vendor/symfony/console/Application.php(301): Symfony\\Component\\Console\\Application->find('rabbitmq:list-q...')
+#1 /var/www/messages-broker/vendor/symfony/console/Application.php(194): Symfony\\Component\\Console\\Application->doRun(Object(Symfony\\Component\\Console\\Input\\ArgvInput), Object(Symfony\\Component\\Console\\Output\\ConsoleOutput))
+#2 /var/www/messages-broker/vendor/laravel/framework/src/Illuminate/Foundation/Console/Kernel.php(197): Symfony\\Component\\Console\\Application->run(Object(Symfony\\Component\\Console\\Input\\ArgvInput), Object(Symfony\\Component\\Console\\Output\\ConsoleOutput))
+#3 /var/www/messages-broker/artisan(16): Illuminate\\Foundation\\Console\\Kernel->handle(Object(Symfony\\Component\\Console\\Input\\ArgvInput), Object(Symfony\\Component\\Console\\Output\\ConsoleOutput))
+#4 {main}
+"} 
+[2025-09-29 10:26:21] local.INFO: RabbitMQ connection closed  
+[2025-09-29 10:26:31] local.ERROR: App\Services\RabbitMQService::getQueueStats(): Argument #1 ($queueName) must be of type string, array given, called in /var/www/messages-broker/app/Console/Commands/MonitorQueuesCommand.php on line 42 {"exception":"[object] (TypeError(code: 0): App\\Services\\RabbitMQService::getQueueStats(): Argument #1 ($queueName) must be of type string, array given, called in /var/www/messages-broker/app/Console/Commands/MonitorQueuesCommand.php on line 42 at /var/www/messages-broker/app/Services/RabbitMQService.php:146)
+[stacktrace]
+#0 /var/www/messages-broker/app/Console/Commands/MonitorQueuesCommand.php(42): App\\Services\\RabbitMQService->getQueueStats(Array)
+#1 /var/www/messages-broker/app/Console/Commands/MonitorQueuesCommand.php(26): App\\Console\\Commands\\MonitorQueuesCommand->displayQueueStats()
+#2 /var/www/messages-broker/vendor/laravel/framework/src/Illuminate/Container/BoundMethod.php(36): App\\Console\\Commands\\MonitorQueuesCommand->handle()
+#3 /var/www/messages-broker/vendor/laravel/framework/src/Illuminate/Container/Util.php(43): Illuminate\\Container\\BoundMethod::Illuminate\\Container\\{closure}()
+#4 /var/www/messages-broker/vendor/laravel/framework/src/Illuminate/Container/BoundMethod.php(96): Illuminate\\Container\\Util::unwrapIfClosure(Object(Closure))
+#5 /var/www/messages-broker/vendor/laravel/framework/src/Illuminate/Container/BoundMethod.php(35): Illuminate\\Container\\BoundMethod::callBoundMethod(Object(Illuminate\\Foundation\\Application), Array, Object(Closure))
+#6 /var/www/messages-broker/vendor/laravel/framework/src/Illuminate/Container/Container.php(836): Illuminate\\Container\\BoundMethod::call(Object(Illuminate\\Foundation\\Application), Array, Array, NULL)
+#7 /var/www/messages-broker/vendor/laravel/framework/src/Illuminate/Console/Command.php(211): Illuminate\\Container\\Container->call(Array)
+#8 /var/www/messages-broker/vendor/symfony/console/Command/Command.php(318): Illuminate\\Console\\Command->execute(Object(Symfony\\Component\\Console\\Input\\ArgvInput), Object(Illuminate\\Console\\OutputStyle))
+#9 /var/www/messages-broker/vendor/laravel/framework/src/Illuminate/Console/Command.php(180): Symfony\\Component\\Console\\Command\\Command->run(Object(Symfony\\Component\\Console\\Input\\ArgvInput), Object(Illuminate\\Console\\OutputStyle))
+#10 /var/www/messages-broker/vendor/symfony/console/Application.php(1110): Illuminate\\Console\\Command->run(Object(Symfony\\Component\\Console\\Input\\ArgvInput), Object(Symfony\\Component\\Console\\Output\\ConsoleOutput))
+#11 /var/www/messages-broker/vendor/symfony/console/Application.php(359): Symfony\\Component\\Console\\Application->doRunCommand(Object(App\\Console\\Commands\\MonitorQueuesCommand), Object(Symfony\\Component\\Console\\Input\\ArgvInput), Object(Symfony\\Component\\Console\\Output\\ConsoleOutput))
+#12 /var/www/messages-broker/vendor/symfony/console/Application.php(194): Symfony\\Component\\Console\\Application->doRun(Object(Symfony\\Component\\Console\\Input\\ArgvInput), Object(Symfony\\Component\\Console\\Output\\ConsoleOutput))
+#13 /var/www/messages-broker/vendor/laravel/framework/src/Illuminate/Foundation/Console/Kernel.php(197): Symfony\\Component\\Console\\Application->run(Object(Symfony\\Component\\Console\\Input\\ArgvInput), Object(Symfony\\Component\\Console\\Output\\ConsoleOutput))
+#14 /var/www/messages-broker/artisan(16): Illuminate\\Foundation\\Console\\Kernel->handle(Object(Symfony\\Component\\Console\\Input\\ArgvInput), Object(Symfony\\Component\\Console\\Output\\ConsoleOutput))
+#15 {main}
+"} 
+[2025-09-29 10:26:31] local.INFO: RabbitMQ connection closed  
+[2025-09-29 13:22:57] local.INFO: RabbitMQ connection closed  
+[2025-09-29 13:22:58] local.INFO: RabbitMQ connection established successfully  
+[2025-09-29 13:22:58] local.INFO: RabbitMQ connection closed  
+[2025-09-29 13:22:58] local.INFO: RabbitMQ connection closed  
+[2025-09-29 13:22:58] local.INFO: RabbitMQ connection established successfully  
+[2025-09-29 13:22:58] local.INFO: Starting to consume messages from queue: auth.events  
+[2025-09-29 13:22:59] local.ERROR: Consumer error: The connection timed out after 1 sec while awaiting incoming data  
+[2025-09-29 13:22:59] local.INFO: RabbitMQ connection closed  
+[2025-09-29 13:26:03] local.INFO: RabbitMQ connection closed  
+[2025-09-29 13:26:03] local.INFO: RabbitMQ connection established successfully  
+[2025-09-29 13:26:03] local.INFO: RabbitMQ connection closed  
+[2025-09-29 13:26:03] local.INFO: RabbitMQ connection closed  
+[2025-09-29 13:26:03] local.INFO: RabbitMQ connection established successfully  
+[2025-09-29 13:26:03] local.INFO: Starting to consume messages from queue: auth.events  
+[2025-09-29 13:26:04] local.ERROR: Consumer error: The connection timed out after 1 sec while awaiting incoming data  
+[2025-09-29 13:26:04] local.INFO: RabbitMQ connection closed  
+[2025-09-29 13:50:58] local.INFO: RabbitMQ connection closed  
+[2025-09-29 13:50:59] local.INFO: RabbitMQ connection established successfully  
+[2025-09-29 13:50:59] local.INFO: RabbitMQ connection closed  
+[2025-09-29 13:50:59] local.INFO: RabbitMQ connection closed  
+[2025-09-29 13:50:59] local.INFO: RabbitMQ connection established successfully  
+[2025-09-29 13:50:59] local.INFO: Starting to consume messages from queue: auth.events  
+[2025-09-29 13:51:00] local.ERROR: Consumer error: The connection timed out after 1 sec while awaiting incoming data  
+[2025-09-29 13:51:00] local.INFO: RabbitMQ connection closed  
+[2025-09-29 13:52:03] local.INFO: RabbitMQ connection closed  
+[2025-09-29 13:52:03] local.INFO: RabbitMQ connection established successfully  
+[2025-09-29 13:52:03] local.INFO: RabbitMQ connection closed  
+[2025-09-29 13:52:03] local.INFO: RabbitMQ connection closed  
+[2025-09-29 13:52:03] local.INFO: RabbitMQ connection established successfully  
+[2025-09-29 13:52:03] local.INFO: Starting to consume messages from queue: auth.events  
+[2025-09-29 13:52:04] local.ERROR: Consumer error: The connection timed out after 1 sec while awaiting incoming data  
+[2025-09-29 13:52:04] local.INFO: RabbitMQ connection closed  
+[2025-09-29 13:53:03] local.INFO: RabbitMQ connection closed  
+[2025-09-29 13:53:03] local.INFO: RabbitMQ connection established successfully  
+[2025-09-29 13:53:03] local.INFO: RabbitMQ connection closed  
+[2025-09-29 13:53:03] local.INFO: RabbitMQ connection closed  
+[2025-09-29 13:53:04] local.INFO: RabbitMQ connection established successfully  
+[2025-09-29 13:53:04] local.INFO: Starting to consume messages from queue: auth.events  
+[2025-09-29 13:53:05] local.ERROR: Consumer error: The connection timed out after 1 sec while awaiting incoming data  
+[2025-09-29 13:53:05] local.INFO: RabbitMQ connection closed  
+[2025-09-29 14:07:09] local.INFO: RabbitMQ connection closed  
+[2025-09-29 14:07:09] local.INFO: RabbitMQ connection established successfully  
+[2025-09-29 14:07:10] local.INFO: RabbitMQ connection closed  
+[2025-09-29 14:07:10] local.INFO: RabbitMQ connection closed  
+[2025-09-29 14:07:10] local.INFO: RabbitMQ connection established successfully  
+[2025-09-29 14:07:10] local.INFO: Starting to consume messages from queue: auth.events  
+[2025-09-29 14:07:11] local.ERROR: Consumer error: The connection timed out after 1 sec while awaiting incoming data  
+[2025-09-29 14:07:11] local.INFO: RabbitMQ connection closed  
+[2025-09-29 14:12:20] local.INFO: RabbitMQ connection closed  
+[2025-09-29 14:12:20] local.INFO: RabbitMQ connection established successfully  
+[2025-09-29 14:12:20] local.INFO: RabbitMQ connection closed  
+[2025-09-29 14:12:20] local.INFO: RabbitMQ connection closed  
+[2025-09-29 14:12:20] local.INFO: RabbitMQ connection established successfully  
+[2025-09-29 14:12:20] local.INFO: Starting to consume messages from queue: auth.events  
+[2025-09-29 14:12:21] local.ERROR: Consumer error: The connection timed out after 1 sec while awaiting incoming data  
+[2025-09-29 14:12:21] local.INFO: RabbitMQ connection closed  
+[2025-09-29 14:44:53] local.INFO: RabbitMQ connection closed  
+[2025-09-29 14:44:53] local.INFO: RabbitMQ connection established successfully  
+[2025-09-29 14:44:54] local.INFO: RabbitMQ connection closed  
+[2025-09-29 14:44:54] local.INFO: RabbitMQ connection closed  
+[2025-09-29 14:44:54] local.INFO: RabbitMQ connection established successfully  
+[2025-09-29 14:44:54] local.INFO: Starting to consume messages from queue: auth.events  
+[2025-09-29 14:44:55] local.ERROR: Consumer error: The connection timed out after 1 sec while awaiting incoming data  
+[2025-09-29 14:44:55] local.INFO: RabbitMQ connection closed  
+[2025-09-29 14:46:41] local.INFO: RabbitMQ connection closed  
+[2025-09-29 14:46:41] local.INFO: RabbitMQ connection established successfully  
+[2025-09-29 14:46:41] local.INFO: RabbitMQ connection closed  
+[2025-09-29 14:46:41] local.INFO: RabbitMQ connection closed  
+[2025-09-29 14:46:41] local.INFO: RabbitMQ connection established successfully  
+[2025-09-29 14:46:41] local.INFO: Starting to consume messages from queue: auth.events  
+[2025-09-29 14:46:42] local.ERROR: Consumer error: The connection timed out after 1 sec while awaiting incoming data  
+[2025-09-29 14:46:42] local.INFO: RabbitMQ connection closed  
+[2025-09-29 20:30:03] local.INFO: RabbitMQ connection closed  
+[2025-09-29 20:30:03] local.INFO: RabbitMQ connection established successfully  
+[2025-09-29 20:30:03] local.INFO: RabbitMQ connection closed  
+[2025-09-29 20:30:03] local.INFO: RabbitMQ connection closed  
+[2025-09-29 20:30:03] local.INFO: RabbitMQ connection established successfully  
+[2025-09-29 20:30:03] local.INFO: Starting to consume messages from queue: auth.events  
+[2025-09-29 20:30:04] local.ERROR: Consumer error: The connection timed out after 1 sec while awaiting incoming data  
+[2025-09-29 20:30:04] local.INFO: RabbitMQ connection closed  
+[2025-09-30 11:11:47] local.INFO: RabbitMQ connection closed  
+[2025-09-30 11:11:48] local.INFO: RabbitMQ connection established successfully  
+[2025-09-30 11:11:48] local.INFO: RabbitMQ connection closed  
+[2025-09-30 11:11:48] local.INFO: RabbitMQ connection closed  
+[2025-09-30 11:11:48] local.INFO: RabbitMQ connection established successfully  
+[2025-09-30 11:11:48] local.INFO: Starting to consume messages from queue: auth.events  
+[2025-09-30 11:11:49] local.ERROR: Consumer error: The connection timed out after 1 sec while awaiting incoming data  
+[2025-09-30 11:11:49] local.INFO: RabbitMQ connection closed  
+[2025-09-30 12:24:58] local.INFO: RabbitMQ connection closed  
+[2025-09-30 12:24:59] local.INFO: RabbitMQ connection established successfully  
+[2025-09-30 12:24:59] local.INFO: RabbitMQ connection closed  
+[2025-09-30 12:24:59] local.INFO: RabbitMQ connection closed  
+[2025-09-30 12:24:59] local.INFO: RabbitMQ connection established successfully  
+[2025-09-30 12:24:59] local.INFO: Starting to consume messages from queue: auth.events  
+[2025-09-30 12:25:00] local.ERROR: Consumer error: The connection timed out after 1 sec while awaiting incoming data  
+[2025-09-30 12:25:00] local.INFO: RabbitMQ connection closed  

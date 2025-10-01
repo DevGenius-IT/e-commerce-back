@@ -1,0 +1,55 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: newsletters-service-mysql
+  labels:
+    app: newsletters-service-mysql
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: newsletters-service-mysql
+  template:
+    metadata:
+      labels:
+        app: newsletters-service-mysql
+    spec:
+      containers:
+      - name: mysql
+        image: mysql:8.0
+        env:
+        - name: MYSQL_ROOT_PASSWORD
+          value: "root"
+        - name: MYSQL_DATABASE
+          value: "newsletters_service_db"
+        - name: MYSQL_USER
+          value: "newsletters_user"
+        - name: MYSQL_PASSWORD
+          value: "newsletters-password-change-this"
+        ports:
+        - containerPort: 3306
+        volumeMounts:
+        - name: mysql-storage
+          mountPath: /var/lib/mysql
+        resources:
+          requests:
+            memory: 256Mi
+            cpu: 250m
+          limits:
+            memory: 512Mi
+            cpu: 500m
+      volumes:
+      - name: mysql-storage
+        emptyDir: {}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: newsletters-service-mysql
+spec:
+  selector:
+    app: newsletters-service-mysql
+  ports:
+  - port: 3306
+    targetPort: 3306
+  type: ClusterIP

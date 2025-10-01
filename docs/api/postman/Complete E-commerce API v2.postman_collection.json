@@ -1,0 +1,890 @@
+{
+  "info": {
+    "_postman_id": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
+    "name": "E-commerce Platform API v2.0 - Complete Collection",
+    "description": "# 🛍️ E-commerce Platform API v2.0 - Complete Collection\n\n## 🏗️ Modern Microservices Architecture\n\n**Architecture**: Docker Compose (Dev) | Kubernetes (Staging/Prod)  \n**Entry Point**: Nginx → API Gateway → RabbitMQ → Services  \n**Authentication**: JWT with role-based permissions  \n**Services**: 13 microservices with async communication  \n\n## 🚀 Quick Start\n1. Select environment: Development | Staging | Production\n2. Run **Authentication > Login** to get JWT token\n3. Token auto-saves for authenticated requests\n4. Use **Health Checks** to verify system status\n\n## 📋 Services Overview\n- **auth-service**: Authentication & authorization\n- **products-service**: Product catalog & inventory\n- **baskets-service**: Shopping cart & promotions\n- **orders-service**: Order processing & management\n- **deliveries-service**: Shipping & tracking\n- **addresses-service**: Address management\n- **sav-service**: Customer support tickets\n- **questions-service**: FAQ & knowledge base\n- **contacts-service**: Contact management\n- **newsletters-service**: Email campaigns\n- **websites-service**: Multi-site management\n- **messages-broker**: Inter-service messaging\n\n## 🧪 Testing Features\n- Automated response validation\n- JWT token management\n- Environment-specific configurations\n- E2E workflow testing\n- Error handling verification\n\n**Version**: 2.0 | **Updated**: 2025-01-15",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "auth": {
+    "type": "bearer",
+    "bearer": [
+      {
+        "key": "token",
+        "value": "{{jwt_token}}",
+        "type": "string"
+      }
+    ]
+  },
+  "event": [
+    {
+      "listen": "prerequest",
+      "script": {
+        "type": "text/javascript",
+        "exec": [
+          "// Global pre-request script",
+          "console.log('🚀 Request to:', pm.request.url.toString());",
+          "",
+          "// Check JWT token expiration",
+          "const token = pm.environment.get('jwt_token');",
+          "if (token && token !== '') {",
+          "    try {",
+          "        const payload = JSON.parse(atob(token.split('.')[1]));",
+          "        const now = Math.floor(Date.now() / 1000);",
+          "        if (payload.exp && payload.exp < now) {",
+          "            console.log('⚠️ JWT token expired, please login again');",
+          "            pm.environment.set('jwt_token', '');",
+          "        }",
+          "    } catch (e) {",
+          "        console.log('⚠️ Invalid JWT token format');",
+          "    }",
+          "}"
+        ]
+      }
+    },
+    {
+      "listen": "test",
+      "script": {
+        "type": "text/javascript",
+        "exec": [
+          "// Global test script",
+          "pm.test('Response time is acceptable', function () {",
+          "    const maxTime = parseInt(pm.environment.get('request_timeout_ms')) || 5000;",
+          "    pm.expect(pm.response.responseTime).to.be.below(maxTime);",
+          "});",
+          "",
+          "if (pm.response.headers.get('Content-Type') && pm.response.headers.get('Content-Type').includes('json')) {",
+          "    pm.test('Response has proper JSON content type', function () {",
+          "        pm.expect(pm.response.headers.get('Content-Type')).to.include('application/json');",
+          "    });",
+          "}",
+          "",
+          "// Enhanced logging",
+          "const debug = pm.environment.get('debug_mode') === 'true';",
+          "if (debug || pm.response.code >= 400) {",
+          "    console.log('📊 Response Status:', pm.response.code);",
+          "    console.log('⏱️ Response Time:', pm.response.responseTime + 'ms');",
+          "    if (pm.response.code >= 400) {",
+          "        console.log('❌ Error Response:', pm.response.text());",
+          "    }",
+          "}"
+        ]
+      }
+    }
+  ],
+  "variable": [
+    {
+      "key": "api_version",
+      "value": "v2.0"
+    },
+    {
+      "key": "collection_version",
+      "value": "2025.01.15"
+    }
+  ],
+  "item": [
+    {
+      "name": "🏥 Health & Monitoring",
+      "description": "System health checks and monitoring endpoints for all services",
+      "item": [
+        {
+          "name": "API Gateway Health",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code is 200', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('Gateway is healthy', function () {",
+                  "    const responseJson = pm.response.json();",
+                  "    pm.expect(responseJson.status).to.eql('healthy');",
+                  "    pm.expect(responseJson.service).to.eql('api-gateway');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [{"key": "Accept", "value": "application/json"}],
+            "url": {
+              "raw": "{{base_url}}/api/health",
+              "host": ["{{base_url}}"],
+              "path": ["api", "health"]
+            },
+            "description": "Check API Gateway health - main entry point"
+          }
+        },
+        {
+          "name": "RabbitMQ Connection Test",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('RabbitMQ connection successful', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "    const responseJson = pm.response.json();",
+                  "    pm.expect(responseJson.rabbitmq_connected).to.be.true;",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [{"key": "Accept", "value": "application/json"}],
+            "url": {
+              "raw": "{{base_url}}/api/test-rabbitmq",
+              "host": ["{{base_url}}"],
+              "path": ["api", "test-rabbitmq"]
+            },
+            "description": "Test RabbitMQ connectivity"
+          }
+        },
+        {
+          "name": "All Services Status",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Services status retrieved', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "    const responseJson = pm.response.json();",
+                  "    pm.expect(responseJson).to.be.an('array');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [{"key": "Accept", "value": "application/json"}],
+            "url": {
+              "raw": "{{base_url}}/api/v1/services/status",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "services", "status"]
+            },
+            "description": "Get status of all microservices"
+          }
+        }
+      ]
+    },
+    {
+      "name": "🔐 Authentication & Authorization",
+      "description": "JWT authentication, user management, and role-based access control",
+      "item": [
+        {
+          "name": "Login",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Login successful', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "    const responseJson = pm.response.json();",
+                  "    pm.expect(responseJson).to.have.property('token');",
+                  "    pm.expect(responseJson).to.have.property('user');",
+                  "});",
+                  "",
+                  "// Auto-save JWT token and user data",
+                  "if (pm.response.code === 200) {",
+                  "    const responseJson = pm.response.json();",
+                  "    pm.environment.set('jwt_token', responseJson.token);",
+                  "    pm.environment.set('user_id', responseJson.user.id);",
+                  "    pm.environment.set('user_email', responseJson.user.email);",
+                  "    console.log('🔑 JWT Token and user data saved');",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {"key": "Content-Type", "value": "application/json"},
+              {"key": "Accept", "value": "application/json"}
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\\n  \\\"email\\\": \\\"{{admin_email}}\\\",\\n  \\\"password\\\": \\\"{{admin_password}}\\\"\\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/auth/login",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "auth", "login"]
+            },
+            "description": "Authenticate and receive JWT token"
+          }
+        },
+        {
+          "name": "Get User Profile",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Profile retrieved', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "    const responseJson = pm.response.json();",
+                  "    pm.expect(responseJson).to.have.property('id');",
+                  "    pm.expect(responseJson).to.have.property('email');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {"key": "Accept", "value": "application/json"},
+              {"key": "Authorization", "value": "Bearer {{jwt_token}}"}
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/auth/me",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "auth", "me"]
+            },
+            "description": "Get current user profile"
+          }
+        },
+        {
+          "name": "Logout",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Logout successful', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "// Clear tokens on successful logout",
+                  "if (pm.response.code === 200) {",
+                  "    pm.environment.set('jwt_token', '');",
+                  "    pm.environment.set('user_id', '');",
+                  "    pm.environment.set('user_email', '');",
+                  "    console.log('🚪 Logged out, tokens cleared');",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {"key": "Accept", "value": "application/json"},
+              {"key": "Authorization", "value": "Bearer {{jwt_token}}"}
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/auth/logout",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "auth", "logout"]
+            },
+            "description": "Logout and invalidate JWT token"
+          }
+        }
+      ]
+    },
+    {
+      "name": "🛍️ Products & Catalog",
+      "description": "Product catalog, categories, brands, and inventory management",
+      "item": [
+        {
+          "name": "List All Products",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Products retrieved', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "    const responseJson = pm.response.json();",
+                  "    pm.expect(responseJson).to.have.property('data');",
+                  "    pm.expect(responseJson.data).to.be.an('array');",
+                  "});",
+                  "",
+                  "// Save first product ID for testing",
+                  "if (pm.response.code === 200) {",
+                  "    const responseJson = pm.response.json();",
+                  "    if (responseJson.data && responseJson.data.length > 0) {",
+                  "        pm.environment.set('test_product_id', responseJson.data[0].id);",
+                  "    }",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [{"key": "Accept", "value": "application/json"}],
+            "url": {
+              "raw": "{{base_url}}/api/v1/products/products",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "products", "products"]
+            },
+            "description": "Get all products (public endpoint)"
+          }
+        },
+        {
+          "name": "Get Product Details",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Product details retrieved', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "    const responseJson = pm.response.json();",
+                  "    pm.expect(responseJson).to.have.property('id');",
+                  "    pm.expect(responseJson).to.have.property('name');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [{"key": "Accept", "value": "application/json"}],
+            "url": {
+              "raw": "{{base_url}}/api/v1/products/products/{{test_product_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "products", "products", "{{test_product_id}}"]
+            },
+            "description": "Get specific product details"
+          }
+        },
+        {
+          "name": "List Categories",
+          "request": {
+            "method": "GET",
+            "header": [{"key": "Accept", "value": "application/json"}],
+            "url": {
+              "raw": "{{base_url}}/api/v1/products/categories",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "products", "categories"]
+            },
+            "description": "Get all product categories"
+          }
+        },
+        {
+          "name": "List Brands",
+          "request": {
+            "method": "GET",
+            "header": [{"key": "Accept", "value": "application/json"}],
+            "url": {
+              "raw": "{{base_url}}/api/v1/products/brands",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "products", "brands"]
+            },
+            "description": "Get all product brands"
+          }
+        }
+      ]
+    },
+    {
+      "name": "🛒 Shopping Cart & Baskets",
+      "description": "Shopping cart management, promotions, and checkout preparation",
+      "item": [
+        {
+          "name": "Get Current Basket",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Basket retrieved', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "    const responseJson = pm.response.json();",
+                  "    pm.expect(responseJson).to.have.property('id');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {"key": "Accept", "value": "application/json"},
+              {"key": "Authorization", "value": "Bearer {{jwt_token}}"}
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/baskets/baskets/current",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "baskets", "baskets", "current"]
+            },
+            "description": "Get current user's shopping basket"
+          }
+        },
+        {
+          "name": "Add Item to Basket",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Item added to basket', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {"key": "Content-Type", "value": "application/json"},
+              {"key": "Accept", "value": "application/json"},
+              {"key": "Authorization", "value": "Bearer {{jwt_token}}"}
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\\n  \\\"product_id\\\": {{test_product_id}},\\n  \\\"quantity\\\": 2\\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/baskets/baskets/items",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "baskets", "baskets", "items"]
+            },
+            "description": "Add product to shopping basket"
+          }
+        },
+        {
+          "name": "Apply Promo Code",
+          "request": {
+            "method": "POST",
+            "header": [
+              {"key": "Content-Type", "value": "application/json"},
+              {"key": "Accept", "value": "application/json"},
+              {"key": "Authorization", "value": "Bearer {{jwt_token}}"}
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\\n  \\\"code\\\": \\\"{{test_promo_code}}\\\"\\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/baskets/baskets/promo-codes",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "baskets", "baskets", "promo-codes"]
+            },
+            "description": "Apply promotional code to basket"
+          }
+        }
+      ]
+    },
+    {
+      "name": "📋 Orders & Processing",
+      "description": "Order creation, management, and status tracking",
+      "item": [
+        {
+          "name": "List My Orders",
+          "request": {
+            "method": "GET",
+            "header": [
+              {"key": "Accept", "value": "application/json"},
+              {"key": "Authorization", "value": "Bearer {{jwt_token}}"}
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/orders/orders",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "orders", "orders"]
+            },
+            "description": "Get user's order history"
+          }
+        },
+        {
+          "name": "Create Order from Basket",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 201) {",
+                  "    const responseJson = pm.response.json();",
+                  "    if (responseJson.order && responseJson.order.id) {",
+                  "        pm.environment.set('test_order_id', responseJson.order.id);",
+                  "        console.log('📋 Order ID saved:', responseJson.order.id);",
+                  "    }",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {"key": "Content-Type", "value": "application/json"},
+              {"key": "Accept", "value": "application/json"},
+              {"key": "Authorization", "value": "Bearer {{jwt_token}}"}
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\\n  \\\"address_id\\\": {{test_address_id}},\\n  \\\"payment_method\\\": \\\"credit_card\\\",\\n  \\\"notes\\\": \\\"Test order via API\\\"\\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/orders/orders/create-from-basket",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "orders", "orders", "create-from-basket"]
+            },
+            "description": "Create order from current basket"
+          }
+        },
+        {
+          "name": "Get Order Details",
+          "request": {
+            "method": "GET",
+            "header": [
+              {"key": "Accept", "value": "application/json"},
+              {"key": "Authorization", "value": "Bearer {{jwt_token}}"}
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/orders/orders/{{test_order_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "orders", "orders", "{{test_order_id}}"]
+            },
+            "description": "Get specific order details"
+          }
+        }
+      ]
+    },
+    {
+      "name": "🚚 Deliveries & Shipping",
+      "description": "Delivery management, tracking, and pickup points",
+      "item": [
+        {
+          "name": "Track Delivery",
+          "request": {
+            "method": "GET",
+            "header": [{"key": "Accept", "value": "application/json"}],
+            "url": {
+              "raw": "{{base_url}}/api/v1/deliveries/track/{{test_delivery_tracking}}",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "deliveries", "track", "{{test_delivery_tracking}}"]
+            },
+            "description": "Track delivery by tracking number (public)"
+          }
+        },
+        {
+          "name": "List Pickup Points",
+          "request": {
+            "method": "GET",
+            "header": [{"key": "Accept", "value": "application/json"}],
+            "url": {
+              "raw": "{{base_url}}/api/v1/deliveries/sale-points",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "deliveries", "sale-points"]
+            },
+            "description": "Get all pickup points"
+          }
+        },
+        {
+          "name": "Find Nearby Pickup Points",
+          "request": {
+            "method": "GET",
+            "header": [{"key": "Accept", "value": "application/json"}],
+            "url": {
+              "raw": "{{base_url}}/api/v1/deliveries/sale-points/nearby?lat={{paris_latitude}}&lng={{paris_longitude}}&radius={{search_radius_km}}",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "deliveries", "sale-points", "nearby"],
+              "query": [
+                {"key": "lat", "value": "{{paris_latitude}}"},
+                {"key": "lng", "value": "{{paris_longitude}}"},
+                {"key": "radius", "value": "{{search_radius_km}}"}
+              ]
+            },
+            "description": "Find pickup points near coordinates"
+          }
+        }
+      ]
+    },
+    {
+      "name": "🏠 Addresses & Locations",
+      "description": "Address management and location services",
+      "item": [
+        {
+          "name": "List Countries",
+          "request": {
+            "method": "GET",
+            "header": [{"key": "Accept", "value": "application/json"}],
+            "url": {
+              "raw": "{{base_url}}/api/v1/addresses/countries",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "addresses", "countries"]
+            },
+            "description": "Get available countries (public)"
+          }
+        },
+        {
+          "name": "List My Addresses",
+          "request": {
+            "method": "GET",
+            "header": [
+              {"key": "Accept", "value": "application/json"},
+              {"key": "Authorization", "value": "Bearer {{jwt_token}}"}
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/addresses/addresses",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "addresses", "addresses"]
+            },
+            "description": "Get user's saved addresses"
+          }
+        },
+        {
+          "name": "Create Address",
+          "request": {
+            "method": "POST",
+            "header": [
+              {"key": "Content-Type", "value": "application/json"},
+              {"key": "Accept", "value": "application/json"},
+              {"key": "Authorization", "value": "Bearer {{jwt_token}}"}
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\\n  \\\"street\\\": \\\"123 Rue de la Paix\\\",\\n  \\\"zip_code\\\": \\\"75001\\\",\\n  \\\"city\\\": \\\"Paris\\\",\\n  \\\"country_id\\\": {{test_country_id}},\\n  \\\"type_id\\\": {{test_address_type_id}}\\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/addresses/addresses",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "addresses", "addresses"]
+            },
+            "description": "Create new address"
+          }
+        }
+      ]
+    },
+    {
+      "name": "🛠️ Customer Support (SAV)",
+      "description": "Customer support tickets and issue management",
+      "item": [
+        {
+          "name": "Create Support Ticket (Public)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {"key": "Content-Type", "value": "application/json"},
+              {"key": "Accept", "value": "application/json"}
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\\n  \\\"email\\\": \\\"customer@example.com\\\",\\n  \\\"subject\\\": \\\"Order Issue\\\",\\n  \\\"message\\\": \\\"I have a problem with my order\\\",\\n  \\\"priority\\\": \\\"medium\\\",\\n  \\\"category\\\": \\\"Order Issue\\\"\\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/sav/public/tickets",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "sav", "public", "tickets"]
+            },
+            "description": "Create support ticket (public access)"
+          }
+        },
+        {
+          "name": "List My Support Tickets",
+          "request": {
+            "method": "GET",
+            "header": [
+              {"key": "Accept", "value": "application/json"},
+              {"key": "Authorization", "value": "Bearer {{jwt_token}}"}
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/v1/sav/tickets",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "sav", "tickets"]
+            },
+            "description": "Get user's support tickets"
+          }
+        }
+      ]
+    },
+    {
+      "name": "❓ FAQ & Questions",
+      "description": "FAQ system and knowledge base management",
+      "item": [
+        {
+          "name": "Get All FAQ Questions",
+          "request": {
+            "method": "GET",
+            "header": [{"key": "Accept", "value": "application/json"}],
+            "url": {
+              "raw": "{{base_url}}/api/v1/questions/public/questions",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "questions", "public", "questions"]
+            },
+            "description": "Get all FAQ questions (public)"
+          }
+        },
+        {
+          "name": "Search FAQ",
+          "request": {
+            "method": "GET",
+            "header": [{"key": "Accept", "value": "application/json"}],
+            "url": {
+              "raw": "{{base_url}}/api/v1/questions/public/search?q={{search_query}}",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "questions", "public", "search"],
+              "query": [{"key": "q", "value": "{{search_query}}"}]
+            },
+            "description": "Search in FAQ questions and answers"
+          }
+        }
+      ]
+    },
+    {
+      "name": "📧 Newsletters & Communications",
+      "description": "Email newsletter management and campaigns",
+      "item": [
+        {
+          "name": "Subscribe to Newsletter",
+          "request": {
+            "method": "POST",
+            "header": [
+              {"key": "Content-Type", "value": "application/json"},
+              {"key": "Accept", "value": "application/json"}
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\\n  \\\"email\\\": \\\"subscriber@example.com\\\",\\n  \\\"preferences\\\": [\\\"promotions\\\", \\\"new_products\\\"]\\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/newsletters/subscribe",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "newsletters", "subscribe"]
+            },
+            "description": "Subscribe to newsletter (public)"
+          }
+        },
+        {
+          "name": "Newsletter Statistics",
+          "request": {
+            "method": "GET",
+            "header": [{"key": "Accept", "value": "application/json"}],
+            "url": {
+              "raw": "{{base_url}}/api/v1/newsletters/stats",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "newsletters", "stats"]
+            },
+            "description": "Get newsletter statistics (public)"
+          }
+        }
+      ]
+    },
+    {
+      "name": "🏢 Contact Management",
+      "description": "Contact forms and customer communication",
+      "item": [
+        {
+          "name": "Submit Contact Form",
+          "request": {
+            "method": "POST",
+            "header": [
+              {"key": "Content-Type", "value": "application/json"},
+              {"key": "Accept", "value": "application/json"}
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\\n  \\\"name\\\": \\\"John Doe\\\",\\n  \\\"email\\\": \\\"john@example.com\\\",\\n  \\\"subject\\\": \\\"General Inquiry\\\",\\n  \\\"message\\\": \\\"Hello, I have a question about your services\\\"\\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/contacts/contact",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "contacts", "contact"]
+            },
+            "description": "Submit contact form (public)"
+          }
+        }
+      ]
+    },
+    {
+      "name": "🌐 Website Management",
+      "description": "Multi-site management and configuration",
+      "item": [
+        {
+          "name": "Get Website Configuration",
+          "request": {
+            "method": "GET",
+            "header": [{"key": "Accept", "value": "application/json"}],
+            "url": {
+              "raw": "{{base_url}}/api/v1/websites/config",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "websites", "config"]
+            },
+            "description": "Get website configuration (public)"
+          }
+        }
+      ]
+    },
+    {
+      "name": "🔧 E2E Workflow Tests",
+      "description": "End-to-end testing scenarios for complete user journeys",
+      "item": [
+        {
+          "name": "Complete Purchase Workflow",
+          "item": [
+            {
+              "name": "1. Login",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {"key": "Content-Type", "value": "application/json"},
+                  {"key": "Accept", "value": "application/json"}
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\\n  \\\"email\\\": \\\"{{test_user_email}}\\\",\\n  \\\"password\\\": \\\"{{test_user_password}}\\\"\\n}"
+                },
+                "url": {
+                  "raw": "{{base_url}}/api/v1/auth/login",
+                  "host": ["{{base_url}}"],
+                  "path": ["api", "v1", "auth", "login"]
+                }
+              }
+            },
+            {
+              "name": "2. Add Product to Basket",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {"key": "Content-Type", "value": "application/json"},
+                  {"key": "Accept", "value": "application/json"},
+                  {"key": "Authorization", "value": "Bearer {{jwt_token}}"}
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\\n  \\\"product_id\\\": {{test_product_id}},\\n  \\\"quantity\\\": 1\\n}"
+                },
+                "url": {
+                  "raw": "{{base_url}}/api/v1/baskets/baskets/items",
+                  "host": ["{{base_url}}"],
+                  "path": ["api", "v1", "baskets", "baskets", "items"]
+                }
+              }
+            },
+            {
+              "name": "3. Create Order",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {"key": "Content-Type", "value": "application/json"},
+                  {"key": "Accept", "value": "application/json"},
+                  {"key": "Authorization", "value": "Bearer {{jwt_token}}"}
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\\n  \\\"address_id\\\": {{test_address_id}},\\n  \\\"payment_method\\\": \\\"credit_card\\\"\\n}"
+                },
+                "url": {
+                  "raw": "{{base_url}}/api/v1/orders/orders/create-from-basket",
+                  "host": ["{{base_url}}"],
+                  "path": ["api", "v1", "orders", "orders", "create-from-basket"]
+                }
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

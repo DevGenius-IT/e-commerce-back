@@ -1,0 +1,259 @@
+# Template générique pour tous les microservices
+# Variables à remplacer: ${SERVICE_NAME}, ${SERVICE_PORT}, ${DB_NAME}
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ${SERVICE_NAME}
+  namespace: e-commerce
+  labels:
+    app: ${SERVICE_NAME}
+    component: microservice
+    tier: backend
+spec:
+  replicas: 3
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxUnavailable: 1
+      maxSurge: 1
+  selector:
+    matchLabels:
+      app: ${SERVICE_NAME}
+  template:
+    metadata:
+      labels:
+        app: ${SERVICE_NAME}
+        component: microservice
+        tier: backend
+        version: ${VERSION:-latest}
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "9090"
+        prometheus.io/path: "/metrics"
+    spec:
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1000
+        fsGroup: 1000
+      containers:
+      - name: ${SERVICE_NAME}
+        image: ${REGISTRY:-localhost}/${SERVICE_NAME}:${VERSION:-latest}
+        imagePullPolicy: Always
+        ports:
+        - containerPort: ${SERVICE_PORT:-8000}
+          name: http
+          protocol: TCP
+        - containerPort: 9090
+          name: metrics
+          protocol: TCP
+        
+        # Environment variables from ConfigMap
+        envFrom:
+        - configMapRef:
+            name: global-config
+        
+        # Service-specific environment variables
+        env:
+        - name: APP_NAME
+          value: "${SERVICE_NAME} Service"
+        - name: APP_URL
+          value: "http://${SERVICE_NAME}.e-commerce.svc.cluster.local:${SERVICE_PORT:-8000}"
+        - name: SERVICE_NAME
+          value: "${SERVICE_NAME}"
+        
+        # Database configuration (from secrets)
+        - name: DB_HOST
+          valueFrom:
+            secretKeyRef:
+              name: ${SERVICE_NAME}-secrets
+              key: DB_HOST
+        - name: DB_DATABASE
+          valueFrom:
+            secretKeyRef:
+              name: ${SERVICE_NAME}-secrets
+              key: DB_DATABASE
+        - name: DB_USERNAME
+          valueFrom:
+            secretKeyRef:
+              name: ${SERVICE_NAME}-secrets
+              key: DB_USERNAME
+        - name: DB_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: ${SERVICE_NAME}-secrets
+              key: DB_PASSWORD
+        
+        # Global secrets
+        - name: JWT_SECRET
+          valueFrom:
+            secretKeyRef:
+              name: global-secrets
+              key: JWT_SECRET
+        - name: APP_KEY
+          valueFrom:
+            secretKeyRef:
+              name: global-secrets
+              key: APP_KEY
+        - name: RABBITMQ_USER
+          valueFrom:
+            secretKeyRef:
+              name: global-secrets
+              key: RABBITMQ_USER
+        - name: RABBITMQ_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: global-secrets
+              key: RABBITMQ_PASSWORD
+        
+        # Health checks
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: ${SERVICE_PORT:-8000}
+          initialDelaySeconds: 60
+          periodSeconds: 30
+          timeoutSeconds: 10
+          failureThreshold: 3
+        
+        readinessProbe:
+          httpGet:
+            path: /ready
+            port: ${SERVICE_PORT:-8000}
+          initialDelaySeconds: 30
+          periodSeconds: 10
+          timeoutSeconds: 5
+          failureThreshold: 3
+        
+        # Resource limits
+        resources:
+          requests:
+            memory: "256Mi"
+            cpu: "250m"
+          limits:
+            memory: "512Mi"
+            cpu: "500m"
+        
+        # Security context
+        securityContext:
+          allowPrivilegeEscalation: false
+          readOnlyRootFilesystem: true
+          capabilities:
+            drop:
+            - ALL
+        
+        # Volume mounts for temporary files
+        volumeMounts:
+        - name: tmp
+          mountPath: /tmp
+        - name: var-cache
+          mountPath: /var/cache
+        - name: var-log
+          mountPath: /var/log
+      
+      # Volumes
+      volumes:
+      - name: tmp
+        emptyDir: {}
+      - name: var-cache
+        emptyDir: {}
+      - name: var-log
+        emptyDir: {}
+      
+      # Restart policy
+      restartPolicy: Always
+      
+      # DNS policy
+      dnsPolicy: ClusterFirst
+      
+      # Termination grace period
+      terminationGracePeriodSeconds: 30
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: ${SERVICE_NAME}
+  namespace: e-commerce
+  labels:
+    app: ${SERVICE_NAME}
+    component: microservice
+    tier: backend
+spec:
+  selector:
+    app: ${SERVICE_NAME}
+  ports:
+  - port: 80
+    targetPort: ${SERVICE_PORT:-8000}
+    protocol: TCP
+    name: http
+  - port: 9090
+    targetPort: 9090
+    protocol: TCP
+    name: metrics
+  type: ClusterIP
+
+---
+# ServiceMonitor for Prometheus monitoring
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: ${SERVICE_NAME}
+  namespace: e-commerce
+  labels:
+    app: ${SERVICE_NAME}
+    component: microservice
+    tier: backend
+spec:
+  selector:
+    matchLabels:
+      app: ${SERVICE_NAME}
+  endpoints:
+  - port: metrics
+    path: /metrics
+    interval: 30s
+    scrapeTimeout: 10s
+
+---
+# HorizontalPodAutoscaler for automatic scaling
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: ${SERVICE_NAME}
+  namespace: e-commerce
+  labels:
+    app: ${SERVICE_NAME}
+    component: microservice
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: ${SERVICE_NAME}
+  minReplicas: 2
+  maxReplicas: 10
+  metrics:
+  - type: Resource
+    resource:
+      name: cpu
+      target:
+        type: Utilization
+        averageUtilization: 70
+  - type: Resource
+    resource:
+      name: memory
+      target:
+        type: Utilization
+        averageUtilization: 80
+  behavior:
+    scaleDown:
+      stabilizationWindowSeconds: 300
+      policies:
+      - type: Percent
+        value: 10
+        periodSeconds: 60
+    scaleUp:
+      stabilizationWindowSeconds: 60
+      policies:
+      - type: Percent
+        value: 100
+        periodSeconds: 15

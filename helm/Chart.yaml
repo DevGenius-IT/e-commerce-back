@@ -1,0 +1,21 @@
+apiVersion: v2
+name: e-commerce-microservices
+description: A Helm chart for E-commerce Microservices Platform
+type: application
+version: 1.0.0
+appVersion: "1.0.0"
+home: https://github.com/your-org/e-commerce-back
+sources:
+  - https://github.com/your-org/e-commerce-back
+maintainers:
+  - name: DevOps Team
+    email: devops@yourcompany.com
+keywords:
+  - e-commerce
+  - microservices
+  - laravel
+  - kubernetes
+  - rabbitmq
+annotations:
+  category: E-commerce
+  licenses: MIT

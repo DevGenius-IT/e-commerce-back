@@ -15,18 +15,33 @@ return [
     */
 
   "auth" => [
-    "base_uri" => env("AUTH_SERVICE_BASE_URL"),
+    "base_uri" => env("AUTH_SERVICE_URL"),
     "secret" => env("AUTH_SERVICE_SECRET"),
   ],
   
-  "users" => [
-    "base_uri" => env("USERS_SERVICE_BASE_URL"),
-    "secret" => env("USERS_SERVICE_SECRET"),
+  "addresses" => [
+    "base_uri" => env("ADDRESSES_SERVICE_URL"),
+    "secret" => env("ADDRESSES_SERVICE_SECRET"),
   ],
   
   "products" => [
-    "base_uri" => env("PRODUCTS_SERVICE"),
+    "base_uri" => env("PRODUCTS_SERVICE_URL"),
     "secret" => env("PRODUCTS_SERVICE_SECRET"),
+  ],
+
+  "baskets" => [
+    "base_uri" => env("BASKETS_SERVICE_URL"),
+    "secret" => env("BASKETS_SERVICE_SECRET"),
+  ],
+
+  "orders" => [
+    "base_uri" => env("ORDERS_SERVICE_URL"),
+    "secret" => env("ORDERS_SERVICE_SECRET"),
+  ],
+
+  "messages-broker" => [
+    "base_uri" => env("MESSAGES_BROKER_URL"),
+    "secret" => env("MESSAGES_BROKER_SECRET"),
   ],
 
   /*

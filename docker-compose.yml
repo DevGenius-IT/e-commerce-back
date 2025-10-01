@@ -3,12 +3,28 @@ services:
     build:
       context: .
       dockerfile: ./services/api-gateway/Dockerfile
+    ports:
+      - "8100:8000"
     volumes:
       - ./services/api-gateway:/var/www/api-gateway
       - /var/www/api-gateway/vendor
     environment:
       - APP_ENV=local
       - CONTAINER_ROLE=app
+      - RABBITMQ_HOST=rabbitmq
+      - RABBITMQ_PORT=5672
+      - RABBITMQ_USER=guest
+      - RABBITMQ_PASSWORD=guest
+      - RABBITMQ_VHOST=/
+      - AUTH_SERVICE_URL=${AUTH_SERVICE_URL}
+      - ADDRESSES_SERVICE_URL=${ADDRESSES_SERVICE_URL}
+      - PRODUCTS_SERVICE_URL=${PRODUCTS_SERVICE_URL}
+      - BASKETS_SERVICE_URL=${BASKETS_SERVICE_URL}
+      - ORDERS_SERVICE_URL=${ORDERS_SERVICE_URL}
+      - DELIVERIES_SERVICE_URL=${DELIVERIES_SERVICE_URL}
+      - NEWSLETTERS_SERVICE_URL=${NEWSLETTERS_SERVICE_URL}
+      - SAV_SERVICE_URL=${SAV_SERVICE_URL}
+      - MESSAGES_BROKER_URL=${MESSAGES_BROKER_URL}
     develop:
       watch:
         - action: sync
@@ -20,6 +36,8 @@ services:
           path: services/api-gateway/composer.json
     networks:
       - microservices-network
+    depends_on:
+      - rabbitmq
 
   auth-service:
     build:
@@ -52,7 +70,7 @@ services:
       MYSQL_DATABASE: auth_service_db
       MYSQL_ROOT_PASSWORD: root
     ports:
-      - ${DB_AUTH_PORT}:3306
+      - ${DB_AUTH_EXTERNAL_PORT}:3306
     networks:
       - microservices-network
 
@@ -92,7 +110,242 @@ services:
       MYSQL_DATABASE: messages_broker
       MYSQL_ROOT_PASSWORD: root
     ports:
-      - ${DB_MESSAGES_BROKER_PORT}:3306
+      - ${DB_MESSAGES_BROKER_EXTERNAL_PORT}:3306
+    networks:
+      - microservices-network
+
+  addresses-service:
+    build:
+      context: .
+      dockerfile: ./services/addresses-service/Dockerfile
+    volumes:
+      - ./services/addresses-service:/var/www/addresses-service
+      - /var/www/addresses-service/vendor
+    environment:
+      - APP_ENV=local
+      - CONTAINER_ROLE=app
+      - DB_HOST=${DB_ADDRESSES_HOST}
+      - RABBITMQ_HOST=rabbitmq
+      - RABBITMQ_PORT=5672
+      - RABBITMQ_USER=guest
+      - RABBITMQ_PASSWORD=guest
+      - RABBITMQ_VHOST=/
+    develop:
+      watch:
+        - action: sync
+          path: services/addresses-service
+          target: /var/www/addresses-service
+          ignore:
+            - vendor/
+        - action: rebuild
+          path: services/addresses-service/composer.json
+    networks:
+      - microservices-network
+    depends_on:
+      - addresses-db
+      - rabbitmq
+
+  addresses-db:
+    image: mysql:8.0
+    environment:
+      MYSQL_DATABASE: addresses_service
+      MYSQL_ROOT_PASSWORD: root
+    ports:
+      - ${DB_ADDRESSES_EXTERNAL_PORT}:3306
+    networks:
+      - microservices-network
+
+  products-service:
+    build:
+      context: .
+      dockerfile: ./services/products-service/Dockerfile
+    volumes:
+      - ./services/products-service:/var/www/products-service
+      - ./shared:/var/www/shared
+      - /var/www/products-service/vendor
+    environment:
+      - APP_ENV=local
+      - CONTAINER_ROLE=app
+      - DB_HOST=${DB_PRODUCTS_HOST}
+    develop:
+      watch:
+        - action: sync
+          path: services/products-service
+          target: /var/www/products-service
+          ignore:
+            - vendor/
+        - action: rebuild
+          path: services/products-service/composer.json
+    networks:
+      - microservices-network
+    depends_on:
+      - products-db
+
+  products-db:
+    image: mysql:8.0
+    environment:
+      MYSQL_DATABASE: products_service_db
+      MYSQL_ROOT_PASSWORD: root
+    ports:
+      - ${DB_PRODUCTS_EXTERNAL_PORT}:3306
+    networks:
+      - microservices-network
+
+  baskets-service:
+    build:
+      context: .
+      dockerfile: ./services/baskets-service/Dockerfile
+    volumes:
+      - ./services/baskets-service:/var/www/baskets-service
+      - ./shared:/var/www/shared
+      - /var/www/baskets-service/vendor
+    environment:
+      - APP_ENV=local
+      - CONTAINER_ROLE=app
+      - DB_HOST=${DB_BASKETS_HOST}
+    develop:
+      watch:
+        - action: sync
+          path: services/baskets-service
+          target: /var/www/baskets-service
+          ignore:
+            - vendor/
+        - action: rebuild
+          path: services/baskets-service/composer.json
+    networks:
+      - microservices-network
+    depends_on:
+      - baskets-db
+
+  baskets-db:
+    image: mysql:8.0
+    environment:
+      MYSQL_DATABASE: baskets_service_db
+      MYSQL_ROOT_PASSWORD: root
+    ports:
+      - ${DB_BASKETS_EXTERNAL_PORT}:3306
+    volumes:
+      - baskets-db-data:/var/lib/mysql
+    networks:
+      - microservices-network
+
+  orders-service:
+    build:
+      context: .
+      dockerfile: ./services/orders-service/Dockerfile
+    volumes:
+      - ./services/orders-service:/var/www/orders-service
+      - ./shared:/var/www/shared
+      - /var/www/orders-service/vendor
+    environment:
+      - APP_ENV=local
+      - CONTAINER_ROLE=app
+      - DB_HOST=${DB_ORDERS_HOST}
+    develop:
+      watch:
+        - action: sync
+          path: services/orders-service
+          target: /var/www/orders-service
+          ignore:
+            - vendor/
+        - action: rebuild
+          path: services/orders-service/composer.json
+    networks:
+      - microservices-network
+    depends_on:
+      - orders-db
+
+  orders-db:
+    image: mysql:8.0
+    environment:
+      MYSQL_DATABASE: orders_service_db
+      MYSQL_ROOT_PASSWORD: root
+    ports:
+      - ${DB_ORDERS_EXTERNAL_PORT}:3306
+    volumes:
+      - orders-db-data:/var/lib/mysql
+    networks:
+      - microservices-network
+
+  deliveries-service:
+    build:
+      context: .
+      dockerfile: ./services/deliveries-service/Dockerfile
+    volumes:
+      - ./services/deliveries-service:/var/www/deliveries-service
+      - ./shared:/var/www/shared
+      - /var/www/deliveries-service/vendor
+    environment:
+      - APP_ENV=local
+      - CONTAINER_ROLE=app
+      - DB_HOST=${DB_DELIVERIES_HOST}
+    develop:
+      watch:
+        - action: sync
+          path: services/deliveries-service
+          target: /var/www/deliveries-service
+          ignore:
+            - vendor/
+        - action: rebuild
+          path: services/deliveries-service/composer.json
+    networks:
+      - microservices-network
+    depends_on:
+      - deliveries-db
+
+  deliveries-db:
+    image: mysql:8.0
+    environment:
+      MYSQL_DATABASE: deliveries_service_db
+      MYSQL_ROOT_PASSWORD: root
+    ports:
+      - ${DB_DELIVERIES_EXTERNAL_PORT}:3306
+    volumes:
+      - deliveries-db-data:/var/lib/mysql
+    networks:
+      - microservices-network
+
+  newsletters-service:
+    build:
+      context: .
+      dockerfile: ./services/newsletters-service/Dockerfile
+    volumes:
+      - ./services/newsletters-service:/var/www/newsletters-service
+      - ./shared:/var/www/shared
+      - /var/www/newsletters-service/vendor
+    environment:
+      - APP_ENV=local
+      - CONTAINER_ROLE=app
+      - DB_HOST=${DB_NEWSLETTERS_HOST}
+      - RABBITMQ_HOST=rabbitmq
+      - RABBITMQ_PORT=5672
+      - RABBITMQ_USER=guest
+      - RABBITMQ_PASSWORD=guest
+      - RABBITMQ_VHOST=/
+    develop:
+      watch:
+        - action: sync
+          path: services/newsletters-service
+          target: /var/www/newsletters-service
+          ignore:
+            - vendor/
+        - action: rebuild
+          path: services/newsletters-service/composer.json
+    networks:
+      - microservices-network
+    depends_on:
+      - newsletters-db
+      - rabbitmq
+
+  newsletters-db:
+    image: mysql:8.0
+    environment:
+      MYSQL_DATABASE: newsletters_service_db
+      MYSQL_ROOT_PASSWORD: root
+    ports:
+      - ${DB_NEWSLETTERS_EXTERNAL_PORT}:3306
+    volumes:
+      - newsletters-db-data:/var/lib/mysql
     networks:
       - microservices-network
 
@@ -121,6 +374,11 @@ services:
       - ./docker/nginx/conf.d:/etc/nginx/conf.d
       - ./services/api-gateway:/var/www/api-gateway
       - ./services/auth-service:/var/www/auth-service
+      - ./services/addresses-service:/var/www/addresses-service
+      - ./services/products-service:/var/www/products-service
+      - ./services/baskets-service:/var/www/baskets-service
+      - ./services/deliveries-service:/var/www/deliveries-service
+      - ./services/newsletters-service:/var/www/newsletters-service
     develop:
       watch:
         - action: sync
@@ -131,10 +389,210 @@ services:
     depends_on:
       - api-gateway
       - auth-service
+      - addresses-service
+      - products-service
+      - baskets-service
+      - deliveries-service
+      - newsletters-service
       - messages-broker
+      - sav-service
+      - contacts-service
+      - websites-service
+
+  sav-service:
+    build:
+      context: .
+      dockerfile: ./services/sav-service/Dockerfile
+    volumes:
+      - ./services/sav-service:/var/www/sav-service
+      - ./shared:/var/www/shared
+      - /var/www/sav-service/vendor
+    environment:
+      - APP_ENV=local
+      - CONTAINER_ROLE=app
+      - DB_HOST=${DB_SAV_HOST}
+      - RABBITMQ_HOST=rabbitmq
+      - RABBITMQ_PORT=5672
+      - RABBITMQ_USER=guest
+      - RABBITMQ_PASSWORD=guest
+      - RABBITMQ_VHOST=/
+      - RABBITMQ_EXCHANGE=sav_exchange
+      - RABBITMQ_QUEUE=sav_queue
+    develop:
+      watch:
+        - action: sync
+          path: services/sav-service
+          target: /var/www/sav-service
+          ignore:
+            - vendor/
+        - action: rebuild
+          path: services/sav-service/composer.json
+    networks:
+      - microservices-network
+    depends_on:
+      - sav-db
+      - rabbitmq
+
+  sav-db:
+    image: mysql:8.0
+    environment:
+      MYSQL_DATABASE: sav_service_db
+      MYSQL_ROOT_PASSWORD: root
+    ports:
+      - ${DB_SAV_EXTERNAL_PORT}:3306
+    volumes:
+      - sav-db-data:/var/lib/mysql
+    networks:
+      - microservices-network
+
+  contacts-service:
+    build:
+      context: .
+      dockerfile: ./services/contacts-service/Dockerfile
+    volumes:
+      - ./services/contacts-service:/var/www/contacts-service
+      - ./shared:/var/www/shared
+      - /var/www/contacts-service/vendor
+    environment:
+      - APP_ENV=local
+      - CONTAINER_ROLE=app
+      - DB_HOST=${DB_CONTACTS_HOST}
+      - RABBITMQ_HOST=rabbitmq
+      - RABBITMQ_PORT=5672
+      - RABBITMQ_USER=guest
+      - RABBITMQ_PASSWORD=guest
+      - RABBITMQ_VHOST=/
+      - RABBITMQ_EXCHANGE=contacts_exchange
+      - RABBITMQ_QUEUE=contacts_queue
+    develop:
+      watch:
+        - action: sync
+          path: services/contacts-service
+          target: /var/www/contacts-service
+          ignore:
+            - vendor/
+        - action: rebuild
+          path: services/contacts-service/composer.json
+    networks:
+      - microservices-network
+    depends_on:
+      - contacts-db
+      - rabbitmq
+
+  contacts-db:
+    image: mysql:8.0
+    environment:
+      MYSQL_DATABASE: contacts_service_db
+      MYSQL_ROOT_PASSWORD: root
+    ports:
+      - ${DB_CONTACTS_EXTERNAL_PORT}:3306
+    volumes:
+      - contacts-db-data:/var/lib/mysql
+    networks:
+      - microservices-network
+
+  websites-service:
+    build:
+      context: .
+      dockerfile: ./services/websites-service/Dockerfile
+    volumes:
+      - ./services/websites-service:/var/www/websites-service
+      - ./shared:/var/www/shared
+      - /var/www/websites-service/vendor
+    environment:
+      - APP_ENV=local
+      - CONTAINER_ROLE=app
+      - DB_HOST=${DB_WEBSITES_HOST}
+      - RABBITMQ_HOST=rabbitmq
+      - RABBITMQ_PORT=5672
+      - RABBITMQ_USER=guest
+      - RABBITMQ_PASSWORD=guest
+      - RABBITMQ_VHOST=/
+      - RABBITMQ_EXCHANGE=websites_exchange
+    develop:
+      watch:
+        - action: sync
+          path: services/websites-service
+          target: /var/www/websites-service
+          ignore:
+            - vendor/
+        - action: rebuild
+          path: services/websites-service/composer.json
+    networks:
+      - microservices-network
+    depends_on:
+      - websites-db
+      - rabbitmq
+
+  websites-db:
+    image: mysql:8.0
+    environment:
+      MYSQL_DATABASE: websites_service_db
+      MYSQL_ROOT_PASSWORD: root
+    ports:
+      - ${DB_WEBSITES_EXTERNAL_PORT}:3306
+    volumes:
+      - websites-db-data:/var/lib/mysql
+    networks:
+      - microservices-network
+
+  questions-service:
+    build:
+      context: .
+      dockerfile: ./services/questions-service/Dockerfile
+    volumes:
+      - ./services/questions-service:/var/www/questions-service
+      - ./shared:/var/www/shared
+      - /var/www/questions-service/vendor
+    environment:
+      - APP_ENV=local
+      - CONTAINER_ROLE=app
+      - DB_HOST=${DB_QUESTIONS_HOST}
+      - RABBITMQ_HOST=rabbitmq
+      - RABBITMQ_PORT=5672
+      - RABBITMQ_USER=guest
+      - RABBITMQ_PASSWORD=guest
+      - RABBITMQ_VHOST=/
+      - RABBITMQ_EXCHANGE=questions_exchange
+    develop:
+      watch:
+        - action: sync
+          path: services/questions-service
+          target: /var/www/questions-service
+          ignore:
+            - vendor/
+        - action: rebuild
+          path: services/questions-service/composer.json
+    networks:
+      - microservices-network
+    depends_on:
+      - questions-db
+      - rabbitmq
+
+  questions-db:
+    image: mysql:8.0
+    environment:
+      MYSQL_DATABASE: questions_service_db
+      MYSQL_ROOT_PASSWORD: root
+    ports:
+      - ${DB_QUESTIONS_EXTERNAL_PORT}:3306
+    volumes:
+      - questions-db-data:/var/lib/mysql
+    networks:
+      - microservices-network
 
 volumes:
   auth-db-data:
+  addresses-db-data:
+  products-db-data:
+  baskets-db-data:
+  orders-db-data:
+  deliveries-db-data:
+  newsletters-db-data:
+  sav-db-data:
+  contacts-db-data:
+  websites-db-data:
+  questions-db-data:
   rabbitmq-data:
 
 networks:

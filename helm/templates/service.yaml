@@ -1,0 +1,27 @@
+{{- range $serviceName, $serviceConfig := .Values.services }}
+{{- if $serviceConfig.enabled }}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ $serviceName }}
+  namespace: {{ $.Values.namespace.name }}
+  labels:
+    app: {{ $serviceName }}
+    component: microservice
+    tier: backend
+    chart: {{ $.Chart.Name }}-{{ $.Chart.Version }}
+    release: {{ $.Release.Name }}
+    heritage: {{ $.Release.Service }}
+spec:
+  type: {{ $serviceConfig.service.type | default "ClusterIP" }}
+  ports:
+  - port: {{ $serviceConfig.service.port | default 80 }}
+    targetPort: {{ if $serviceConfig.service }}{{ $serviceConfig.service.targetPort | default 8000 }}{{ else }}8000{{ end }}
+    protocol: TCP
+    name: http
+  selector:
+    app: {{ $serviceName }}
+    release: {{ $.Release.Name }}
+{{- end }}
+{{- end }}

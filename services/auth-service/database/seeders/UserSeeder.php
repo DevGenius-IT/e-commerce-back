@@ -45,11 +45,15 @@ class UserSeeder extends Seeder
     }
 
     $this->createUser([
+      "lastname" => "Admin",
+      "firstname" => "Demo",
       "email" => "admin@flippad.com",
       "password" => Hash::make("@Admin123"),
     ]);
 
     $this->createUser([
+      "lastname" => "User",
+      "firstname" => "Demo",
       "email" => "user@flippad.com",
       "password" => Hash::make("@User123"),
     ]);
@@ -84,7 +88,17 @@ class UserSeeder extends Seeder
    */
   private function createUser(?array $data): User
   {
-    $user = User::factory()->create($data ?? []);
+    $userData = $data ?? [];
+    
+    // Use firstOrCreate to avoid duplicate entries
+    if (isset($userData['email'])) {
+      $user = User::firstOrCreate(
+        ['email' => $userData['email']],
+        $userData
+      );
+    } else {
+      $user = User::factory()->create($userData);
+    }
 
     return $user;
   }

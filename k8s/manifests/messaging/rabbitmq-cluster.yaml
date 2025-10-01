@@ -1,0 +1,208 @@
+# RabbitMQ Cluster Operator deployment
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: rabbitmq-system
+  labels:
+    name: rabbitmq-system
+---
+apiVersion: rabbitmq.com/v1beta1
+kind: RabbitmqCluster
+metadata:
+  name: rabbitmq-cluster
+  namespace: e-commerce-messaging
+  labels:
+    app: rabbitmq
+    component: messaging
+spec:
+  replicas: 3
+  
+  # Image configuration
+  image: rabbitmq:3.12-management
+  
+  # Service configuration
+  service:
+    type: ClusterIP
+    annotations:
+      service.beta.kubernetes.io/aws-load-balancer-backend-protocol: tcp
+  
+  # Management service
+  rabbitmq:
+    additionalConfig: |
+      # Clustering
+      cluster_formation.peer_discovery_backend = rabbit_peer_discovery_k8s
+      cluster_formation.k8s.host = kubernetes.default.svc.cluster.local
+      cluster_formation.k8s.address_type = hostname
+      cluster_formation.node_cleanup.interval = 30
+      cluster_formation.node_cleanup.only_log_warning = true
+      cluster_partition_handling = autoheal
+      
+      # Management
+      management.tcp.port = 15672
+      management.tcp.ip = 0.0.0.0
+      
+      # Metrics
+      prometheus.tcp.port = 15692
+      
+      # Memory and disk thresholds
+      vm_memory_high_watermark.relative = 0.8
+      disk_free_limit.relative = 2.0
+      
+      # Performance tuning
+      heartbeat = 60
+      frame_max = 131072
+      channel_max = 2047
+      
+      # Queue settings
+      queue_master_locator = min-masters
+      
+    additionalPlugins:
+      - rabbitmq_management
+      - rabbitmq_prometheus
+      - rabbitmq_peer_discovery_k8s
+      - rabbitmq_federation
+      - rabbitmq_shovel
+  
+  # Resources
+  resources:
+    requests:
+      cpu: 500m
+      memory: 1Gi
+    limits:
+      cpu: 1000m
+      memory: 2Gi
+  
+  # Persistence
+  persistence:
+    storageClassName: ""
+    storage: 20Gi
+  
+  # Affinity for spreading across nodes
+  affinity:
+    podAntiAffinity:
+      requiredDuringSchedulingIgnoredDuringExecution:
+      - labelSelector:
+          matchExpressions:
+          - key: app.kubernetes.io/name
+            operator: In
+            values:
+            - rabbitmq
+        topologyKey: kubernetes.io/hostname
+  
+  # Security context
+  securityContext:
+    fsGroup: 999
+    runAsUser: 999
+    runAsGroup: 999
+  
+  # Tolerations for dedicated nodes
+  tolerations: []
+  
+  # Node selector for dedicated nodes
+  nodeSelector: {}
+
+---
+# Service for external access to management UI
+apiVersion: v1
+kind: Service
+metadata:
+  name: rabbitmq-management
+  namespace: e-commerce-messaging
+  labels:
+    app: rabbitmq
+    component: management
+spec:
+  selector:
+    app.kubernetes.io/name: rabbitmq-cluster
+  ports:
+  - name: management
+    port: 15672
+    targetPort: 15672
+    protocol: TCP
+  - name: metrics
+    port: 15692
+    targetPort: 15692
+    protocol: TCP
+  type: ClusterIP
+
+---
+# ServiceMonitor for Prometheus
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: rabbitmq-cluster
+  namespace: e-commerce-messaging
+  labels:
+    app: rabbitmq
+    component: messaging
+spec:
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: rabbitmq-cluster
+  endpoints:
+  - port: prometheus
+    path: /metrics
+    interval: 30s
+    scrapeTimeout: 10s
+
+---
+# NetworkPolicy for RabbitMQ security
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: rabbitmq-network-policy
+  namespace: e-commerce-messaging
+spec:
+  podSelector:
+    matchLabels:
+      app.kubernetes.io/name: rabbitmq-cluster
+  policyTypes:
+  - Ingress
+  - Egress
+  ingress:
+  # Allow connections from e-commerce services
+  - from:
+    - namespaceSelector:
+        matchLabels:
+          name: e-commerce
+    ports:
+    - protocol: TCP
+      port: 5672
+  # Allow management access from monitoring
+  - from:
+    - namespaceSelector:
+        matchLabels:
+          name: e-commerce-monitoring
+    ports:
+    - protocol: TCP
+      port: 15672
+    - protocol: TCP
+      port: 15692
+  # Allow inter-cluster communication
+  - from:
+    - podSelector:
+        matchLabels:
+          app.kubernetes.io/name: rabbitmq-cluster
+    ports:
+    - protocol: TCP
+      port: 25672
+    - protocol: TCP
+      port: 4369
+  egress:
+  # Allow DNS resolution
+  - to: []
+    ports:
+    - protocol: UDP
+      port: 53
+  # Allow inter-cluster communication
+  - to:
+    - podSelector:
+        matchLabels:
+          app.kubernetes.io/name: rabbitmq-cluster
+    ports:
+    - protocol: TCP
+      port: 25672
+    - protocol: TCP
+      port: 4369
+    - protocol: TCP
+      port: 5672

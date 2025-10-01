@@ -1,0 +1,352 @@
+# ArgoCD Installation and Configuration for GitOps
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: argocd
+  labels:
+    name: argocd
+---
+# ArgoCD Installation via Helm
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: argocd
+  namespace: argocd
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+spec:
+  project: default
+  source:
+    repoURL: https://argoproj.github.io/argo-helm
+    chart: argo-cd
+    targetRevision: "5.51.6"
+    helm:
+      values: |
+        # Global configuration
+        global:
+          image:
+            repository: quay.io/argoproj/argocd
+            tag: "v2.9.3"
+        
+        # Controller configuration
+        controller:
+          replicas: 2
+          resources:
+            requests:
+              cpu: 250m
+              memory: 512Mi
+            limits:
+              cpu: 500m
+              memory: 1Gi
+          metrics:
+            enabled: true
+            serviceMonitor:
+              enabled: true
+              selector:
+                prometheus: kube-prometheus
+        
+        # Server configuration  
+        server:
+          replicas: 2
+          autoscaling:
+            enabled: true
+            minReplicas: 2
+            maxReplicas: 5
+            targetCPUUtilizationPercentage: 70
+          
+          resources:
+            requests:
+              cpu: 250m
+              memory: 256Mi
+            limits:
+              cpu: 500m
+              memory: 512Mi
+          
+          # Ingress configuration
+          ingress:
+            enabled: true
+            ingressClassName: traefik
+            hostname: argocd.yourcompany.com
+            annotations:
+              cert-manager.io/cluster-issuer: letsencrypt-prod
+              traefik.ingress.kubernetes.io/router.tls: "true"
+            tls: true
+          
+          # Configuration
+          config:
+            application.instanceLabelKey: argocd.argoproj.io/instance
+            server.rbac.log.enforce.enable: true
+            exec.enabled: true
+            admin.enabled: true
+            timeout.reconciliation: 180s
+            
+            # Git repository credentials
+            repositories: |
+              - type: git
+                url: https://github.com/your-org/e-commerce-back
+                name: e-commerce-repo
+                
+            # Resource customizations
+            resource.customizations: |
+              networking.k8s.io/Ingress:
+                health.lua: |
+                  hs = {}
+                  hs.status = "Healthy"
+                  return hs
+        
+        # Repository server
+        repoServer:
+          replicas: 2
+          resources:
+            requests:
+              cpu: 250m
+              memory: 512Mi
+            limits:
+              cpu: 500m
+              memory: 1Gi
+          metrics:
+            enabled: true
+            serviceMonitor:
+              enabled: true
+        
+        # ApplicationSet controller
+        applicationSet:
+          enabled: true
+          replicas: 2
+          resources:
+            requests:
+              cpu: 100m
+              memory: 128Mi
+            limits:
+              cpu: 200m
+              memory: 256Mi
+        
+        # Notifications
+        notifications:
+          enabled: true
+          argocdUrl: https://argocd.yourcompany.com
+          
+          notifiers:
+            service.slack: |
+              token: $slack-token
+              
+          subscriptions:
+            - recipients:
+              - slack:devops
+              triggers:
+              - on-deployed
+              - on-health-degraded
+              - on-sync-failed
+        
+        # Redis for caching
+        redis:
+          enabled: true
+          metrics:
+            enabled: true
+            serviceMonitor:
+              enabled: true
+
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: argocd
+  
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
+      - PrunePropagationPolicy=foreground
+      - PruneLast=true
+
+---
+# ArgoCD Projects for E-commerce
+apiVersion: argoproj.io/v1alpha1
+kind: AppProject
+metadata:
+  name: e-commerce
+  namespace: argocd
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+spec:
+  description: E-commerce microservices platform project
+  
+  # Source repositories
+  sourceRepos:
+    - 'https://github.com/your-org/e-commerce-back'
+    - 'https://helm.yourcompany.com/*'
+    - 'https://charts.yourcompany.com/*'
+  
+  # Allowed destinations
+  destinations:
+    - namespace: 'e-commerce*'
+      server: https://kubernetes.default.svc
+    - namespace: 'monitoring'
+      server: https://kubernetes.default.svc
+    - namespace: 'e-commerce-messaging'
+      server: https://kubernetes.default.svc
+  
+  # Cluster resource allow list
+  clusterResourceWhitelist:
+    - group: ''
+      kind: Namespace
+    - group: rbac.authorization.k8s.io
+      kind: ClusterRole
+    - group: rbac.authorization.k8s.io
+      kind: ClusterRoleBinding
+    - group: networking.k8s.io
+      kind: NetworkPolicy
+  
+  # Namespace resource allow list
+  namespaceResourceWhitelist:
+    - group: ''
+      kind: Service
+    - group: ''
+      kind: ConfigMap
+    - group: ''
+      kind: Secret
+    - group: apps
+      kind: Deployment
+    - group: apps
+      kind: StatefulSet
+    - group: networking.k8s.io
+      kind: Ingress
+    - group: autoscaling
+      kind: HorizontalPodAutoscaler
+    - group: batch
+      kind: Job
+    - group: batch
+      kind: CronJob
+  
+  # RBAC roles for this project
+  roles:
+    - name: admin
+      description: Admin access to e-commerce project
+      policies:
+        - p, proj:e-commerce:admin, applications, *, e-commerce/*, allow
+        - p, proj:e-commerce:admin, logs, get, e-commerce/*, allow
+        - p, proj:e-commerce:admin, exec, create, e-commerce/*, allow
+      groups:
+        - e-commerce:admins
+    
+    - name: developer
+      description: Developer access to e-commerce project
+      policies:
+        - p, proj:e-commerce:developer, applications, get, e-commerce/*, allow
+        - p, proj:e-commerce:developer, applications, sync, e-commerce/*, allow
+        - p, proj:e-commerce:developer, logs, get, e-commerce/*, allow
+      groups:
+        - e-commerce:developers
+    
+    - name: readonly
+      description: Read-only access to e-commerce project
+      policies:
+        - p, proj:e-commerce:readonly, applications, get, e-commerce/*, allow
+        - p, proj:e-commerce:readonly, logs, get, e-commerce/*, allow
+      groups:
+        - e-commerce:viewers
+
+---
+# Repository Secret for private repositories
+apiVersion: v1
+kind: Secret
+metadata:
+  name: e-commerce-repo-secret
+  namespace: argocd
+  labels:
+    argocd.argoproj.io/secret-type: repository
+type: Opaque
+stringData:
+  type: git
+  url: https://github.com/your-org/e-commerce-back
+  username: github-username
+  password: github-token  # Use GitHub token for private repos
+
+---
+# ArgoCD RBAC Configuration
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: argocd-rbac-cm
+  namespace: argocd
+  labels:
+    app.kubernetes.io/name: argocd-rbac-cm
+    app.kubernetes.io/part-of: argocd
+data:
+  policy.default: role:readonly
+  policy.csv: |
+    # Admin users
+    p, role:admin, applications, *, *, allow
+    p, role:admin, clusters, *, *, allow
+    p, role:admin, repositories, *, *, allow
+    p, role:admin, projects, *, *, allow
+    
+    # Developer users
+    p, role:developer, applications, get, */*, allow
+    p, role:developer, applications, sync, */*, allow
+    p, role:developer, applications, action/*, */*, allow
+    p, role:developer, logs, get, */*, allow
+    p, role:developer, exec, create, */*, allow
+    
+    # Read-only users
+    p, role:readonly, applications, get, */*, allow
+    p, role:readonly, logs, get, */*, allow
+    p, role:readonly, projects, get, *, allow
+    
+    # Group mappings (if using OIDC/LDAP)
+    g, argocd-admins, role:admin
+    g, e-commerce-developers, role:developer
+    g, e-commerce-viewers, role:readonly
+
+---
+# ServiceMonitor for ArgoCD metrics
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: argocd-metrics
+  namespace: argocd
+  labels:
+    app.kubernetes.io/name: argocd-metrics
+    prometheus: kube-prometheus
+spec:
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: argocd-metrics
+  endpoints:
+    - port: metrics
+      interval: 30s
+      path: /metrics
+---
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: argocd-server-metrics
+  namespace: argocd
+  labels:
+    app.kubernetes.io/name: argocd-server-metrics
+    prometheus: kube-prometheus
+spec:
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: argocd-server-metrics
+  endpoints:
+    - port: metrics
+      interval: 30s
+      path: /metrics
+---
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: argocd-repo-server-metrics
+  namespace: argocd
+  labels:
+    app.kubernetes.io/name: argocd-repo-server
+    prometheus: kube-prometheus
+spec:
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: argocd-repo-server
+  endpoints:
+    - port: metrics
+      interval: 30s
+      path: /metrics

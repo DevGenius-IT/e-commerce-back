@@ -1,0 +1,178 @@
+# Multi-stage Dockerfile optimisé pour les microservices Laravel
+ARG PHP_VERSION=8.3
+ARG SERVICE_NAME=unknown
+
+#============================================
+# Stage 1: Dependencies and Build
+#============================================
+FROM php:${PHP_VERSION}-fpm-alpine AS builder
+
+# Build arguments
+ARG SERVICE_NAME
+ARG BUILD_DATE
+ARG VCS_REF
+
+# Install system dependencies
+RUN apk add --no-cache \
+    git \
+    curl \
+    libpng-dev \
+    libxml2-dev \
+    zip \
+    unzip \
+    mysql-client \
+    nginx \
+    supervisor \
+    oniguruma-dev \
+    freetype-dev \
+    libjpeg-turbo-dev \
+    libzip-dev \
+    icu-dev \
+    autoconf \
+    g++ \
+    make \
+    && docker-php-ext-configure gd --with-freetype --with-jpeg \
+    && docker-php-ext-configure intl
+
+# Install PHP extensions required for Laravel + RabbitMQ
+RUN docker-php-ext-install \
+    pdo_mysql \
+    mbstring \
+    exif \
+    pcntl \
+    bcmath \
+    gd \
+    zip \
+    intl \
+    sockets \
+    opcache
+
+# Install Redis extension
+RUN pecl install redis && docker-php-ext-enable redis
+
+# Install Composer
+COPY --from=composer:2.6 /usr/bin/composer /usr/bin/composer
+
+# Set working directory
+WORKDIR /var/www
+
+# Copy composer files first for better layer caching
+COPY shared/composer.json shared/composer.lock ./shared/
+COPY services/${SERVICE_NAME}/composer.json services/${SERVICE_NAME}/composer.lock ./services/${SERVICE_NAME}/
+
+# Install shared dependencies
+RUN cd shared && composer install --no-dev --no-autoloader --no-scripts
+
+# Install service dependencies  
+RUN cd services/${SERVICE_NAME} && composer install --no-dev --no-autoloader --no-scripts
+
+# Copy application source
+COPY shared/ ./shared/
+COPY services/${SERVICE_NAME}/ ./services/${SERVICE_NAME}/
+
+# Generate optimized autoloader
+RUN cd shared && composer dump-autoload --optimize
+RUN cd services/${SERVICE_NAME} && composer dump-autoload --optimize
+
+# Set proper permissions
+RUN chown -R www-data:www-data /var/www \
+    && chmod -R 755 /var/www/services/${SERVICE_NAME}/storage \
+    && chmod -R 755 /var/www/services/${SERVICE_NAME}/bootstrap/cache
+
+#============================================
+# Stage 2: Production Runtime
+#============================================
+FROM php:${PHP_VERSION}-fpm-alpine AS production
+
+# Build arguments
+ARG SERVICE_NAME
+ARG BUILD_DATE
+ARG VCS_REF
+
+# Labels for metadata
+LABEL maintainer="DevOps Team <devops@yourcompany.com>" \
+      org.label-schema.name="${SERVICE_NAME}-service" \
+      org.label-schema.description="E-commerce ${SERVICE_NAME} microservice" \
+      org.label-schema.build-date="${BUILD_DATE}" \
+      org.label-schema.vcs-ref="${VCS_REF}" \
+      org.label-schema.schema-version="1.0"
+
+# Install runtime dependencies only
+RUN apk add --no-cache \
+    nginx \
+    supervisor \
+    mysql-client \
+    libpng \
+    libxml2 \
+    libzip \
+    icu \
+    freetype \
+    libjpeg-turbo \
+    oniguruma \
+    && docker-php-ext-configure gd --with-freetype --with-jpeg \
+    && docker-php-ext-install \
+    pdo_mysql \
+    mbstring \
+    exif \
+    pcntl \
+    bcmath \
+    gd \
+    zip \
+    intl \
+    sockets \
+    opcache
+
+# Install Redis extension
+RUN pecl install redis && docker-php-ext-enable redis
+
+# Copy application from builder stage
+COPY --from=builder --chown=www-data:www-data /var/www /var/www
+
+# Copy configuration files
+COPY docker/config/nginx.conf /etc/nginx/nginx.conf
+COPY docker/config/php.ini /usr/local/etc/php/conf.d/99-custom.ini
+COPY docker/config/supervisord.conf /etc/supervisor/conf.d/supervisord.conf
+COPY docker/config/opcache.ini /usr/local/etc/php/conf.d/opcache.ini
+
+# Create necessary directories
+RUN mkdir -p /var/log/supervisor \
+    && mkdir -p /var/log/nginx \
+    && mkdir -p /run/nginx \
+    && mkdir -p /var/www/services/${SERVICE_NAME}/storage/app \
+    && mkdir -p /var/www/services/${SERVICE_NAME}/storage/framework/cache \
+    && mkdir -p /var/www/services/${SERVICE_NAME}/storage/framework/sessions \
+    && mkdir -p /var/www/services/${SERVICE_NAME}/storage/framework/views \
+    && mkdir -p /var/www/services/${SERVICE_NAME}/storage/logs
+
+# Set working directory to service
+WORKDIR /var/www/services/${SERVICE_NAME}
+
+# Create non-root user for security
+RUN addgroup -S appgroup && adduser -S appuser -G appgroup
+RUN chown -R appuser:appgroup /var/www \
+    && chown -R appuser:appgroup /var/log \
+    && chown -R appuser:appgroup /run/nginx
+
+# Copy entrypoint script
+COPY docker/scripts/entrypoint.sh /usr/local/bin/entrypoint.sh
+RUN chmod +x /usr/local/bin/entrypoint.sh
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
+    CMD curl -f http://localhost:8000/health || exit 1
+
+# Expose port
+EXPOSE 8000 9090
+
+# Switch to non-root user
+USER appuser
+
+# Set environment variables
+ENV SERVICE_NAME=${SERVICE_NAME}
+ENV PHP_MEMORY_LIMIT=256M
+ENV PHP_MAX_EXECUTION_TIME=30
+ENV NGINX_WORKER_PROCESSES=auto
+
+# Entrypoint
+ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]
+CMD ["supervisord", "-c", "/etc/supervisor/conf.d/supervisord.conf"]

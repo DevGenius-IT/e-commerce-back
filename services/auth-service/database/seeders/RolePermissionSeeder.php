@@ -53,56 +53,68 @@ class RolePermissionSeeder extends Seeder
         ];
 
         foreach ($permissions as $permission) {
-            Permission::create(['name' => $permission, 'guard_name' => 'api']);
+            Permission::firstOrCreate(['name' => $permission, 'guard_name' => 'api']);
         }
 
         // Create roles and assign permissions
         
         // Super Admin - has all permissions
-        $superAdmin = Role::create(['name' => 'super-admin', 'guard_name' => 'api']);
-        $superAdmin->givePermissionTo(Permission::all());
+        $superAdmin = Role::firstOrCreate(['name' => 'super-admin', 'guard_name' => 'api']);
+        if ($superAdmin->permissions->isEmpty()) {
+            $superAdmin->givePermissionTo(Permission::all());
+        }
 
         // Admin - has most permissions except critical settings
-        $admin = Role::create(['name' => 'admin', 'guard_name' => 'api']);
-        $admin->givePermissionTo([
-            'users.view', 'users.create', 'users.update',
-            'products.view', 'products.create', 'products.update', 'products.delete',
-            'orders.view', 'orders.create', 'orders.update', 'orders.cancel',
-            'support.view', 'support.respond', 'support.close',
-            'reports.view', 'reports.export',
-            'settings.view',
-        ]);
+        $admin = Role::firstOrCreate(['name' => 'admin', 'guard_name' => 'api']);
+        if ($admin->permissions->isEmpty()) {
+            $admin->givePermissionTo([
+                'users.view', 'users.create', 'users.update',
+                'products.view', 'products.create', 'products.update', 'products.delete',
+                'orders.view', 'orders.create', 'orders.update', 'orders.cancel',
+                'support.view', 'support.respond', 'support.close',
+                'reports.view', 'reports.export',
+                'settings.view',
+            ]);
+        }
 
         // Manager - can manage products and orders
-        $manager = Role::create(['name' => 'manager', 'guard_name' => 'api']);
-        $manager->givePermissionTo([
-            'products.view', 'products.create', 'products.update',
-            'orders.view', 'orders.update',
-            'reports.view',
-        ]);
+        $manager = Role::firstOrCreate(['name' => 'manager', 'guard_name' => 'api']);
+        if ($manager->permissions->isEmpty()) {
+            $manager->givePermissionTo([
+                'products.view', 'products.create', 'products.update',
+                'orders.view', 'orders.update',
+                'reports.view',
+            ]);
+        }
 
         // Support - customer service role
-        $support = Role::create(['name' => 'support', 'guard_name' => 'api']);
-        $support->givePermissionTo([
-            'orders.view',
-            'support.view', 'support.respond', 'support.close',
-            'users.view',
-        ]);
+        $support = Role::firstOrCreate(['name' => 'support', 'guard_name' => 'api']);
+        if ($support->permissions->isEmpty()) {
+            $support->givePermissionTo([
+                'orders.view',
+                'support.view', 'support.respond', 'support.close',
+                'users.view',
+            ]);
+        }
 
         // Customer - basic customer role
-        $customer = Role::create(['name' => 'customer', 'guard_name' => 'api']);
-        $customer->givePermissionTo([
-            'products.view',
-            'orders.view', 'orders.create',
-        ]);
+        $customer = Role::firstOrCreate(['name' => 'customer', 'guard_name' => 'api']);
+        if ($customer->permissions->isEmpty()) {
+            $customer->givePermissionTo([
+                'products.view',
+                'orders.view', 'orders.create',
+            ]);
+        }
 
         // Merchant - can manage their own products
-        $merchant = Role::create(['name' => 'merchant', 'guard_name' => 'api']);
-        $merchant->givePermissionTo([
-            'products.view', 'products.create', 'products.update', 'products.delete',
-            'orders.view',
-            'reports.view',
-        ]);
+        $merchant = Role::firstOrCreate(['name' => 'merchant', 'guard_name' => 'api']);
+        if ($merchant->permissions->isEmpty()) {
+            $merchant->givePermissionTo([
+                'products.view', 'products.create', 'products.update', 'products.delete',
+                'orders.view',
+                'reports.view',
+            ]);
+        }
 
         // Assign super-admin role to the first user (created in UserSeeder)
         $user = User::where('email', 'kylian@collect-verything.com')->first();

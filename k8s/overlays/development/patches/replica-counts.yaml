@@ -1,0 +1,7 @@
+# Development replica counts (single replica for cost efficiency)
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: placeholder
+spec:
+  replicas: 1

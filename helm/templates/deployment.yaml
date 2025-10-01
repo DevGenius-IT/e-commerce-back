@@ -1,0 +1,218 @@
+{{- range $serviceName, $serviceConfig := .Values.services }}
+{{- if $serviceConfig.enabled }}
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ $serviceName }}
+  namespace: {{ $.Values.namespace.name }}
+  labels:
+    app: {{ $serviceName }}
+    component: microservice
+    tier: backend
+    chart: {{ $.Chart.Name }}-{{ $.Chart.Version }}
+    release: {{ $.Release.Name }}
+    heritage: {{ $.Release.Service }}
+spec:
+  replicas: {{ $serviceConfig.replicaCount | default 2 }}
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxUnavailable: 1
+      maxSurge: 1
+  selector:
+    matchLabels:
+      app: {{ $serviceName }}
+      release: {{ $.Release.Name }}
+  template:
+    metadata:
+      labels:
+        app: {{ $serviceName }}
+        component: microservice
+        tier: backend
+        release: {{ $.Release.Name }}
+        version: {{ if $serviceConfig.image }}{{ $serviceConfig.image.tag | default "latest" }}{{ else }}latest{{ end }}
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "9090"
+        prometheus.io/path: "/metrics"
+        checksum/config: {{ .Values | toYaml | sha256sum }}
+    spec:
+      {{- if $.Values.security.podSecurityContext }}
+      securityContext:
+        {{- toYaml $.Values.security.podSecurityContext | nindent 8 }}
+      {{- else }}
+      securityContext:
+        runAsNonRoot: false  # Allow root for supervisord in development
+        runAsUser: 0
+        fsGroup: 0
+      {{- end }}
+      containers:
+      - name: {{ $serviceName }}
+        image: "{{ if $.Values.global.imageRegistry }}{{ $.Values.global.imageRegistry }}/{{ end }}{{ if $serviceConfig.image }}{{ $serviceConfig.image.repository | default $serviceName }}{{ else }}{{ $serviceName }}{{ end }}:{{ if $serviceConfig.image }}{{ $serviceConfig.image.tag | default "latest" }}{{ else }}latest{{ end }}"
+        imagePullPolicy: {{ if $serviceConfig.image }}{{ $serviceConfig.image.pullPolicy | default "Always" }}{{ else }}Always{{ end }}
+        ports:
+        - containerPort: {{ if $serviceConfig.service }}{{ $serviceConfig.service.targetPort | default 8000 }}{{ else }}8000{{ end }}
+          name: http
+          protocol: TCP
+        - containerPort: 9090
+          name: metrics
+          protocol: TCP
+        
+        # Environment variables from ConfigMap
+        envFrom:
+        - configMapRef:
+            name: global-config
+        
+        # Service-specific environment variables
+        env:
+        - name: APP_NAME
+          value: "{{ $serviceName | title }} Service"
+        - name: APP_URL
+          value: "http://{{ $serviceName }}.{{ $.Values.namespace.name }}.svc.cluster.local:{{ if $serviceConfig.service }}{{ $serviceConfig.service.targetPort | default 8000 }}{{ else }}8000{{ end }}"
+        - name: SERVICE_NAME
+          value: "{{ $serviceName }}"
+        
+        {{- if $serviceConfig.database.enabled }}
+        # Database configuration
+        - name: DB_HOST
+          value: "{{ $serviceName }}-mysql.{{ $.Values.namespace.name }}.svc.cluster.local"
+        - name: DB_DATABASE
+          value: "{{ $serviceConfig.database.name }}"
+        - name: DB_USERNAME
+          value: "{{ $serviceConfig.database.user }}"
+        - name: DB_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: {{ $serviceName }}-secrets
+              key: DB_PASSWORD
+        {{- end }}
+        
+        # Global secrets
+        - name: JWT_SECRET
+          valueFrom:
+            secretKeyRef:
+              name: global-secrets
+              key: JWT_SECRET
+        - name: APP_KEY
+          valueFrom:
+            secretKeyRef:
+              name: global-secrets
+              key: APP_KEY
+        - name: RABBITMQ_USER
+          valueFrom:
+            secretKeyRef:
+              name: global-secrets
+              key: RABBITMQ_USER
+        - name: RABBITMQ_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: global-secrets
+              key: RABBITMQ_PASSWORD
+        
+        # Health checks
+        startupProbe:
+          tcpSocket:
+            port: {{ if and $serviceConfig.probes $serviceConfig.probes.port }}{{ $serviceConfig.probes.port }}{{ else if $serviceConfig.service }}{{ $serviceConfig.service.targetPort | default 8000 }}{{ else }}8000{{ end }}
+          {{- if and $serviceConfig.probes $serviceConfig.probes.startup }}
+          initialDelaySeconds: {{ $serviceConfig.probes.startup.initialDelaySeconds | default 10 }}
+          periodSeconds: {{ $serviceConfig.probes.startup.periodSeconds | default 5 }}
+          timeoutSeconds: {{ $serviceConfig.probes.startup.timeoutSeconds | default 3 }}
+          failureThreshold: {{ $serviceConfig.probes.startup.failureThreshold | default 30 }}
+          {{- else }}
+          initialDelaySeconds: 10
+          periodSeconds: 5
+          timeoutSeconds: 3
+          failureThreshold: 30
+          {{- end }}
+        
+        livenessProbe:
+          tcpSocket:
+            port: {{ if and $serviceConfig.probes $serviceConfig.probes.port }}{{ $serviceConfig.probes.port }}{{ else if $serviceConfig.service }}{{ $serviceConfig.service.targetPort | default 8000 }}{{ else }}8000{{ end }}
+          {{- if and $serviceConfig.probes $serviceConfig.probes.liveness }}
+          initialDelaySeconds: {{ $serviceConfig.probes.liveness.initialDelaySeconds | default 60 }}
+          periodSeconds: {{ $serviceConfig.probes.liveness.periodSeconds | default 30 }}
+          timeoutSeconds: {{ $serviceConfig.probes.liveness.timeoutSeconds | default 5 }}
+          failureThreshold: {{ $serviceConfig.probes.liveness.failureThreshold | default 3 }}
+          {{- else }}
+          initialDelaySeconds: 60
+          periodSeconds: 30
+          timeoutSeconds: 5
+          failureThreshold: 3
+          {{- end }}
+        
+        readinessProbe:
+          tcpSocket:
+            port: {{ if and $serviceConfig.probes $serviceConfig.probes.port }}{{ $serviceConfig.probes.port }}{{ else if $serviceConfig.service }}{{ $serviceConfig.service.targetPort | default 8000 }}{{ else }}8000{{ end }}
+          {{- if and $serviceConfig.probes $serviceConfig.probes.readiness }}
+          initialDelaySeconds: {{ $serviceConfig.probes.readiness.initialDelaySeconds | default 5 }}
+          periodSeconds: {{ $serviceConfig.probes.readiness.periodSeconds | default 10 }}
+          timeoutSeconds: {{ $serviceConfig.probes.readiness.timeoutSeconds | default 3 }}
+          failureThreshold: {{ $serviceConfig.probes.readiness.failureThreshold | default 3 }}
+          {{- else }}
+          initialDelaySeconds: 5
+          periodSeconds: 10
+          timeoutSeconds: 3
+          failureThreshold: 3
+          {{- end }}
+        
+        # Resource limits
+        resources:
+          {{- toYaml ($serviceConfig.resources | default $.Values.services.defaults.resources) | nindent 10 }}
+        
+        # Security context (relaxed for development)
+        {{- if $.Values.security.containerSecurityContext }}
+        securityContext:
+          {{- toYaml $.Values.security.containerSecurityContext | nindent 10 }}
+        {{- else }}
+        securityContext:
+          allowPrivilegeEscalation: true
+          readOnlyRootFilesystem: false
+          capabilities:
+            add:
+            - SETUID
+            - SETGID
+        {{- end }}
+        
+        # Volume mounts
+        volumeMounts:
+        - name: tmp
+          mountPath: /tmp
+        - name: var-cache
+          mountPath: /var/cache
+        - name: var-log
+          mountPath: /var/log
+        {{- if and (ne $serviceName "api-gateway") (ne $serviceName "addresses-service") (ne $serviceName "messages-broker") }}
+        - name: supervisord-config
+          mountPath: /etc/supervisor/conf.d/supervisord.conf
+          subPath: supervisord.conf
+        - name: supervisord-config
+          mountPath: /etc/nginx/nginx.conf
+          subPath: nginx.conf
+        {{- end }}
+      
+      # Volumes
+      volumes:
+      - name: tmp
+        emptyDir: {}
+      - name: var-cache
+        emptyDir: {}
+      - name: var-log
+        emptyDir: {}
+      {{- if and (ne $serviceName "api-gateway") (ne $serviceName "addresses-service") (ne $serviceName "messages-broker") }}
+      - name: supervisord-config
+        configMap:
+          name: {{ $serviceName }}-supervisord-config
+      {{- end }}
+      
+      # Image pull secrets
+      {{- with $.Values.global.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      
+      restartPolicy: Always
+      dnsPolicy: ClusterFirst
+      terminationGracePeriodSeconds: 30
+{{- end }}
+{{- end }}

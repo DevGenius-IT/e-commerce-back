@@ -12,6 +12,7 @@ class RabbitMQService
 {
     protected ?AMQPStreamConnection $connection = null;
     protected $channel;
+    protected bool $shouldContinueConsuming = true;
     protected array $config;
 
     public function __construct(array $config)
@@ -105,6 +106,9 @@ class RabbitMQService
             $this->config['qos']['global']
         );
 
+        // Reset the consuming flag
+        $this->shouldContinueConsuming = true;
+
         $this->channel->basic_consume(
             $queueName,
             $this->config['consumer']['tag'],
@@ -115,8 +119,14 @@ class RabbitMQService
             function ($message) use ($callback) {
                 try {
                     $data = json_decode($message->body, true);
-                    $callback($data, $message);
+                    $result = $callback($data, $message);
                     $message->ack();
+                    
+                    // If callback returns false explicitly, stop consuming
+                    if ($result === false) {
+                        $this->shouldContinueConsuming = false;
+                        $this->channel->basic_cancel($this->config['consumer']['tag']);
+                    }
                 } catch (Exception $e) {
                     Log::error('Error processing message: ' . $e->getMessage());
                     $message->nack(true);
@@ -126,9 +136,11 @@ class RabbitMQService
 
         Log::info("Starting to consume messages from queue: {$queueName}");
 
-        while ($this->channel->is_consuming()) {
-            $this->channel->wait();
+        while ($this->channel->is_consuming() && $this->shouldContinueConsuming) {
+            $this->channel->wait(null, false, 1); // 1 second timeout to check shouldContinueConsuming flag
         }
+        
+        Log::info("Stopped consuming messages from queue: {$queueName}");
     }
 
     public function getQueueStats(string $queueName): array
@@ -152,6 +164,11 @@ class RabbitMQService
     public function isConnected(): bool
     {
         return $this->connection && $this->connection->isConnected();
+    }
+
+    public function getChannel()
+    {
+        return $this->channel;
     }
 
     public function disconnect(): void
