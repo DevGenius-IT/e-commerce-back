@@ -91,11 +91,24 @@ docker-stop:
 	@echo "$(YELLOW)⏹️ Arrêt de tous les services Docker...$(NC)"
 	@docker-compose stop
 
+## 🛑 Arrêter et supprimer Docker Compose
+docker-down:
+	@echo "$(YELLOW)🛑 Arrêt et suppression des services Docker...$(NC)"
+	@docker-compose down
+	@echo "$(GREEN)✅ Services Docker arrêtés et supprimés$(NC)"
+
 ## 🗑️ Nettoyer Docker Compose
 docker-clean:
 	@echo "$(RED)🧹 Nettoyage Docker Compose...$(NC)"
 	@docker-compose down -v --rmi all
 	@docker system prune -f
+
+## 🚨 Arrêt d'urgence Docker (force)
+docker-kill:
+	@echo "$(RED)🚨 Arrêt d'urgence de tous les services Docker...$(NC)"
+	@docker-compose kill
+	@docker-compose down --remove-orphans
+	@echo "$(GREEN)✅ Arrêt d'urgence terminé$(NC)"
 
 ## 🌐 Points d'accès Docker
 docker-endpoints:
@@ -148,10 +161,42 @@ k8s-endpoints:
 	@echo "$(YELLOW)🌐 Points d'accès Kubernetes:$(NC)"
 	@$(AUTOMATION_SCRIPT) endpoints
 
+## ⏹️ Arrêter l'environnement Kubernetes
+k8s-stop:
+	@echo "$(YELLOW)⏹️ Arrêt de l'environnement $(K8S_ENVIRONMENT)...$(NC)"
+	@if [ "$(K8S_ENVIRONMENT)" = "monitoring" ]; then \
+		echo "$(BLUE)Arrêt des services de monitoring...$(NC)"; \
+		kubectl get deployments -n monitoring 2>/dev/null | tail -n +2 | awk '{print $$1}' | xargs -I {} kubectl scale deployment {} --replicas=0 -n monitoring 2>/dev/null || true; \
+	else \
+		echo "$(BLUE)Mise à l'échelle des déploiements microservices à 0 répliques...$(NC)"; \
+		kubectl get deployments -n $(K8S_ENVIRONMENT)-microservices 2>/dev/null | tail -n +2 | awk '{print $$1}' | xargs -I {} kubectl scale deployment {} --replicas=0 -n $(K8S_ENVIRONMENT)-microservices 2>/dev/null || true; \
+		echo "$(BLUE)Arrêt des services dans l'environnement de monitoring...$(NC)"; \
+		kubectl get deployments -n $(K8S_ENVIRONMENT)-monitoring 2>/dev/null | tail -n +2 | awk '{print $$1}' | xargs -I {} kubectl scale deployment {} --replicas=0 -n $(K8S_ENVIRONMENT)-monitoring 2>/dev/null || true; \
+	fi
+	@echo "$(GREEN)✅ Environnement $(K8S_ENVIRONMENT) arrêté (déploiements mis à l'échelle 0)$(NC)"
+
+## 🛑 Supprimer l'environnement Kubernetes
+k8s-down:
+	@echo "$(YELLOW)🛑 Suppression de l'environnement $(K8S_ENVIRONMENT)...$(NC)"
+	@kubectl delete namespace $(K8S_ENVIRONMENT)-microservices 2>/dev/null || true
+	@kubectl delete namespace $(K8S_ENVIRONMENT)-monitoring 2>/dev/null || true
+	@echo "$(GREEN)✅ Environnement $(K8S_ENVIRONMENT) supprimé$(NC)"
+
 ## 🧹 Nettoyer l'environnement Kubernetes
 k8s-clean:
 	@echo "$(RED)🧹 Nettoyage de l'environnement $(K8S_ENVIRONMENT)...$(NC)"
 	@$(AUTOMATION_SCRIPT) cleanup-env $(K8S_ENVIRONMENT)
+
+## 🚨 Arrêt d'urgence Kubernetes (tout)
+k8s-kill:
+	@echo "$(RED)🚨 Arrêt d'urgence de tous les environnements Kubernetes...$(NC)"
+	@kubectl delete namespace development-microservices 2>/dev/null || true
+	@kubectl delete namespace staging-microservices 2>/dev/null || true
+	@kubectl delete namespace production-microservices 2>/dev/null || true
+	@kubectl delete namespace development-monitoring 2>/dev/null || true
+	@kubectl delete namespace staging-monitoring 2>/dev/null || true
+	@kubectl delete namespace production-monitoring 2>/dev/null || true
+	@echo "$(GREEN)✅ Arrêt d'urgence Kubernetes terminé$(NC)"
 
 ## ☸️ Préparer la migration Kubernetes
 k8s-prepare:
@@ -162,6 +207,41 @@ k8s-prepare:
 	@chmod +x $(VERIFIER_SCRIPT)
 	@chmod +x $(INTEGRATION_TESTS)
 	@echo "$(GREEN)✅ Scripts Kubernetes préparés$(NC)"
+
+# =============================================================================
+# 🛑 COMMANDES D'ARRÊT GLOBAL
+# =============================================================================
+
+## 🛑 Arrêter tout (Docker + Kubernetes)
+stop-all:
+	@echo "$(YELLOW)🛑 Arrêt de tous les services (Docker + Kubernetes)...$(NC)"
+	@$(MAKE) docker-stop
+	@$(MAKE) k8s-stop
+	@echo "$(GREEN)✅ Tous les services arrêtés$(NC)"
+
+## 🗑️ Supprimer tout (Docker + Kubernetes)
+down-all:
+	@echo "$(YELLOW)🗑️ Suppression de tous les services (Docker + Kubernetes)...$(NC)"
+	@$(MAKE) docker-down
+	@$(MAKE) k8s-down
+	@echo "$(GREEN)✅ Tous les services supprimés$(NC)"
+
+## 🧹 Nettoyer tout (Docker + Kubernetes)
+clean-all:
+	@echo "$(RED)🧹 Nettoyage complet (Docker + Kubernetes)...$(NC)"
+	@$(MAKE) docker-clean
+	@$(MAKE) k8s-clean
+	@echo "$(GREEN)✅ Nettoyage complet terminé$(NC)"
+
+## 🚨 Arrêt d'urgence complet (TOUT)
+kill-all:
+	@echo "$(RED)🚨 ARRÊT D'URGENCE COMPLET - Tous les services...$(NC)"
+	@echo "$(RED)⚠️  Ceci va arrêter et supprimer TOUS les services Docker et Kubernetes$(NC)"
+	@echo "$(YELLOW)Appuyez sur Ctrl+C dans les 5 secondes pour annuler...$(NC)"
+	@sleep 5
+	@$(MAKE) docker-kill
+	@$(MAKE) k8s-kill
+	@echo "$(RED)🔥 ARRÊT D'URGENCE COMPLET TERMINÉ$(NC)"
 
 # =============================================================================
 # 🧪 TESTS ET VALIDATION
@@ -408,12 +488,25 @@ help: banner
 	@echo "  $(BLUE)k8s-health$(NC)             Vérifier santé Kubernetes"
 	@echo "  $(BLUE)k8s-status$(NC)             Statut plateforme Kubernetes"
 	@echo "  $(BLUE)k8s-monitoring$(NC)         Ouvrir monitoring Kubernetes"
+	@echo "  $(BLUE)k8s-stop$(NC)               Arrêter environnement Kubernetes"
+	@echo "  $(BLUE)k8s-down$(NC)               Supprimer environnement Kubernetes"
+	@echo "  $(BLUE)k8s-clean$(NC)              Nettoyer environnement Kubernetes"
+	@echo "  $(BLUE)k8s-kill$(NC)               Arrêt d'urgence tous environnements"
 	@echo ""
 	@echo "$(YELLOW)🐳 DOCKER COMPOSE:$(NC)"
 	@echo "  $(BLUE)docker-start$(NC)           Démarrer services Docker"
 	@echo "  $(BLUE)docker-install$(NC)         Installation Docker Compose"
 	@echo "  $(BLUE)docker-status$(NC)          Statut services Docker"
+	@echo "  $(BLUE)docker-stop$(NC)            Arrêter services Docker"
+	@echo "  $(BLUE)docker-down$(NC)            Arrêter et supprimer services Docker"
 	@echo "  $(BLUE)docker-clean$(NC)           Nettoyer Docker Compose"
+	@echo "  $(BLUE)docker-kill$(NC)            Arrêt d'urgence Docker"
+	@echo ""
+	@echo "$(YELLOW)🛑 ARRÊT GLOBAL:$(NC)"
+	@echo "  $(BLUE)stop-all$(NC)               Arrêter tout (Docker + Kubernetes)"
+	@echo "  $(BLUE)down-all$(NC)               Supprimer tout (Docker + Kubernetes)"
+	@echo "  $(BLUE)clean-all$(NC)              Nettoyer tout (Docker + Kubernetes)"
+	@echo "  $(BLUE)kill-all$(NC)               Arrêt d'urgence complet (TOUT)"
 	@echo ""
 	@echo "$(YELLOW)🧪 TESTS & VALIDATION:$(NC)"
 	@echo "  $(BLUE)validate-platform$(NC)      Validation complète plateforme"
@@ -470,4 +563,4 @@ check-tools:
 	@echo -n "jq: "; jq --version 2>/dev/null && echo "$(GREEN)✅$(NC)" || echo "$(RED)❌$(NC)"
 	@echo -n "curl: "; curl --version 2>/dev/null | head -1 && echo "$(GREEN)✅$(NC)" || echo "$(RED)❌$(NC)"
 
-.PHONY: dashboard install-complete migrate-to-k8s docker-start docker-install docker-status docker-stop docker-clean docker-endpoints k8s-setup k8s-deploy k8s-build k8s-health k8s-status k8s-monitoring k8s-logs k8s-endpoints k8s-clean k8s-prepare validate-platform validate-quick verify-deployment verify-quick test-integration test-health test-auth test-performance test-security test-all migrate-all seed-all fresh-all test-docker test-service shell composer-install health-docker clear-cache dev stats newsletters-process newsletters-stats backup-docker deploy-complete dev-workflow prod-workflow migration-workflow banner help info check-tools
+.PHONY: dashboard install-complete migrate-to-k8s docker-start docker-install docker-status docker-stop docker-down docker-clean docker-kill docker-endpoints k8s-setup k8s-deploy k8s-build k8s-health k8s-status k8s-monitoring k8s-logs k8s-endpoints k8s-stop k8s-down k8s-clean k8s-kill k8s-prepare stop-all down-all clean-all kill-all validate-platform validate-quick verify-deployment verify-quick test-integration test-health test-auth test-performance test-security test-all migrate-all seed-all fresh-all test-docker test-service shell composer-install health-docker clear-cache dev stats newsletters-process newsletters-stats backup-docker deploy-complete dev-workflow prod-workflow migration-workflow banner help info check-tools

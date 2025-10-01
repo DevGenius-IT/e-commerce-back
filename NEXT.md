@@ -1,1415 +1,1379 @@
-📋 Plan de Développement E-commerce - Architecture Fully Asynchrone
+# 📋 Plan de Développement E-commerce - Architecture Moderne avec Minio
 
-## 🏗️ Architecture Microservices Fully Asynchrone
+## 🏗️ Architecture Microservices Fully Asynchrone + Stockage
 
-### 🎯 **NOUVELLE ARCHITECTURE : 100% MESSAGE BROKER**
+### 🎯 **ARCHITECTURE COMPLÈTE : RabbitMQ + MinIO**
 
-Cette plateforme e-commerce utilise désormais une **architecture entièrement asynchrone** où toutes les communications inter-services passent exclusivement par **RabbitMQ**.
+Cette plateforme e-commerce utilise une **architecture entièrement asynchrone** avec stockage de fichiers distribué via **MinIO**.
 
-#### 🚀 **Flux de Communication Unifié**
+#### 🚀 **Flux de Communication et Stockage**
 ```
-Client → Nginx (port 80) → API Gateway (port 8100) → RabbitMQ → Services
+Client → Nginx → API Gateway → RabbitMQ → Services
+                                    ↓
+                            MinIO Storage
+                        (Images, Documents, Assets)
 ```
 
-**Plus aucune communication HTTP directe entre services !**
-
-### 📊 État Actuel des Services
-
-#### ✅ Services Opérationnels (Architecture Asynchrone)
-- **api-gateway** (port 8100) - **Point d'entrée unique + Routage RabbitMQ**
-- **auth-service** (port 8001) - Authentification JWT + Permissions
-- **messages-broker** (port 8002) - **Hub central RabbitMQ**
-- **addresses-service** (port 8009) - Gestion des adresses
-- **products-service** (port 8003) - Catalogue produits ✅
-- **baskets-service** (port 8005) - Paniers et codes promo ✅
-- **orders-service** (port 8004) - Gestion des commandes ✅
-- **deliveries-service** (port 8006) - Livraisons et points de vente ✅
-- **newsletters-service** (port 8007) - Email marketing ✅
-- **sav-service** (port 8008) - Service après-vente ✅
-- **questions-service** (port 8012) - FAQ et support questions/réponses ✅
-- **contacts-service** (port 8010) - Gestion des contacts ✅
-
-#### ✅ Services Complets
-- **websites-service** (port 8012) - Configuration sites ✅
+**Architecture hybride : Communication async + Stockage centralisé**
 
 ---
 
-## 🔄 Architecture Message Broker
+## 🗂️ INTÉGRATION MINIO - STOCKAGE DE FICHIERS
 
-### 🐰 Configuration RabbitMQ
-- **Host**: `rabbitmq` (Docker network)
-- **Port AMQP**: 5672
-- **Port Management**: 15672
-- **Credentials**: guest/guest
-- **Exchange**: `microservices_exchange` (topic)
-- **Pattern RPC**: Request/Response avec correlation ID
+### 📦 Configuration MinIO Container
 
-### 📡 Queues et Routing Keys
+#### Architecture de Stockage
 ```
-{service-name}.requests  → RPC requests
-{service-name}.events    → Event publishing
-```
-
-#### Services avec RabbitMQ Listeners Actifs
-- ✅ **products-service**: 3 consumers actifs
-- ✅ **addresses-service**: 1 consumer actif
-- ✅ **auth-service**: Listener configuré
-- ✅ **baskets-service**: Listener configuré
-- ✅ **orders-service**: Listener configuré
-- ✅ **deliveries-service**: Listener configuré
-
-### 🛣️ API Gateway - Point d'Entrée Unique
-
-#### Configuration Nginx
-```nginx
-# Toutes les requêtes passent par l'API Gateway
-location /api/ {
-    proxy_pass http://api-gateway:8000/v1/;
-}
+Services → MinIO Container → Persistent Storage
+├── products-service    → Images produits, catalogues PDF
+├── newsletters-service → Templates HTML, attachements emails
+├── sav-service        → Documents joints tickets
+├── contacts-service   → Formulaires avec fichiers
+├── websites-service   → Assets, logos, images sites
+└── shared-assets      → Ressources communes
 ```
 
-#### Endpoints API Gateway
-- **Health Check**: `GET /api/health`
-- **RabbitMQ Status**: `GET /api/test-rabbitmq`
-- **Service Status**: `GET /api/services/status`
-- **Service Routing**: `ANY /api/{service}/{path}`
+#### Configuration Docker Compose
+```yaml
+# docker-compose.yml - Ajout MinIO
+services:
+  minio:
+    image: minio/minio:latest
+    container_name: minio-storage
+    environment:
+      MINIO_ROOT_USER: admin
+      MINIO_ROOT_PASSWORD: adminpass123
+      MINIO_DEFAULT_BUCKETS: "products,newsletters,support,contacts,websites,shared"
+    ports:
+      - "9000:9000"      # API MinIO
+      - "9001:9001"      # Console Web
+    volumes:
+      - minio-data:/data
+    command: server /data --console-address ":9001"
+    networks:
+      - microservices-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
+      interval: 30s
+      timeout: 20s
+      retries: 3
 
-#### Exemple de Routage Asynchrone
-```
-GET /api/products/health
-→ Nginx → API Gateway → RabbitMQ (products.requests)
-→ Products Service → RabbitMQ Response → API Gateway → Client
-```
+  # Services existants avec accès MinIO
+  products-service:
+    environment:
+      - MINIO_ENDPOINT=http://minio:9000
+      - MINIO_BUCKET=products
+    depends_on:
+      - minio
+      
+  sav-service:
+    environment:
+      - MINIO_ENDPOINT=http://minio:9000
+      - MINIO_BUCKET=support
+    depends_on:
+      - minio
 
----
-
-## 🔐 Configuration JWT Unifiée
-
-### Token d'Administration Valide
-```
-eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJodHRwOi8vYXV0aC1zZXJ2aWNlOjgwMDEvYXBpL2xvZ2luIiwiaWF0IjoxNzU4ODEyNjcyLCJleHAiOjE3NTg4MTYyNzIsIm5iZiI6MTc1ODgxMjY3MiwianRpIjoiQUE1Ulk5VzZXRDZTT3BINSIsInN1YiI6IjEiLCJwcnYiOiJiNzc0MzY1ZWVlNjhkNTc4N2VlNDQwNDVmNzIzMzM3ODI5Mjk4Y2U3Iiwicm9sZSI6bnVsbCwiZW1haWwiOiJreWxpYW5AY29sbGVjdC12ZXJ5dGhpbmcuY29tIn0.f8KlvvvNpnvWz6rhphkK0E20wPkdhwbnu1Q63uuxpls
-```
-
-### Routes Publiques (Sans Authentication)
-```
-/api/products/*          # Navigation catalogue
-/api/addresses/countries # Données géographiques  
-/api/newsletters/*       # Abonnements emails
-/api/sav/public/*        # Tickets clients
-```
-
-### Routes Protégées par JWT
-```
-/api/auth/logout         # Déconnexion
-/api/baskets/current     # Panier utilisateur
-/api/orders/orders       # Commandes utilisateur
-/api/deliveries/track    # Suivi livraisons
-```
-
----
-
-## 🗃️ Schéma de Base de Données Consolidé
-
-### 🎯 Services Opérationnels Complets
-
-#### **Products Service** ✅
-```sql
--- Tables principales
-products (id, name, ref, price_ht, stock)
-brands (id, name, website)
-categories (id, name)
-types (id, name)
-
--- Relations
-product_categories (product_id, category_id)
-product_attributes (product_id, attribute_id)
+volumes:
+  minio-data:
+    driver: local
 ```
 
-#### **Baskets Service** ✅
-```sql
--- Panier et articles
-baskets (id, user_id, amount, created_at)
-basket_items (id, basket_id, product_id, quantity, price_ht)
-
--- Codes promotionnels
-promo_codes (id, name, code, discount, type_id)
-types (id, name, symbol) -- %, €, 🚚, 🎁
-basket_promo_code (basket_id, promo_code_id)
-```
-
-#### **Orders Service** ✅
-```sql
--- Commandes
-orders (id, user_id, address_id, total_ht, total_ttc, status_id)
-order_items (id, order_id, product_id, quantity, price_ht, product_name)
-order_status (id, name, color) -- pending, confirmed, processing, shipped, delivered
-```
-
-#### **Deliveries Service** ✅
-```sql
--- Livraisons
-deliveries (id, order_id, tracking_number, carrier, status_id)
-sale_points (id, name, address, lat, lng, type)
-status (id, name, color) -- pending, shipped, delivered, failed
-```
-
-#### **SAV Service** ✅
-```sql
--- Support tickets
-support_tickets (id, user_id, ticket_number, subject, priority, status, assigned_to)
-ticket_messages (id, ticket_id, message, sender_type, is_internal, is_read)
-ticket_attachments (id, ticket_id, filename, file_path, file_size)
-```
-
-#### **Addresses Service** ✅
-```sql
--- Adresses
-addresses (id, user_id, street, zip_code, city, country_id, type_id)
-countries (id, name, code)
-address_types (id, name) -- billing, shipping, pickup
-```
-
-### 🎯 Services Communication & Support
-
-#### **Questions Service** ✅
-```
-erDiagram
-    Questions {
-        INT id PK
-        VARCHAR title
-        TEXT body
-        DATETIME created_at
-        DATETIME updated_at
-        DATETIME deleted_at
-    }
-    
-    Answers {
-        INT id PK
-        INT question_id FK
-        TEXT body
-        DATETIME created_at
-        DATETIME updated_at
-        DATETIME deleted_at
-    }
-    
-    Questions ||--o{ Answers : "has_answers"
-```
-
-#### **Websites Service** ✅
-```sql
--- Configuration des sites web
-websites (id, name, domain, created_at, updated_at, deleted_at)
-```
-
-#### **Contacts Service** ✅
-```sql
-contacts (id, email, phone, subject, message, status, created_at)
-```
-
-#### **Newsletters Service** ✅
-```sql
-newsletters (id, email, status, subscribed_at, unsubscribed_at)
-campaigns (id, name, subject, content, sent_at)
-```
-
----
-
-## 🛠️ Tests de l'Architecture Asynchrone
-
-### 🧪 Commandes de Test
-
-#### Test de l'API Gateway
+#### Buckets par Service
 ```bash
-# Health check général
-curl http://localhost/api/health
+# Structure des buckets MinIO
+products/        → Images produits, catalogues, fiches techniques
+├── images/      → Photos produits haute résolution
+├── thumbnails/  → Miniatures optimisées
+├── catalogs/    → PDF catalogues
+└── specs/       → Fiches techniques
 
-# Test connexion RabbitMQ
-curl http://localhost/api/test-rabbitmq
+newsletters/     → Templates et assets emails
+├── templates/   → Templates HTML
+├── assets/      → Images, logos emails
+└── attachments/ → Documents joints
 
-# Status des services
-curl http://localhost/api/services/status
+support/         → Documents SAV
+├── tickets/     → Attachements tickets
+├── kb/          → Base de connaissances
+└── forms/       → Formulaires PDF
+
+contacts/        → Documents formulaires
+├── attachments/ → Fichiers joints contacts
+└── forms/       → Données formulaires
+
+websites/        → Assets sites web
+├── logos/       → Logos sites
+├── images/      → Images génériques
+├── documents/   → Documents téléchargeables
+└── themes/      → Thèmes/templates
+
+shared/          → Ressources communes
+├── icons/       → Icônes réutilisables
+├── fonts/       → Polices personnalisées
+└── templates/   → Templates partagés
 ```
 
-#### Test des Services via Gateway
-```bash
-# Products (public)
-curl http://localhost/api/products/health
+### 🔧 Shared MinIO Service
 
-# Auth (avec token)
-curl -H "Authorization: Bearer {token}" http://localhost/api/auth/me
-
-# Baskets (avec token) 
-curl -H "Authorization: Bearer {token}" http://localhost/api/baskets/current
-
-# Orders (avec token)
-curl -H "Authorization: Bearer {token}" http://localhost/api/orders/orders
-
-# Deliveries tracking
-curl http://localhost/api/deliveries/track/DLV-20241225-0001
-
-# Websites (public)
-curl http://localhost/api/websites/websites
-
-# Questions (public)
-curl http://localhost/api/questions/questions
-
-# Contacts (public)
-curl http://localhost/api/contacts/contacts
-```
-
-#### Vérification RabbitMQ
-```bash
-# Queues actives
-curl -u guest:guest http://localhost:15672/api/queues
-
-# Exchanges configurés
-curl -u guest:guest http://localhost:15672/api/exchanges
-
-# Management UI
-open http://localhost:15672
-```
-
-### 🔍 Diagnostic Architecture
-
-#### Vérifier les Consumers RabbitMQ
-```bash
-# Dans chaque service
-docker-compose exec {service-name} php artisan rabbitmq:listen
-
-# Logs des listeners
-docker-compose logs -f {service-name}
-```
-
-#### Monitoring des Messages
-```bash
-# Stats queues en temps réel
-curl -u guest:guest http://localhost:15672/api/queues | jq '.[] | {name: .name, consumers: .consumers, messages: .messages}'
-```
-
----
-
-## 🚀 Workflow de Développement Asynchrone
-
-### 🎯 Ajout d'un Nouveau Service
-
-#### 1. Structure Laravel Standard
-```bash
-# Créer le service
-docker-compose exec {service} composer create-project laravel/laravel
-
-# Ajouter les dépendances RabbitMQ et Shared Services
-composer require php-amqplib/php-amqplib
-composer require e-commerce/shared:@dev
-```
-
-#### 2. Configuration Composer.json
-```json
-{
-    "require": {
-        "php": "^8.3",
-        "e-commerce/shared": "@dev",
-        "laravel/framework": "^12.0",
-        "php-amqplib/php-amqplib": "^3.5"
-    },
-    "repositories": [
-        {
-            "type": "path",
-            "url": "../../shared",
-            "options": {
-                "symlink": true
-            }
-        }
-    ]
-}
-```
-
-#### 3. Dockerfile avec Extension Sockets
-```dockerfile
-FROM php:8.3-fpm
-
-# Install system dependencies
-RUN apt-get update && apt-get install -y \
-    git curl libpng-dev libxml2-dev zip unzip netcat-traditional \
-    && rm -rf /var/lib/apt/lists/*
-
-# Install PHP extensions (IMPORTANT: inclure sockets pour RabbitMQ)
-RUN docker-php-ext-install \
-    pdo_mysql mbstring exif pcntl bcmath gd sockets
-
-# Install Composer
-COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
-
-# Set working directory
-WORKDIR /var/www/{service-name}
-
-# Copy application
-COPY services/{service-name} .
-COPY shared/ ../../shared/
-
-# Install dependencies
-RUN composer install --optimize-autoloader
-
-EXPOSE 80{XX}
-CMD ["php", "artisan", "serve", "--host=0.0.0.0", "--port=80{XX}"]
-```
-
-#### 4. Configuration RabbitMQ Consumer
+#### Service MinIO Partagé
 ```php
 <?php
-// app/Console/Commands/ListenRabbitMQRequestsCommand.php
+// shared/Services/MinioService.php
 
-namespace App\Console\Commands;
+namespace Shared\Services;
 
-use Illuminate\Console\Command;
-use Shared\Services\RabbitMQRequestHandlerService;
-use Exception;
+use Aws\S3\S3Client;
+use Aws\Exception\AwsException;
+use Illuminate\Http\UploadedFile;
 
-class ListenRabbitMQRequestsCommand extends Command
+class MinioService
 {
-    protected $signature = 'rabbitmq:listen-requests {--timeout=0 : Maximum execution time in seconds (0 = no timeout)}';
-    protected $description = 'Listen for incoming RabbitMQ requests and process them';
-    protected RabbitMQRequestHandlerService $requestHandler;
-
-    public function handle()
+    private S3Client $client;
+    private string $bucket;
+    private string $endpoint;
+    
+    public function __construct(string $bucket)
     {
-        $this->info('Starting RabbitMQ Request Listener for {service-name}-service...');
-
+        $this->bucket = $bucket;
+        $this->endpoint = env('MINIO_ENDPOINT', 'http://minio:9000');
+        
+        $this->client = new S3Client([
+            'version' => 'latest',
+            'region' => 'us-east-1',
+            'endpoint' => $this->endpoint,
+            'credentials' => [
+                'key' => env('MINIO_ACCESS_KEY', 'admin'),
+                'secret' => env('MINIO_SECRET_KEY', 'adminpass123'),
+            ],
+            'use_path_style_endpoint' => true,
+        ]);
+    }
+    
+    /**
+     * Upload un fichier avec métadonnées
+     */
+    public function uploadFile(string $key, $file, array $metadata = []): array
+    {
         try {
-            // Initialize the request handler for this service
-            $serviceUrl = env('APP_URL', 'http://localhost:80{XX}');
-            $this->requestHandler = new RabbitMQRequestHandlerService('{service-name}', $serviceUrl);
-
-            // Set up graceful shutdown
-            $this->setupSignalHandlers();
-
-            // Connect to RabbitMQ
-            $this->requestHandler->connect();
-            $this->info('Connected to RabbitMQ successfully');
-
-            $this->info('Listening for requests on queue: {service-name}.requests');
-            $this->info('Press Ctrl+C to stop...');
-
-            // Start listening for requests
-            $this->requestHandler->startListening();
-
-        } catch (Exception $e) {
-            $this->error('Failed to start RabbitMQ listener: ' . $e->getMessage());
-            return Command::FAILURE;
-        }
-
-        $this->info('RabbitMQ Request Listener stopped');
-        return Command::SUCCESS;
-    }
-
-    protected function setupSignalHandlers(): void
-    {
-        if (function_exists('pcntl_signal')) {
-            pcntl_signal(SIGTERM, [$this, 'handleShutdown']);
-            pcntl_signal(SIGINT, [$this, 'handleShutdown']);
-            pcntl_signal(SIGQUIT, [$this, 'handleShutdown']);
-        }
-    }
-
-    public function handleShutdown(): void
-    {
-        $this->info('Received shutdown signal, stopping gracefully...');
-        if ($this->requestHandler) {
-            $this->requestHandler->stopListening();
-            $this->requestHandler->disconnect();
-        }
-    }
-}
-```
-
-#### 5. Configuration Environment (.env)
-```env
-# Service Configuration
-APP_NAME="{Service-Name} Service"
-APP_URL=http://localhost:80{XX}
-
-# Database
-DB_CONNECTION=mysql
-DB_HOST=${DB_{SERVICE}_HOST}
-DB_PORT=3306
-DB_DATABASE={service}_service_db
-DB_USERNAME=root
-DB_PASSWORD=root
-
-# RabbitMQ Configuration
-RABBITMQ_HOST=rabbitmq
-RABBITMQ_PORT=5672
-RABBITMQ_USER=guest
-RABBITMQ_PASSWORD=guest
-RABBITMQ_VHOST=/
-RABBITMQ_EXCHANGE=microservices_exchange
-RABBITMQ_QUEUE={service-name}.requests
-
-# JWT Configuration (Shared)
-JWT_SECRET=${JWT_SECRET}
-JWT_TTL=60
-```
-
-#### 6. Démarrage du Consumer
-```bash
-# Dans le service, démarrer le consumer RabbitMQ
-docker-compose exec {service-name}-service php artisan rabbitmq:listen-requests
-
-# En arrière-plan
-docker-compose exec -d {service-name}-service php artisan rabbitmq:listen-requests
-```
-
-#### 7. Enregistrement dans l'API Gateway
-```php
-// services/api-gateway/app/Services/GatewayRouterService.php
-
-class GatewayRouterService
-{
-    protected array $serviceConfig = [
-        // Services existants...
-        'auth' => ['queue' => 'auth.requests', 'timeout' => 5000],
-        'products' => ['queue' => 'products.requests', 'timeout' => 5000],
-        
-        // Nouveau service
-        '{service-name}' => [
-            'queue' => '{service-name}.requests',
-            'timeout' => 5000,
-            'healthEndpoint' => '/health'
-        ]
-    ];
-
-    public function getAvailableServices(): array
-    {
-        $services = [];
-        
-        foreach ($this->serviceConfig as $serviceName => $config) {
-            $services[$serviceName] = [
-                'available' => $this->checkServiceAvailability($serviceName),
-                'url' => "http://{$serviceName}-service:80{XX}/"
+            $body = $file instanceof UploadedFile 
+                ? fopen($file->getRealPath(), 'r')
+                : $file;
+                
+            $result = $this->client->putObject([
+                'Bucket' => $this->bucket,
+                'Key' => $key,
+                'Body' => $body,
+                'Metadata' => $metadata,
+                'ContentType' => $this->getMimeType($file)
+            ]);
+            
+            return [
+                'url' => $this->getPublicUrl($key),
+                'etag' => $result['ETag'],
+                'key' => $key,
+                'bucket' => $this->bucket,
+                'size' => $this->getFileSize($file)
             ];
+            
+        } catch (AwsException $e) {
+            throw new \Exception('Upload failed: ' . $e->getMessage());
         }
-        
-        return $services;
     }
-
-    private function checkServiceAvailability(string $serviceName): bool
+    
+    /**
+     * Télécharger un fichier
+     */
+    public function getFile(string $key): array
     {
         try {
-            // Test si le consumer RabbitMQ répond
-            $rabbitMQClient = new \Shared\Services\RabbitMQClientService();
-            $rabbitMQClient->connect();
+            $result = $this->client->getObject([
+                'Bucket' => $this->bucket,
+                'Key' => $key
+            ]);
             
-            // Vérifier s'il y a un consumer sur la queue
-            $queueStats = $rabbitMQClient->getQueueStats("{$serviceName}.requests");
+            return [
+                'content' => $result['Body']->getContents(),
+                'metadata' => $result['Metadata'] ?? [],
+                'size' => $result['ContentLength'],
+                'content_type' => $result['ContentType'],
+                'last_modified' => $result['LastModified']
+            ];
             
-            return isset($queueStats['consumers']) && $queueStats['consumers'] > 0;
-        } catch (\Exception $e) {
-            \Log::error("Service availability check failed for {$serviceName}: " . $e->getMessage());
+        } catch (AwsException $e) {
+            throw new \Exception('Download failed: ' . $e->getMessage());
+        }
+    }
+    
+    /**
+     * Supprimer un fichier
+     */
+    public function deleteFile(string $key): bool
+    {
+        try {
+            $this->client->deleteObject([
+                'Bucket' => $this->bucket,
+                'Key' => $key
+            ]);
+            return true;
+            
+        } catch (AwsException $e) {
+            \Log::error('MinIO delete failed: ' . $e->getMessage());
             return false;
         }
     }
+    
+    /**
+     * Générer URL présignée pour accès temporaire
+     */
+    public function getPresignedUrl(string $key, int $expiration = 3600): string
+    {
+        $cmd = $this->client->getCommand('GetObject', [
+            'Bucket' => $this->bucket,
+            'Key' => $key
+        ]);
+        
+        $request = $this->client->createPresignedRequest($cmd, "+{$expiration} seconds");
+        return (string) $request->getUri();
+    }
+    
+    /**
+     * Lister les fichiers d'un dossier
+     */
+    public function listFiles(string $prefix = '', int $maxKeys = 1000): array
+    {
+        try {
+            $result = $this->client->listObjectsV2([
+                'Bucket' => $this->bucket,
+                'Prefix' => $prefix,
+                'MaxKeys' => $maxKeys
+            ]);
+            
+            $files = [];
+            foreach ($result['Contents'] ?? [] as $object) {
+                $files[] = [
+                    'key' => $object['Key'],
+                    'size' => $object['Size'],
+                    'last_modified' => $object['LastModified'],
+                    'etag' => $object['ETag'],
+                    'url' => $this->getPublicUrl($object['Key'])
+                ];
+            }
+            
+            return $files;
+            
+        } catch (AwsException $e) {
+            throw new \Exception('List files failed: ' . $e->getMessage());
+        }
+    }
+    
+    /**
+     * Copier un fichier vers un autre emplacement
+     */
+    public function copyFile(string $sourceKey, string $destinationKey): bool
+    {
+        try {
+            $this->client->copyObject([
+                'Bucket' => $this->bucket,
+                'Key' => $destinationKey,
+                'CopySource' => $this->bucket . '/' . $sourceKey
+            ]);
+            return true;
+            
+        } catch (AwsException $e) {
+            return false;
+        }
+    }
+    
+    /**
+     * Obtenir URL publique
+     */
+    public function getPublicUrl(string $key): string
+    {
+        return $this->endpoint . '/' . $this->bucket . '/' . $key;
+    }
+    
+    /**
+     * Vérifier si un fichier existe
+     */
+    public function fileExists(string $key): bool
+    {
+        try {
+            $this->client->headObject([
+                'Bucket' => $this->bucket,
+                'Key' => $key
+            ]);
+            return true;
+            
+        } catch (AwsException $e) {
+            return false;
+        }
+    }
+    
+    /**
+     * Obtenir informations fichier
+     */
+    public function getFileInfo(string $key): array
+    {
+        try {
+            $result = $this->client->headObject([
+                'Bucket' => $this->bucket,
+                'Key' => $key
+            ]);
+            
+            return [
+                'size' => $result['ContentLength'],
+                'content_type' => $result['ContentType'],
+                'last_modified' => $result['LastModified'],
+                'metadata' => $result['Metadata'] ?? [],
+                'etag' => $result['ETag']
+            ];
+            
+        } catch (AwsException $e) {
+            throw new \Exception('File info failed: ' . $e->getMessage());
+        }
+    }
+    
+    /**
+     * Helpers privés
+     */
+    private function getMimeType($file): string
+    {
+        if ($file instanceof UploadedFile) {
+            return $file->getMimeType();
+        }
+        
+        return 'application/octet-stream';
+    }
+    
+    private function getFileSize($file): int
+    {
+        if ($file instanceof UploadedFile) {
+            return $file->getSize();
+        }
+        
+        return 0;
+    }
 }
 ```
 
-#### 8. Configuration Docker Compose
-```yaml
-# docker-compose.yml
+### 🛍️ Products Service - Intégration Images
 
-services:
-  {service-name}-service:
-    build:
-      context: .
-      dockerfile: ./services/{service-name}-service/Dockerfile
-    volumes:
-      - ./services/{service-name}-service:/var/www/{service-name}-service
-      - ./shared:/var/www/shared
-      - /var/www/{service-name}-service/vendor
-    environment:
-      - APP_ENV=local
-      - CONTAINER_ROLE=app
-      - DB_HOST=${DB_{SERVICE}_HOST}
-    ports:
-      - "80{XX}:80{XX}"
-    networks:
-      - microservices-network
-    depends_on:
-      - {service-name}-db
-      - rabbitmq
-
-  {service-name}-db:
-    image: mysql:8.0
-    environment:
-      MYSQL_DATABASE: {service}_service_db
-      MYSQL_ROOT_PASSWORD: root
-    ports:
-      - "33{XX}:3306"
-    volumes:
-      - {service}-db-data:/var/lib/mysql
-    networks:
-      - microservices-network
-
-  # Nginx configuration (mise à jour automatique)
-  nginx:
-    volumes:
-      - ./services/{service-name}-service:/var/www/{service-name}-service
-    depends_on:
-      - {service-name}-service
-```
-
-#### 9. Routing des Requêtes dans le Service
+#### Controller Gestion Images Produits
 ```php
 <?php
-// app/Http/Controllers/API/{Service}Controller.php
+// services/products-service/app/Http/Controllers/API/ProductImagesController.php
 
 namespace App\Http\Controllers\API;
 
 use App\Http\Controllers\Controller;
+use App\Models\Product;
+use App\Models\ProductImage;
 use Illuminate\Http\Request;
+use Shared\Services\MinioService;
+use Intervention\Image\Facades\Image;
 
-class {Service}Controller extends Controller
+class ProductImagesController extends Controller
 {
-    public function health()
-    {
-        return response()->json([
-            'status' => 'healthy',
-            'service' => '{service-name}-service',
-            'timestamp' => now()
-        ]);
-    }
-
-    public function index(Request $request)
-    {
-        // Logique métier du service
-        return response()->json([
-            'data' => [],
-            'meta' => [
-                'service' => '{service-name}',
-                'version' => '1.0.0'
-            ]
-        ]);
-    }
-}
-```
-
-```php
-<?php
-// routes/api.php
-
-use App\Http\Controllers\API\{Service}Controller;
-
-Route::group([], function () {
-    // Health check
-    Route::get('health', [{Service}Controller::class, 'health']);
+    private MinioService $minioService;
     
-    // Public routes
-    Route::get('{service-name}', [{Service}Controller::class, 'index']);
-    
-    // Protected routes
-    Route::middleware('auth:jwt')->group(function () {
-        Route::post('{service-name}', [{Service}Controller::class, 'store']);
-        Route::put('{service-name}/{id}', [{Service}Controller::class, 'update']);
-        Route::delete('{service-name}/{id}', [{Service}Controller::class, 'destroy']);
-    });
-});
-```
-
-#### 10. Test du Nouveau Service
-```bash
-# 1. Vérifier que le service apparaît dans la liste
-curl -H "Authorization: Bearer {token}" http://localhost/api/services/status
-
-# 2. Tester le health check
-curl http://localhost/api/{service-name}/health
-
-# 3. Tester l'endpoint principal
-curl http://localhost/api/{service-name}
-
-# 4. Vérifier les logs RabbitMQ
-docker-compose logs -f {service-name}-service
-
-# 5. Vérifier les queues RabbitMQ
-curl -u guest:guest http://localhost:15672/api/queues | jq '.[] | select(.name | contains("{service-name}"))'
-```
-
-### 🔧 Pattern de Communication RPC
-
-#### Envoi de Requête (API Gateway)
-```php
-$response = $this->rabbitMQClient->sendRequest(
-    $service,           // nom du service
-    $path,             // endpoint ciblé
-    $request->all(),   // payload
-    $request->method() // HTTP method
-);
-```
-
-#### Réception et Traitement (Service)
-```php
-public function handleRabbitMQRequest($message)
-{
-    $data = json_decode($message->body, true);
-    
-    // Router vers le bon controller
-    $response = $this->routeToController($data);
-    
-    // Envoyer la réponse
-    $this->sendRPCResponse($message, $response);
-}
-```
-
----
-
-## 🛡️ Implémentation API Gateway pour Nouveau Service
-
-### 🎯 Étapes d'Intégration Complète
-
-#### 1. Configuration du Service dans GatewayRouterService
-```php
-<?php
-// services/api-gateway/app/Services/GatewayRouterService.php
-
-namespace App\Services;
-
-use Shared\Services\RabbitMQClientService;
-use Illuminate\Support\Facades\Log;
-
-class GatewayRouterService
-{
-    private RabbitMQClientService $rabbitMQClient;
-    
-    protected array $serviceConfig = [
-        // Services existants
-        'auth' => [
-            'queue' => 'auth.requests',
-            'timeout' => 5000,
-            'healthEndpoint' => '/health',
-            'port' => 8001
-        ],
-        'products' => [
-            'queue' => 'products.requests', 
-            'timeout' => 5000,
-            'healthEndpoint' => '/health',
-            'port' => 8003
-        ],
-        'baskets' => [
-            'queue' => 'baskets.requests',
-            'timeout' => 5000, 
-            'healthEndpoint' => '/health',
-            'port' => 8005
-        ],
-        
-        // NOUVEAU SERVICE - Remplacer {service-name} par le vrai nom
-        '{service-name}' => [
-            'queue' => '{service-name}.requests',
-            'timeout' => 5000,
-            'healthEndpoint' => '/health',
-            'port' => 80{XX},  // Port spécifique du service
-            'version' => '1.0.0',
-            'publicRoutes' => [
-                'GET:{service-name}/health',
-                'GET:{service-name}/public/*'
-            ],
-            'protectedRoutes' => [
-                'POST:{service-name}/*',
-                'PUT:{service-name}/*', 
-                'DELETE:{service-name}/*'
-            ]
-        ]
-    ];
-
     public function __construct()
     {
-        $this->rabbitMQClient = new RabbitMQClientService();
+        $this->minioService = new MinioService('products');
     }
-
+    
     /**
-     * Router une requête vers le service approprié via RabbitMQ
+     * Upload image produit avec génération miniatures
      */
-    public function routeRequest(string $service, string $path, array $requestData): array
+    public function uploadImage(Request $request, int $productId)
     {
-        if (!isset($this->serviceConfig[$service])) {
-            throw new \Exception("Unknown service: {$service}");
-        }
-
-        $config = $this->serviceConfig[$service];
+        $request->validate([
+            'image' => 'required|image|max:5120', // 5MB max
+            'type' => 'required|in:main,gallery,thumbnail',
+            'alt_text' => 'string|max:255',
+            'position' => 'integer|min:0'
+        ]);
+        
+        $product = Product::findOrFail($productId);
+        $file = $request->file('image');
         
         try {
-            // Vérifier disponibilité du service
-            if (!$this->checkServiceAvailability($service)) {
-                throw new \Exception("Service unavailable: {$service}");
-            }
-
-            // Préparer le payload RabbitMQ
-            $payload = [
-                'service' => $service,
-                'path' => $path,
-                'method' => $requestData['method'] ?? 'GET',
-                'headers' => $requestData['headers'] ?? [],
-                'data' => $requestData['data'] ?? [],
-                'query' => $requestData['query'] ?? [],
-                'timestamp' => now()->toISOString(),
-                'request_id' => uniqid('req_', true)
-            ];
-
-            // Envoyer via RabbitMQ
-            Log::info("Routing request to {$service}:", $payload);
+            // Générer nom unique
+            $timestamp = now()->timestamp;
+            $extension = $file->getClientOriginalExtension();
+            $filename = "images/{$productId}/original_{$timestamp}.{$extension}";
             
-            $response = $this->rabbitMQClient->sendRequest(
-                $config['queue'],
-                $payload,
-                $config['timeout']
+            // Upload image originale
+            $uploadResult = $this->minioService->uploadFile(
+                $filename,
+                $file,
+                [
+                    'product_id' => (string) $productId,
+                    'type' => $request->type,
+                    'alt_text' => $request->alt_text ?? '',
+                    'uploaded_by' => auth()->id() ?? 'system',
+                    'original_name' => $file->getClientOriginalName()
+                ]
             );
-
-            return [
+            
+            // Générer miniatures
+            $thumbnails = $this->generateThumbnails($file, $productId, $timestamp);
+            
+            // Sauvegarder en base
+            $productImage = ProductImage::create([
+                'product_id' => $productId,
+                'original_url' => $uploadResult['url'],
+                'thumbnail_url' => $thumbnails['thumbnail'] ?? null,
+                'medium_url' => $thumbnails['medium'] ?? null,
+                'filename' => $filename,
+                'type' => $request->type,
+                'alt_text' => $request->alt_text,
+                'position' => $request->position ?? 0,
+                'size' => $uploadResult['size'],
+                'mime_type' => $file->getMimeType()
+            ]);
+            
+            return response()->json([
                 'success' => true,
-                'data' => $response,
-                'service' => $service,
-                'timestamp' => now()->toISOString()
-            ];
-
-        } catch (\Exception $e) {
-            Log::error("Failed to route request to {$service}: " . $e->getMessage());
-            
-            return [
-                'success' => false,
-                'error' => $e->getMessage(),
-                'service' => $service,
-                'timestamp' => now()->toISOString()
-            ];
-        }
-    }
-
-    /**
-     * Vérifier la disponibilité d'un service
-     */
-    private function checkServiceAvailability(string $serviceName): bool
-    {
-        try {
-            $this->rabbitMQClient->connect();
-            
-            // Vérifier la présence de consumers sur la queue
-            $queueName = $this->serviceConfig[$serviceName]['queue'];
-            $queueStats = $this->rabbitMQClient->getQueueStats($queueName);
-            
-            return isset($queueStats['consumers']) && $queueStats['consumers'] > 0;
-            
-        } catch (\Exception $e) {
-            Log::error("Service availability check failed for {$serviceName}: " . $e->getMessage());
-            return false;
-        }
-    }
-
-    /**
-     * Obtenir le statut de tous les services
-     */
-    public function getAvailableServices(): array
-    {
-        $services = [];
-        
-        foreach ($this->serviceConfig as $serviceName => $config) {
-            $services[$serviceName] = [
-                'available' => $this->checkServiceAvailability($serviceName),
-                'url' => "http://{$serviceName}-service:{$config['port']}/",
-                'queue' => $config['queue'],
-                'timeout' => $config['timeout'],
-                'version' => $config['version'] ?? '1.0.0'
-            ];
-        }
-        
-        return $services;
-    }
-
-    /**
-     * Vérifier si une route est publique
-     */
-    public function isPublicRoute(string $service, string $method, string $path): bool
-    {
-        if (!isset($this->serviceConfig[$service]['publicRoutes'])) {
-            return false;
-        }
-
-        $routePattern = strtoupper($method) . ':' . $path;
-        
-        foreach ($this->serviceConfig[$service]['publicRoutes'] as $publicRoute) {
-            if ($this->matchRoute($routePattern, $publicRoute)) {
-                return true;
-            }
-        }
-        
-        return false;
-    }
-
-    /**
-     * Matcher une route avec un pattern (supporte wildcards)
-     */
-    private function matchRoute(string $route, string $pattern): bool
-    {
-        $pattern = str_replace('*', '.*', $pattern);
-        return preg_match('/^' . str_replace('/', '\/', $pattern) . '$/', $route);
-    }
-}
-```
-
-#### 2. Controller Gateway Principal
-```php
-<?php
-// services/api-gateway/app/Http/Controllers/API/GatewayController.php
-
-namespace App\Http\Controllers\API;
-
-use App\Http\Controllers\Controller;
-use App\Services\GatewayRouterService;
-use Illuminate\Http\Request;
-use Illuminate\Http\JsonResponse;
-use Illuminate\Support\Facades\Log;
-
-class GatewayController extends Controller
-{
-    private GatewayRouterService $gatewayRouter;
-
-    public function __construct(GatewayRouterService $gatewayRouter)
-    {
-        $this->gatewayRouter = $gatewayRouter;
-    }
-
-    /**
-     * Route toutes les requêtes vers les microservices
-     */
-    public function route(Request $request, string $service, string $path = ''): JsonResponse
-    {
-        try {
-            // Log de la requête entrante
-            Log::info("Gateway routing request", [
-                'service' => $service,
-                'path' => $path,
-                'method' => $request->method(),
-                'user_id' => auth()->id(),
-                'ip' => $request->ip()
+                'image' => $productImage,
+                'urls' => [
+                    'original' => $uploadResult['url'],
+                    'thumbnail' => $thumbnails['thumbnail'] ?? null,
+                    'medium' => $thumbnails['medium'] ?? null
+                ]
             ]);
-
-            // Vérifier si la route nécessite une authentification
-            $method = $request->method();
-            $fullPath = $service . '/' . ltrim($path, '/');
-            
-            if (!$this->gatewayRouter->isPublicRoute($service, $method, $fullPath)) {
-                // Route protégée, vérifier JWT
-                $this->middleware('auth:jwt');
-                
-                if (!auth()->check()) {
-                    return response()->json([
-                        'error' => 'Authentication required',
-                        'service' => $service,
-                        'path' => $fullPath
-                    ], 401);
-                }
-            }
-
-            // Préparer les données de la requête
-            $requestData = [
-                'method' => $method,
-                'headers' => $this->sanitizeHeaders($request->headers->all()),
-                'data' => $request->all(),
-                'query' => $request->query->all(),
-                'user' => auth()->user(),
-                'ip' => $request->ip(),
-                'user_agent' => $request->userAgent()
-            ];
-
-            // Router vers le service
-            $response = $this->gatewayRouter->routeRequest($service, $path, $requestData);
-
-            if (!$response['success']) {
-                return response()->json([
-                    'error' => 'Service error',
-                    'message' => $response['error'],
-                    'service' => $service
-                ], 500);
-            }
-
-            // Retourner la réponse du service
-            return response()->json($response['data']);
-
-        } catch (\Exception $e) {
-            Log::error("Gateway routing failed", [
-                'service' => $service,
-                'path' => $path,
-                'error' => $e->getMessage(),
-                'trace' => $e->getTraceAsString()
-            ]);
-
-            return response()->json([
-                'error' => 'Gateway error',
-                'message' => 'Failed to process request',
-                'service' => $service
-            ], 500);
-        }
-    }
-
-    /**
-     * Obtenir le statut de tous les services
-     */
-    public function getServicesStatus(): JsonResponse
-    {
-        try {
-            $services = $this->gatewayRouter->getAvailableServices();
-            
-            return response()->json($services);
             
         } catch (\Exception $e) {
-            Log::error("Failed to get services status: " . $e->getMessage());
-            
             return response()->json([
-                'error' => 'Failed to retrieve services status',
+                'error' => 'Upload failed',
                 'message' => $e->getMessage()
             ], 500);
         }
     }
-
+    
     /**
-     * Health check de l'API Gateway
+     * Récupérer images d'un produit
      */
-    public function health(): JsonResponse
+    public function getProductImages(int $productId)
     {
+        $product = Product::findOrFail($productId);
+        
+        $images = ProductImage::where('product_id', $productId)
+            ->orderBy('position')
+            ->orderBy('created_at')
+            ->get()
+            ->map(function ($image) {
+                return [
+                    'id' => $image->id,
+                    'type' => $image->type,
+                    'urls' => [
+                        'original' => $image->original_url,
+                        'medium' => $image->medium_url,
+                        'thumbnail' => $image->thumbnail_url
+                    ],
+                    'alt_text' => $image->alt_text,
+                    'position' => $image->position,
+                    'created_at' => $image->created_at
+                ];
+            });
+            
         return response()->json([
-            'status' => 'healthy',
-            'service' => 'api-gateway',
-            'version' => '2.0.0',
-            'timestamp' => now()->toISOString(),
-            'architecture' => 'fully-asynchronous'
+            'product_id' => $productId,
+            'images' => $images
         ]);
     }
-
+    
     /**
-     * Test de la connexion RabbitMQ
+     * Supprimer une image
      */
-    public function testRabbitMQ(): JsonResponse
+    public function deleteImage(int $productId, int $imageId)
     {
+        $image = ProductImage::where('product_id', $productId)
+            ->where('id', $imageId)
+            ->firstOrFail();
+            
         try {
-            $rabbitMQClient = new \Shared\Services\RabbitMQClientService();
-            $rabbitMQClient->connect();
-            $isConnected = $rabbitMQClient->isConnected();
+            // Supprimer de MinIO
+            $this->minioService->deleteFile($image->filename);
+            
+            // Supprimer miniatures
+            if ($image->thumbnail_url) {
+                $thumbnailKey = $this->extractKeyFromUrl($image->thumbnail_url);
+                $this->minioService->deleteFile($thumbnailKey);
+            }
+            
+            if ($image->medium_url) {
+                $mediumKey = $this->extractKeyFromUrl($image->medium_url);
+                $this->minioService->deleteFile($mediumKey);
+            }
+            
+            // Supprimer de la base
+            $image->delete();
             
             return response()->json([
-                'status' => 'success',
-                'rabbitmq_connected' => $isConnected,
-                'message' => $isConnected ? 'RabbitMQ connection successful' : 'RabbitMQ not connected',
-                'timestamp' => now()->toISOString()
+                'success' => true,
+                'message' => 'Image deleted successfully'
             ]);
+            
         } catch (\Exception $e) {
             return response()->json([
-                'status' => 'error',
-                'message' => 'RabbitMQ connection failed: ' . $e->getMessage(),
-                'timestamp' => now()->toISOString()
+                'error' => 'Delete failed',
+                'message' => $e->getMessage()
             ], 500);
         }
     }
-
+    
     /**
-     * Nettoyer les headers pour la transmission
+     * Générer miniatures
      */
-    private function sanitizeHeaders(array $headers): array
+    private function generateThumbnails($file, int $productId, int $timestamp): array
     {
-        $sanitized = [];
+        $thumbnails = [];
         
-        foreach ($headers as $key => $value) {
-            // Exclure les headers sensibles ou inutiles
-            if (!in_array(strtolower($key), ['authorization', 'cookie', 'host'])) {
-                $sanitized[$key] = is_array($value) ? $value[0] : $value;
-            }
+        try {
+            $image = Image::make($file->getRealPath());
+            
+            // Thumbnail 150x150
+            $thumbnail = clone $image;
+            $thumbnail->fit(150, 150);
+            $thumbnailKey = "images/{$productId}/thumbnail_{$timestamp}.jpg";
+            
+            $thumbnailResult = $this->minioService->uploadFile(
+                $thumbnailKey,
+                $thumbnail->encode('jpg', 80)->getEncoded(),
+                ['type' => 'thumbnail', 'generated_from' => 'original']
+            );
+            $thumbnails['thumbnail'] = $thumbnailResult['url'];
+            
+            // Medium 400x400
+            $medium = clone $image;
+            $medium->fit(400, 400);
+            $mediumKey = "images/{$productId}/medium_{$timestamp}.jpg";
+            
+            $mediumResult = $this->minioService->uploadFile(
+                $mediumKey,
+                $medium->encode('jpg', 85)->getEncoded(),
+                ['type' => 'medium', 'generated_from' => 'original']
+            );
+            $thumbnails['medium'] = $mediumResult['url'];
+            
+        } catch (\Exception $e) {
+            \Log::error('Thumbnail generation failed: ' . $e->getMessage());
         }
         
-        return $sanitized;
+        return $thumbnails;
+    }
+    
+    private function extractKeyFromUrl(string $url): string
+    {
+        $parts = parse_url($url);
+        return ltrim($parts['path'], '/products/');
     }
 }
 ```
 
-#### 3. Middleware d'Authentification JWT
+#### Model ProductImage
 ```php
 <?php
-// services/api-gateway/app/Http/Middleware/JWTAuthMiddleware.php
+// services/products-service/app/Models/ProductImage.php
 
-namespace App\Http\Middleware;
+namespace App\Models;
 
-use Closure;
-use Illuminate\Http\Request;
-use Tymon\JWTAuth\Facades\JWTAuth;
-use Tymon\JWTAuth\Exceptions\JWTException;
-use Illuminate\Support\Facades\Log;
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
-class JWTAuthMiddleware
+class ProductImage extends Model
 {
-    public function handle(Request $request, Closure $next)
+    protected $fillable = [
+        'product_id',
+        'original_url',
+        'thumbnail_url', 
+        'medium_url',
+        'filename',
+        'type',
+        'alt_text',
+        'position',
+        'size',
+        'mime_type'
+    ];
+    
+    protected $casts = [
+        'position' => 'integer',
+        'size' => 'integer'
+    ];
+    
+    public function product(): BelongsTo
     {
-        try {
-            // Tenter d'authentifier l'utilisateur via JWT
-            $user = JWTAuth::parseToken()->authenticate();
-            
-            if (!$user) {
-                return response()->json([
-                    'error' => 'User not found',
-                    'message' => 'The user associated with this token was not found'
-                ], 404);
-            }
+        return $this->belongsTo(Product::class);
+    }
+    
+    /**
+     * Scope pour images principales
+     */
+    public function scopeMain($query)
+    {
+        return $query->where('type', 'main');
+    }
+    
+    /**
+     * Scope pour galerie
+     */
+    public function scopeGallery($query)
+    {
+        return $query->where('type', 'gallery');
+    }
+}
+```
 
-            // Ajouter l'utilisateur au contexte
-            auth()->setUser($user);
+#### Migration ProductImages
+```php
+<?php
+// services/products-service/database/migrations/create_product_images_table.php
+
+use Illuminate\Database\Migrations\Migration;
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\Schema;
+
+return new class extends Migration
+{
+    public function up()
+    {
+        Schema::create('product_images', function (Blueprint $table) {
+            $table->id();
+            $table->foreignId('product_id')->constrained()->onDelete('cascade');
+            $table->string('original_url');
+            $table->string('thumbnail_url')->nullable();
+            $table->string('medium_url')->nullable();
+            $table->string('filename');
+            $table->enum('type', ['main', 'gallery', 'thumbnail'])->default('gallery');
+            $table->string('alt_text')->nullable();
+            $table->integer('position')->default(0);
+            $table->bigInteger('size'); // Size in bytes
+            $table->string('mime_type');
+            $table->timestamps();
             
-        } catch (JWTException $e) {
-            Log::warning('JWT Authentication failed', [
-                'error' => $e->getMessage(),
-                'ip' => $request->ip(),
-                'user_agent' => $request->userAgent()
+            $table->index(['product_id', 'type']);
+            $table->index(['product_id', 'position']);
+        });
+    }
+
+    public function down()
+    {
+        Schema::dropIfExists('product_images');
+    }
+};
+```
+
+### 🛠️ SAV Service - Attachments
+
+#### Controller Attachments Tickets
+```php
+<?php
+// services/sav-service/app/Http/Controllers/API/TicketAttachmentsController.php
+
+namespace App\Http\Controllers\API;
+
+use App\Http\Controllers\Controller;
+use App\Models\SupportTicket;
+use App\Models\TicketAttachment;
+use Illuminate\Http\Request;
+use Shared\Services\MinioService;
+
+class TicketAttachmentsController extends Controller
+{
+    private MinioService $minioService;
+    
+    public function __construct()
+    {
+        $this->minioService = new MinioService('support');
+    }
+    
+    /**
+     * Upload attachment pour ticket
+     */
+    public function uploadAttachment(Request $request, int $ticketId)
+    {
+        $request->validate([
+            'file' => 'required|file|max:10240', // 10MB max
+            'description' => 'string|max:255'
+        ]);
+        
+        $ticket = SupportTicket::findOrFail($ticketId);
+        
+        // Vérifier permissions
+        if (!$this->canAccessTicket($ticket)) {
+            return response()->json(['error' => 'Access denied'], 403);
+        }
+        
+        $file = $request->file('file');
+        
+        try {
+            // Générer chemin sécurisé
+            $filename = "tickets/{$ticketId}/" . uniqid() . '_' . $this->sanitizeFilename($file->getClientOriginalName());
+            
+            // Upload vers MinIO
+            $uploadResult = $this->minioService->uploadFile(
+                $filename,
+                $file,
+                [
+                    'ticket_id' => (string) $ticketId,
+                    'uploaded_by' => auth()->id(),
+                    'description' => $request->description ?? '',
+                    'original_name' => $file->getClientOriginalName(),
+                    'upload_ip' => request()->ip()
+                ]
+            );
+            
+            // Sauvegarder en base
+            $attachment = TicketAttachment::create([
+                'ticket_id' => $ticketId,
+                'filename' => $filename,
+                'original_name' => $file->getClientOriginalName(),
+                'url' => $uploadResult['url'],
+                'size' => $uploadResult['size'],
+                'mime_type' => $file->getMimeType(),
+                'description' => $request->description,
+                'uploaded_by' => auth()->id()
+            ]);
+            
+            // Log activité
+            $this->logTicketActivity($ticketId, 'attachment_added', [
+                'filename' => $file->getClientOriginalName(),
+                'size' => $uploadResult['size']
             ]);
             
             return response()->json([
-                'error' => 'Authentication failed',
-                'message' => 'Invalid or expired token'
-            ], 401);
-        }
-
-        return $next($request);
-    }
-}
-```
-
-#### 4. Routes API Gateway
-```php
-<?php
-// services/api-gateway/routes/api.php
-
-use App\Http\Controllers\API\AuthController;
-use App\Http\Controllers\API\GatewayController;
-use Illuminate\Support\Facades\Route;
-
-Route::group([], function () {
-    // Health check endpoint
-    Route::get('health', [GatewayController::class, 'health']);
-
-    // Test RabbitMQ connection
-    Route::get('test-rabbitmq', [GatewayController::class, 'testRabbitMQ']);
-
-    // V1 API routes (accès via /v1/ depuis Nginx)
-    Route::prefix('v1')->group(function () {
-        // Service status endpoint
-        Route::get('services/status', [GatewayController::class, 'getServicesStatus']);
-
-        // Legacy direct auth routes (compatibilité)
-        Route::post("login", [AuthController::class, "login"]);
-
-        // Gateway routing - router toutes les requêtes de service
-        Route::any('{service}/{path?}', [GatewayController::class, 'route'])
-             ->where(['service' => '[a-zA-Z0-9\-_]+', 'path' => '.*']);
-    });
-
-    // Legacy API routes (accès via /api/ depuis Nginx)
-    Route::get('services/status', [GatewayController::class, 'getServicesStatus']);
-
-    // Legacy direct auth routes
-    Route::post("login", [AuthController::class, "login"]);
-
-    // Gateway routing principal
-    Route::any('{service}/{path?}', [GatewayController::class, 'route'])
-         ->where(['service' => '[a-zA-Z0-9\-_]+', 'path' => '.*']);
-});
-```
-
-#### 5. Configuration JWT dans l'API Gateway
-```php
-<?php
-// services/api-gateway/config/auth.php
-
-return [
-    'defaults' => [
-        'guard' => 'jwt',
-        'passwords' => 'users',
-    ],
-
-    'guards' => [
-        'jwt' => [
-            'driver' => 'jwt',
-            'provider' => 'users',
-        ],
-    ],
-
-    'providers' => [
-        'users' => [
-            'driver' => 'eloquent',
-            'model' => App\Models\User::class,
-        ],
-    ],
-];
-```
-
-#### 6. Tests d'Intégration Complète
-```bash
-#!/bin/bash
-# test-nouveau-service.sh
-
-# Variables
-SERVICE_NAME="{service-name}"
-BASE_URL="http://localhost"
-TOKEN=""
-
-echo "🧪 Test d'intégration pour le service: $SERVICE_NAME"
-
-# 1. Authentification
-echo "1. Test d'authentification..."
-TOKEN=$(curl -s -X POST "$BASE_URL/api/auth/login" \
-  -H "Content-Type: application/json" \
-  -d '{"email": "kylian@collect-verything.com", "password": "password123"}' \
-  | jq -r '.token')
-
-if [ "$TOKEN" = "null" ] || [ -z "$TOKEN" ]; then
-    echo "❌ Échec de l'authentification"
-    exit 1
-fi
-echo "✅ Authentification réussie"
-
-# 2. Vérifier que le service apparaît dans la liste
-echo "2. Vérification du service dans la liste..."
-SERVICE_STATUS=$(curl -s -H "Authorization: Bearer $TOKEN" \
-  "$BASE_URL/api/services/status" \
-  | jq -r ".\"$SERVICE_NAME\".available")
-
-if [ "$SERVICE_STATUS" = "true" ]; then
-    echo "✅ Service $SERVICE_NAME disponible"
-else
-    echo "❌ Service $SERVICE_NAME non disponible"
-    exit 1
-fi
-
-# 3. Test health check
-echo "3. Test health check..."
-HEALTH_RESPONSE=$(curl -s "$BASE_URL/api/$SERVICE_NAME/health")
-HEALTH_STATUS=$(echo "$HEALTH_RESPONSE" | jq -r '.status')
-
-if [ "$HEALTH_STATUS" = "healthy" ]; then
-    echo "✅ Health check réussi"
-else
-    echo "❌ Health check échoué: $HEALTH_RESPONSE"
-    exit 1
-fi
-
-# 4. Test endpoint principal
-echo "4. Test endpoint principal..."
-MAIN_RESPONSE=$(curl -s "$BASE_URL/api/$SERVICE_NAME")
-MAIN_STATUS=$(echo "$MAIN_RESPONSE" | jq -r '.meta.service')
-
-if [ "$MAIN_STATUS" = "$SERVICE_NAME" ]; then
-    echo "✅ Endpoint principal fonctionnel"
-else
-    echo "❌ Endpoint principal défaillant: $MAIN_RESPONSE"
-    exit 1
-fi
-
-# 5. Test route protégée
-echo "5. Test route protégée..."
-PROTECTED_RESPONSE=$(curl -s -X POST \
-  -H "Authorization: Bearer $TOKEN" \
-  -H "Content-Type: application/json" \
-  "$BASE_URL/api/$SERVICE_NAME" \
-  -d '{"test": "data"}')
-
-if [[ "$PROTECTED_RESPONSE" != *"error"* ]]; then
-    echo "✅ Route protégée accessible avec JWT"
-else
-    echo "❌ Route protégée inaccessible: $PROTECTED_RESPONSE"
-fi
-
-echo "🎉 Tests d'intégration terminés pour $SERVICE_NAME"
-```
-
-#### 7. Monitoring et Debugging
-```php
-<?php
-// services/api-gateway/app/Console/Commands/MonitorServicesCommand.php
-
-namespace App\Console\Commands;
-
-use Illuminate\Console\Command;
-use App\Services\GatewayRouterService;
-
-class MonitorServicesCommand extends Command
-{
-    protected $signature = 'gateway:monitor {--interval=30 : Interval en secondes}';
-    protected $description = 'Monitor la disponibilité des services';
-
-    public function handle()
-    {
-        $interval = (int) $this->option('interval');
-        $gatewayRouter = new GatewayRouterService();
-
-        $this->info("🔍 Monitoring des services (intervalle: {$interval}s)");
-        $this->info("Appuyez sur Ctrl+C pour arrêter...");
-
-        while (true) {
-            $services = $gatewayRouter->getAvailableServices();
+                'success' => true,
+                'attachment' => [
+                    'id' => $attachment->id,
+                    'filename' => $attachment->original_name,
+                    'size' => $attachment->size,
+                    'mime_type' => $attachment->mime_type,
+                    'description' => $attachment->description,
+                    'download_url' => route('api.sav.tickets.attachments.download', [
+                        'ticketId' => $ticketId,
+                        'attachmentId' => $attachment->id
+                    ]),
+                    'uploaded_at' => $attachment->created_at
+                ]
+            ]);
             
-            $this->info("\n📊 État des services - " . now()->format('H:i:s'));
-            $this->table(
-                ['Service', 'Statut', 'Queue', 'URL'],
-                collect($services)->map(function ($service, $name) {
-                    return [
-                        $name,
-                        $service['available'] ? '✅ Disponible' : '❌ Indisponible',
-                        $service['queue'],
-                        $service['url']
-                    ];
-                })->values()
-            );
-
-            sleep($interval);
+        } catch (\Exception $e) {
+            return response()->json([
+                'error' => 'Upload failed',
+                'message' => $e->getMessage()
+            ], 500);
         }
+    }
+    
+    /**
+     * Télécharger attachment
+     */
+    public function downloadAttachment(int $ticketId, int $attachmentId)
+    {
+        $ticket = SupportTicket::findOrFail($ticketId);
+        $attachment = TicketAttachment::where('ticket_id', $ticketId)
+            ->where('id', $attachmentId)
+            ->firstOrFail();
+            
+        if (!$this->canAccessTicket($ticket)) {
+            return response()->json(['error' => 'Access denied'], 403);
+        }
+        
+        try {
+            // Générer URL présignée (valide 1h)
+            $presignedUrl = $this->minioService->getPresignedUrl($attachment->filename, 3600);
+            
+            // Log téléchargement
+            $this->logTicketActivity($ticketId, 'attachment_downloaded', [
+                'filename' => $attachment->original_name,
+                'downloaded_by' => auth()->id()
+            ]);
+            
+            return redirect($presignedUrl);
+            
+        } catch (\Exception $e) {
+            return response()->json([
+                'error' => 'Download failed',
+                'message' => 'File not found or corrupted'
+            ], 404);
+        }
+    }
+    
+    /**
+     * Lister attachments d'un ticket
+     */
+    public function listAttachments(int $ticketId)
+    {
+        $ticket = SupportTicket::findOrFail($ticketId);
+        
+        if (!$this->canAccessTicket($ticket)) {
+            return response()->json(['error' => 'Access denied'], 403);
+        }
+        
+        $attachments = TicketAttachment::where('ticket_id', $ticketId)
+            ->with('uploadedBy:id,name,email')
+            ->orderBy('created_at', 'desc')
+            ->get()
+            ->map(function ($attachment) use ($ticketId) {
+                return [
+                    'id' => $attachment->id,
+                    'filename' => $attachment->original_name,
+                    'size' => $attachment->size,
+                    'size_human' => $this->formatBytes($attachment->size),
+                    'mime_type' => $attachment->mime_type,
+                    'description' => $attachment->description,
+                    'uploaded_by' => $attachment->uploadedBy->name ?? 'Unknown',
+                    'uploaded_at' => $attachment->created_at,
+                    'download_url' => route('api.sav.tickets.attachments.download', [
+                        'ticketId' => $ticketId,
+                        'attachmentId' => $attachment->id
+                    ])
+                ];
+            });
+            
+        return response()->json([
+            'ticket_id' => $ticketId,
+            'attachments' => $attachments,
+            'total_count' => $attachments->count(),
+            'total_size' => $attachments->sum('size'),
+            'total_size_human' => $this->formatBytes($attachments->sum('size'))
+        ]);
+    }
+    
+    /**
+     * Supprimer attachment
+     */
+    public function deleteAttachment(int $ticketId, int $attachmentId)
+    {
+        $ticket = SupportTicket::findOrFail($ticketId);
+        $attachment = TicketAttachment::where('ticket_id', $ticketId)
+            ->where('id', $attachmentId)
+            ->firstOrFail();
+            
+        if (!$this->canAccessTicket($ticket) || !$this->canDeleteAttachment($attachment)) {
+            return response()->json(['error' => 'Access denied'], 403);
+        }
+        
+        try {
+            // Supprimer de MinIO
+            $this->minioService->deleteFile($attachment->filename);
+            
+            // Log suppression
+            $this->logTicketActivity($ticketId, 'attachment_deleted', [
+                'filename' => $attachment->original_name,
+                'deleted_by' => auth()->id()
+            ]);
+            
+            // Supprimer de la base
+            $attachment->delete();
+            
+            return response()->json([
+                'success' => true,
+                'message' => 'Attachment deleted successfully'
+            ]);
+            
+        } catch (\Exception $e) {
+            return response()->json([
+                'error' => 'Delete failed',
+                'message' => $e->getMessage()
+            ], 500);
+        }
+    }
+    
+    /**
+     * Helpers privés
+     */
+    private function canAccessTicket(SupportTicket $ticket): bool
+    {
+        $user = auth()->user();
+        
+        // Admin ou agent SAV
+        if ($user->hasRole(['admin', 'support_agent'])) {
+            return true;
+        }
+        
+        // Propriétaire du ticket
+        return $ticket->user_id === $user->id;
+    }
+    
+    private function canDeleteAttachment(TicketAttachment $attachment): bool
+    {
+        $user = auth()->user();
+        
+        // Admin peut tout supprimer
+        if ($user->hasRole('admin')) {
+            return true;
+        }
+        
+        // Agent SAV peut supprimer ses uploads
+        if ($user->hasRole('support_agent') && $attachment->uploaded_by === $user->id) {
+            return true;
+        }
+        
+        // Client peut supprimer ses uploads dans les 24h
+        if ($attachment->uploaded_by === $user->id && $attachment->created_at->diffInHours() < 24) {
+            return true;
+        }
+        
+        return false;
+    }
+    
+    private function sanitizeFilename(string $filename): string
+    {
+        // Supprimer caractères dangereux
+        $filename = preg_replace('/[^a-zA-Z0-9._-]/', '_', $filename);
+        return substr($filename, 0, 100); // Limiter longueur
+    }
+    
+    private function logTicketActivity(int $ticketId, string $action, array $data = []): void
+    {
+        \App\Models\TicketActivity::create([
+            'ticket_id' => $ticketId,
+            'user_id' => auth()->id(),
+            'action' => $action,
+            'data' => $data,
+            'ip_address' => request()->ip()
+        ]);
+    }
+    
+    private function formatBytes(int $bytes, int $precision = 2): string
+    {
+        $units = ['B', 'KB', 'MB', 'GB'];
+        
+        for ($i = 0; $bytes > 1024 && $i < count($units) - 1; $i++) {
+            $bytes /= 1024;
+        }
+        
+        return round($bytes, $precision) . ' ' . $units[$i];
     }
 }
 ```
 
-### 🎯 Checklist d'Intégration Nouveau Service
+### 📧 Newsletters Service - Templates
 
-#### ✅ Côté Service
-- [ ] Dockerfile avec extension sockets
-- [ ] Composer.json avec shared services
-- [ ] Consumer RabbitMQ configuré
-- [ ] Routes API définies
-- [ ] Health check endpoint
-- [ ] Consumer démarré et opérationnel
+#### Controller Templates Newsletters
+```php
+<?php
+// services/newsletters-service/app/Http/Controllers/API/TemplateAssetsController.php
 
-#### ✅ Côté API Gateway  
-- [ ] Service ajouté dans serviceConfig
-- [ ] Routes publiques/privées configurées
-- [ ] Health check intégré
-- [ ] Tests d'intégration passés
-- [ ] Monitoring fonctionnel
+namespace App\Http\Controllers\API;
 
-#### ✅ Infrastructure
-- [ ] Docker Compose mis à jour
-- [ ] Base de données créée
-- [ ] Variables d'environnement configurées
-- [ ] RabbitMQ queues créées
-- [ ] Nginx routing automatique
+use App\Http\Controllers\Controller;
+use App\Models\NewsletterTemplate;
+use Illuminate\Http\Request;
+use Shared\Services\MinioService;
 
----
-
-## 📱 Collection Postman Actualisée
-
-### 🎯 Structure Nouvelle Architecture
-
-#### **🌐 Architecture Endpoints**
+class TemplateAssetsController extends Controller
+{
+    private MinioService $minioService;
+    
+    public function __construct()
+    {
+        $this->minioService = new MinioService('newsletters');
+    }
+    
+    /**
+     * Upload template newsletter
+     */
+    public function uploadTemplate(Request $request)
+    {
+        $request->validate([
+            'template' => 'required|file|mimes:html,zip|max:5120',
+            'name' => 'required|string|max:255|unique:newsletter_templates,name',
+            'category' => 'required|in:promotion,notification,welcome,transactional',
+            'description' => 'string|max:500'
+        ]);
+        
+        $file = $request->file('template');
+        
+        try {
+            $filename = "templates/" . Str::slug($request->name) . '_' . uniqid() . '.' . $file->getClientOriginalExtension();
+            
+            // Upload template
+            $uploadResult = $this->minioService->uploadFile(
+                $filename,
+                $file,
+                [
+                    'name' => $request->name,
+                    'category' => $request->category,
+                    'created_by' => auth()->id(),
+                    'version' => '1.0'
+                ]
+            );
+            
+            // Analyser template si HTML
+            $templateData = $this->analyzeTemplate($file);
+            
+            // Sauvegarder en base
+            $template = NewsletterTemplate::create([
+                'name' => $request->name,
+                'category' => $request->category,
+                'description' => $request->description,
+                'filename' => $filename,
+                'url' => $uploadResult['url'],
+                'file_type' => $file->getClientOriginalExtension(),
+                'size' => $uploadResult['size'],
+                'variables' => $templateData['variables'] ?? [],
+                'preview_image' => $templateData['preview'] ?? null,
+                'created_by' => auth()->id(),
+                'is_active' => true
+            ]);
+            
+            return response()->json([
+                'success' => true,
+                'template' => $template,
+                'upload_info' => $uploadResult
+            ]);
+            
+        } catch (\Exception $e) {
+            return response()->json([
+                'error' => 'Template upload failed',
+                'message' => $e->getMessage()
+            ], 500);
+        }
+    }
+    
+    /**
+     * Upload asset pour template (images, CSS, etc.)
+     */
+    public function uploadAsset(Request $request)
+    {
+        $request->validate([
+            'asset' => 'required|file|mimes:jpg,jpeg,png,gif,css,js|max:2048',
+            'folder' => 'string|in:images,css,js,fonts',
+            'description' => 'string|max:255'
+        ]);
+        
+        $file = $request->file('asset');
+        $folder = $request->folder ?? 'images';
+        
+        try {
+            $filename = "assets/{$folder}/" . uniqid() . '_' . $file->getClientOriginalName();
+            
+            $uploadResult = $this->minioService->uploadFile(
+                $filename,
+                $file,
+                [
+                    'folder' => $folder,
+                    'description' => $request->description ?? '',
+                    'uploaded_by' => auth()->id()
+                ]
+            );
+            
+            return response()->json([
+                'success' => true,
+                'asset' => [
+                    'filename' => $filename,
+                    'url' => $uploadResult['url'],
+                    'public_url' => $this->minioService->getPublicUrl($filename),
+                    'size' => $uploadResult['size'],
+                    'type' => $file->getMimeType()
+                ]
+            ]);
+            
+        } catch (\Exception $e) {
+            return response()->json([
+                'error' => 'Asset upload failed',
+                'message' => $e->getMessage()
+            ], 500);
+        }
+    }
+    
+    /**
+     * Générer aperçu template
+     */
+    public function generatePreview(int $templateId, Request $request)
+    {
+        $template = NewsletterTemplate::findOrFail($templateId);
+        
+        try {
+            // Récupérer template depuis MinIO
+            $templateContent = $this->minioService->getFile($template->filename);
+            
+            // Remplacer variables par valeurs de test
+            $testData = $request->get('test_data', []);
+            $previewHtml = $this->renderTemplatePreview($templateContent['content'], $testData);
+            
+            // Générer screenshot avec Puppeteer ou retourner HTML
+            $previewUrl = $this->generatePreviewScreenshot($previewHtml, $templateId);
+            
+            return response()->json([
+                'success' => true,
+                'preview_url' => $previewUrl,
+                'html_preview' => $previewHtml
+            ]);
+            
+        } catch (\Exception $e) {
+            return response()->json([
+                'error' => 'Preview generation failed',
+                'message' => $e->getMessage()
+            ], 500);
+        }
+    }
+    
+    /**
+     * Lister templates disponibles
+     */
+    public function listTemplates(Request $request)
+    {
+        $query = NewsletterTemplate::query()
+            ->where('is_active', true)
+            ->with('createdBy:id,name');
+            
+        if ($request->category) {
+            $query->where('category', $request->category);
+        }
+        
+        if ($request->search) {
+            $query->where(function ($q) use ($request) {
+                $q->where('name', 'like', "%{$request->search}%")
+                  ->orWhere('description', 'like', "%{$request->search}%");
+            });
+        }
+        
+        $templates = $query->orderBy('created_at', 'desc')
+            ->paginate(20)
+            ->through(function ($template) {
+                return [
+                    'id' => $template->id,
+                    'name' => $template->name,
+                    'category' => $template->category,
+                    'description' => $template->description,
+                    'preview_image' => $template->preview_image,
+                    'file_type' => $template->file_type,
+                    'size' => $template->size,
+                    'variables' => $template->variables,
+                    'created_by' => $template->createdBy->name ?? 'Unknown',
+                    'created_at' => $template->created_at,
+                    'download_url' => route('api.newsletters.templates.download', $template->id)
+                ];
+            });
+            
+        return response()->json($templates);
+    }
+    
+    /**
+     * Helpers privés
+     */
+    private function analyzeTemplate($file): array
+    {
+        $data = ['variables' => []];
+        
+        if ($file->getClientOriginalExtension() === 'html') {
+            $content = file_get_contents($file->getRealPath());
+            
+            // Extraire variables {{ variable }}
+            preg_match_all('/\{\{\s*(\w+)\s*\}\}/', $content, $matches);
+            $data['variables'] = array_unique($matches[1]);
+        }
+        
+        return $data;
+    }
+    
+    private function renderTemplatePreview(string $template, array $data): string
+    {
+        // Simple template rendering
+        foreach ($data as $key => $value) {
+            $template = str_replace("{{ {$key} }}", $value, $template);
+        }
+        
+        // Remplacer variables manquantes par placeholder
+        $template = preg_replace('/\{\{\s*(\w+)\s*\}\}/', '[{{ $1 }}]', $template);
+        
+        return $template;
+    }
+    
+    private function generatePreviewScreenshot(string $html, int $templateId): ?string
+    {
+        // Ici on pourrait utiliser Puppeteer ou une API de screenshot
+        // Pour l'instant, on retourne null
+        return null;
+    }
+}
 ```
-GET  /api/health                 # Health check API Gateway
-GET  /api/test-rabbitmq          # Test connexion RabbitMQ  
-GET  /api/services/status        # Status des microservices
+
+### 🔒 Sécurité et Configuration
+
+#### Variables d'Environment
+```env
+# MinIO Configuration
+MINIO_ENDPOINT=http://minio:9000
+MINIO_ACCESS_KEY=admin
+MINIO_SECRET_KEY=adminpass123
+
+# Service-specific buckets
+MINIO_BUCKET_PRODUCTS=products
+MINIO_BUCKET_SUPPORT=support
+MINIO_BUCKET_NEWSLETTERS=newsletters
+MINIO_BUCKET_CONTACTS=contacts
+MINIO_BUCKET_WEBSITES=websites
+MINIO_BUCKET_SHARED=shared
+
+# File Upload Configuration
+MAX_FILE_SIZE_MB=10
+MAX_IMAGE_SIZE_MB=5
+ALLOWED_IMAGE_TYPES=jpg,jpeg,png,gif,webp
+ALLOWED_DOCUMENT_TYPES=pdf,doc,docx,txt,zip,html
+ALLOWED_ARCHIVE_TYPES=zip,tar,gz
+
+# Security
+MINIO_SECURE=false  # true pour HTTPS
+MINIO_REGION=us-east-1
 ```
 
-#### **🔐 Authentication**
-```
-POST /api/auth/login             # Connexion (génère JWT)
-GET  /api/auth/me                # Profil utilisateur  
-POST /api/auth/logout            # Déconnexion
-```
-
-#### **🛍️ E-commerce Workflow**
-```
-# 1. Navigation produits
-GET  /api/products/products      # Liste produits
-GET  /api/products/{id}          # Détail produit
-
-# 2. Gestion panier  
-GET  /api/baskets/current        # Panier actuel
-POST /api/baskets/items          # Ajouter produit
-POST /api/baskets/promo-codes    # Appliquer code promo
-
-# 3. Commande
-POST /api/orders/create-from-basket  # Créer commande
-GET  /api/orders/orders              # Mes commandes
-
-# 4. Livraison
-GET  /api/deliveries/track/{number}  # Suivi livraison
-GET  /api/deliveries/sale-points     # Points de retrait
-```
-
-#### **🛠️ Administration**
-```
-# Gestion produits
-GET  /api/admin/products/products
-POST /api/admin/products/products
-
-# Gestion commandes
-GET  /api/admin/orders/orders
-PUT  /api/admin/orders/{id}/status
-
-# Support client
-GET  /api/admin/sav/tickets
-POST /api/admin/sav/tickets/{id}/assign
-```
-
-### 🔧 Configuration Variables Postman
+#### Politique de Sécurité Buckets
 ```json
 {
-  "base_url": "http://localhost",
-  "admin_token": "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9...",
-  "user_id": "1",
-  "test_product_id": "1",
-  "test_order_id": "1"
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Effect": "Allow",
+      "Principal": {"AWS": ["arn:aws:iam::*:user/products-service"]},
+      "Action": ["s3:GetObject", "s3:PutObject", "s3:DeleteObject"],
+      "Resource": ["arn:aws:s3:::products/*"]
+    },
+    {
+      "Effect": "Allow", 
+      "Principal": {"AWS": ["arn:aws:iam::*:user/support-service"]},
+      "Action": ["s3:GetObject", "s3:PutObject"],
+      "Resource": ["arn:aws:s3:::support/*"]
+    },
+    {
+      "Effect": "Deny",
+      "Principal": "*",
+      "Action": "s3:*",
+      "Resource": ["arn:aws:s3:::support/tickets/*/private/*"]
+    }
+  ]
 }
+```
+
+### 🧪 Tests MinIO Integration
+
+#### Health Checks
+```bash
+# Vérifier MinIO
+curl http://localhost:9000/minio/health/live
+
+# Console Web MinIO
+open http://localhost:9001
+# Login: admin / adminpass123
+
+# Vérifier buckets
+curl -X GET http://localhost:9000/
+```
+
+#### Tests API avec fichiers
+```bash
+# Upload image produit
+curl -X POST http://localhost/api/v1/products/1/images \
+  -H "Authorization: Bearer {jwt_token}" \
+  -F "image=@product.jpg" \
+  -F "type=main" \
+  -F "alt_text=Image principale du produit"
+
+# Upload document SAV
+curl -X POST http://localhost/api/v1/sav/tickets/1/attachments \
+  -H "Authorization: Bearer {jwt_token}" \
+  -F "file=@facture.pdf" \
+  -F "description=Facture d'achat"
+
+# Upload template newsletter
+curl -X POST http://localhost/api/v1/newsletters/templates \
+  -H "Authorization: Bearer {jwt_token}" \
+  -F "template=@newsletter.html" \
+  -F "name=Black Friday 2025" \
+  -F "category=promotion"
+
+# Upload asset newsletter
+curl -X POST http://localhost/api/v1/newsletters/assets \
+  -H "Authorization: Bearer {jwt_token}" \
+  -F "asset=@logo.png" \
+  -F "folder=images" \
+  -F "description=Logo de l'entreprise"
+```
+
+### 📊 Monitoring et Maintenance
+
+#### Scripts de Maintenance
+```bash
+#!/bin/bash
+# scripts/minio-maintenance.sh
+
+# Nettoyage fichiers temporaires > 7 jours
+mc find minio-local/temp --older-than 7d --exec "mc rm {}"
+
+# Archivage tickets résolus > 1 an
+mc mirror minio-local/support/resolved/ minio-local/archive/support/
+
+# Compression logs > 30 jours
+find /data/newsletters/logs -name "*.log" -mtime +30 -exec gzip {} \;
+
+# Statistiques storage
+mc admin info minio-local --json | jq '.info.storage'
+
+# Backup buckets critiques
+mc mirror minio-local/products minio-backup/products-$(date +%Y%m%d)
+mc mirror minio-local/support minio-backup/support-$(date +%Y%m%d)
+```
+
+#### Métriques MinIO
+```bash
+# Usage par bucket
+mc du minio-local
+
+# Objets par bucket
+mc ls minio-local --recursive | wc -l
+
+# Taille totale
+mc admin info minio-local | grep "Storage Usage"
 ```
 
 ---
 
-## 🎯 Prochaines Priorités de Développement
+## 📋 ARCHITECTURE FINALE
 
-### 🔧 Résoudre Timeouts RPC
-**Issue actuelle**: Services reçoivent les messages mais les réponses n'arrivent pas à l'API Gateway.
+### 🎯 Services avec MinIO intégré
+- ✅ **products-service** → Images, catalogues, fiches techniques
+- ✅ **sav-service** → Attachements tickets, base de connaissances
+- ✅ **newsletters-service** → Templates, assets emails
+- ✅ **contacts-service** → Documents joints formulaires
+- ✅ **websites-service** → Assets sites, logos, images
+- ✅ **shared assets** → Ressources communes
 
-**Solution recommandée**:
-1. **Debug correlation IDs** - Vérifier mécanisme request/response
-2. **Callback queues** - Valider configuration des queues temporaires
-3. **Timeout configuration** - Ajuster durées d'attente
-4. **Error handling** - Améliorer gestion des erreurs RPC
+### 🔧 Stack Technologique Complète
+```
+Frontend → Nginx → API Gateway → RabbitMQ → Microservices
+                                     ↓           ↓
+                                MinIO Storage ← Files
+```
 
-### 🚀 Finaliser Services Restants
-1. **Questions Service** - FAQ dynamique
-2. **Websites Service** - Configuration multi-sites  
-3. **Performance Optimization** - Cache, indexation, monitoring
-
-### 🧪 Tests d'Intégration
-1. **E2E Testing** - Workflow complet client
-2. **Load Testing** - Performance architecture asynchrone
-3. **Error Recovery** - Résilience des communications
-
----
-
-## 🎉 Réalisations Architecture Asynchrone
-
-### ✅ **Implémentations Réussies**
-
-#### **🏗️ Infrastructure**
-- ✅ **API Gateway centralisé** - Point d'entrée unique
-- ✅ **RabbitMQ configuré** - Credentials, exchanges, queues
-- ✅ **Nginx routing** - Toutes requêtes via Gateway
-- ✅ **Docker orchestration** - Services isolés et connectés
-
-#### **🔄 Communication Asynchrone**
-- ✅ **Plus aucun HTTP direct** entre services
-- ✅ **Pattern RPC** via RabbitMQ implémenté  
-- ✅ **Queues opérationnelles** - consumers actifs confirmés
-- ✅ **Message delivery** - Publications et consommations validées
-
-#### **🛡️ Sécurité Unifiée**
-- ✅ **JWT partagé** - Authentification cohérente
-- ✅ **Middleware centralisé** - Contrôle d'accès uniforme
-- ✅ **Routes publiques/privées** - Segmentation sécurisée
-
-### 📊 **Métriques de Réussite**
-- ✅ **11 services** opérationnels avec architecture asynchrone
-- ✅ **15+ queues RabbitMQ** actives avec consumers
-- ✅ **100% routage** via API Gateway validé
-- ✅ **0 communication HTTP** directe inter-services
-
-### 🎯 **Objectif Accompli**
-**"Applique les Recommandations pour une Architecture Fully Asynchrone"** ✅
-
-La migration vers l'architecture entièrement asynchrone est **complète et opérationnelle** ! Tous les services communiquent exclusivement via RabbitMQ, garantissant une scalabilité, résilience et découplage optimaux.
+### 📊 Métriques Attendues
+- **Storage**: 100GB+ avec auto-scaling
+- **Upload**: < 2s pour images, < 5s pour documents
+- **Download**: < 1s avec URLs présignées
+- **Availability**: 99.9% uptime MinIO
+- **Security**: Encryption at rest + in transit
 
 ---
 
-*Cette documentation reflète l'état actuel de la plateforme e-commerce avec son architecture microservices fully asynchrone via RabbitMQ.* 🚀
+## 🚀 NEXT STEPS
+
+### Phase 1 : Déploiement MinIO ✅
+- [x] Configuration Docker Compose
+- [x] Integration services critiques
+- [x] Tests et validation
+
+### Phase 2 : Optimisations
+- [ ] CDN intégration pour assets statiques
+- [ ] Compression automatique images
+- [ ] Versioning fichiers
+- [ ] Backup automatique
+
+### Phase 3 : Intelligence
+- [ ] Analyse automatique images (IA)
+- [ ] Optimisation SEO images
+- [ ] Analytics usage fichiers
+- [ ] Recommandations stockage
+
+**🎉 Plateforme e-commerce avec stockage distribué opérationnelle ! 🚀**
