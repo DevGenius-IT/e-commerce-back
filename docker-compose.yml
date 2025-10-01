@@ -167,6 +167,11 @@ services:
       - APP_ENV=local
       - CONTAINER_ROLE=app
       - DB_HOST=${DB_PRODUCTS_HOST}
+      - MINIO_ENDPOINT=${MINIO_ENDPOINT:-minio:9000}
+      - MINIO_ACCESS_KEY=${MINIO_ROOT_USER:-admin}
+      - MINIO_SECRET_KEY=${MINIO_ROOT_PASSWORD:-adminpass123}
+      - MINIO_BUCKET=products
+      - MINIO_USE_SSL=false
     develop:
       watch:
         - action: sync
@@ -180,6 +185,7 @@ services:
       - microservices-network
     depends_on:
       - products-db
+      - minio
 
   products-db:
     image: mysql:8.0
@@ -322,6 +328,11 @@ services:
       - RABBITMQ_USER=guest
       - RABBITMQ_PASSWORD=guest
       - RABBITMQ_VHOST=/
+      - MINIO_ENDPOINT=${MINIO_ENDPOINT:-minio:9000}
+      - MINIO_ACCESS_KEY=${MINIO_ROOT_USER:-admin}
+      - MINIO_SECRET_KEY=${MINIO_ROOT_PASSWORD:-adminpass123}
+      - MINIO_BUCKET=newsletters
+      - MINIO_USE_SSL=false
     develop:
       watch:
         - action: sync
@@ -336,6 +347,7 @@ services:
     depends_on:
       - newsletters-db
       - rabbitmq
+      - minio
 
   newsletters-db:
     image: mysql:8.0
@@ -364,6 +376,27 @@ services:
       - rabbitmq-data:/var/lib/rabbitmq
     networks:
       - microservices-network
+
+  minio:
+    image: minio/minio:latest
+    container_name: minio-storage
+    restart: unless-stopped
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    environment:
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER:-admin}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD:-adminpass123}
+    volumes:
+      - minio-data:/data
+    command: server /data --console-address ":9001"
+    networks:
+      - microservices-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
+      interval: 30s
+      timeout: 20s
+      retries: 3
 
   nginx:
     image: nginx:alpine
@@ -418,6 +451,11 @@ services:
       - RABBITMQ_VHOST=/
       - RABBITMQ_EXCHANGE=sav_exchange
       - RABBITMQ_QUEUE=sav_queue
+      - MINIO_ENDPOINT=${MINIO_ENDPOINT:-minio:9000}
+      - MINIO_ACCESS_KEY=${MINIO_ROOT_USER:-admin}
+      - MINIO_SECRET_KEY=${MINIO_ROOT_PASSWORD:-adminpass123}
+      - MINIO_BUCKET=sav
+      - MINIO_USE_SSL=false
     develop:
       watch:
         - action: sync
@@ -432,6 +470,7 @@ services:
     depends_on:
       - sav-db
       - rabbitmq
+      - minio
 
   sav-db:
     image: mysql:8.0
@@ -594,6 +633,8 @@ volumes:
   websites-db-data:
   questions-db-data:
   rabbitmq-data:
+  minio-data:
+    driver: local
 
 networks:
   microservices-network:

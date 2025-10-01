@@ -69,7 +69,8 @@ RUN chown -R www-data:www-data /var/www \
 # Create start script
 RUN echo '#!/bin/bash\n\
 echo "Waiting for database connection..."\n\
-while ! nc -z orders-db 3306; do\n\
+DB_HOST_ONLY=$(echo ${DB_HOST:-orders-service-mysql} | cut -d: -f1)\n\
+while ! nc -z $DB_HOST_ONLY 3306; do\n\
   sleep 0.1\n\
 done\n\
 echo "Database connected!"\n\

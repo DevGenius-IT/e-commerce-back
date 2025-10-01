@@ -32,9 +32,8 @@ secretGenerator:
 images:
 - name: redis
   newTag: 7-alpine
-labels:
-- includeSelectors: true
-  pairs:
-    environment: development
+
+# Note: Labels are defined in base files to avoid selector immutability issues
+  
 patches:
 - path: patches/namespace-dev.yaml

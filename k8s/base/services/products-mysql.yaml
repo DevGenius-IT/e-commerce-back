@@ -40,6 +40,14 @@ spec:
       containers:
       - name: mysql
         image: mysql:8.0
+        command:
+        - docker-entrypoint.sh
+        args:
+        - mysqld
+        - --default-authentication-plugin=mysql_native_password
+        - --skip-log-bin
+        stdin: true
+        tty: true
         env:
         - name: MYSQL_ROOT_PASSWORD
           value: "products-root-password"
@@ -55,7 +63,7 @@ spec:
         resources:
           requests:
             memory: 256Mi
-            cpu: 200m
+            cpu: 100m
           limits:
             memory: 512Mi
             cpu: 500m
@@ -69,8 +77,10 @@ spec:
             - ping
             - -h
             - localhost
-          initialDelaySeconds: 30
+          initialDelaySeconds: 60
           periodSeconds: 10
+          timeoutSeconds: 5
+          failureThreshold: 3
         readinessProbe:
           exec:
             command:
@@ -78,8 +88,10 @@ spec:
             - ping
             - -h
             - localhost
-          initialDelaySeconds: 5
-          periodSeconds: 5
+          initialDelaySeconds: 30
+          periodSeconds: 10
+          timeoutSeconds: 5
+          failureThreshold: 3
       volumes:
       - name: mysql-storage
         emptyDir: {}  # For development only

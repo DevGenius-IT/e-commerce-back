@@ -72,10 +72,10 @@ COPY docker/scripts/entrypoint.sh /usr/local/bin/entrypoint.sh
 RUN chmod +x /usr/local/bin/entrypoint.sh
 
 # Create directories and set permissions
-RUN mkdir -p /var/log/supervisor /var/log/nginx /run/nginx \
+RUN mkdir -p /var/log/supervisor /var/log/nginx /run/nginx /var/run \
     && mkdir -p /var/www/services/products-service/storage/{app/public/products,framework/{cache,sessions,views},logs} \
     && groupadd -r appgroup && useradd -r -g appgroup appuser \
-    && chown -R appuser:appgroup /var/www /var/log /run/nginx
+    && chown -R appuser:appgroup /var/www /var/log /run/nginx /var/run
 
 # Switch to service directory
 WORKDIR /var/www/services/products-service

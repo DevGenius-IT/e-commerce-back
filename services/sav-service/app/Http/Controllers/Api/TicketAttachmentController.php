@@ -8,11 +8,18 @@ use App\Models\TicketMessage;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
 use Shared\Components\Controller;
-use Illuminate\Support\Facades\Storage;
+use Shared\Services\MinioService;
 use Illuminate\Support\Facades\Validator;
 
 class TicketAttachmentController extends Controller
 {
+    private MinioService $minioService;
+
+    public function __construct()
+    {
+        $this->minioService = new MinioService('sav');
+    }
+
     public function index(string $ticketId): JsonResponse
     {
         $ticket = SupportTicket::find($ticketId);
@@ -60,19 +67,29 @@ class TicketAttachmentController extends Controller
 
         $file = $request->file('file');
         $originalName = $file->getClientOriginalName();
-        $filename = time() . '_' . str_replace(' ', '_', $originalName);
         
-        // Stocker le fichier
-        $filePath = $file->storeAs('sav-attachments', $filename, 'public');
+        // Générer chemin sécurisé pour MinIO
+        $filename = "tickets/{$ticketId}/" . uniqid() . '_' . $this->sanitizeFilename($originalName);
+        
+        // Upload vers MinIO
+        $uploadResult = $this->minioService->uploadFile(
+            $filename,
+            $file,
+            [
+                'ticket_id' => (string) $ticketId,
+                'uploaded_by' => auth()->id() ?? 'system',
+                'original_name' => $originalName,
+            ]
+        );
 
         $attachment = TicketAttachment::create([
             'ticket_id' => $ticketId,
             'message_id' => $request->message_id ?? null,
             'original_name' => $originalName,
             'filename' => $filename,
-            'file_path' => $filePath,
+            'file_path' => $uploadResult['url'],
             'mime_type' => $file->getMimeType(),
-            'file_size' => $file->getSize(),
+            'file_size' => $uploadResult['size'],
         ]);
 
         return response()->json([
@@ -110,17 +127,17 @@ class TicketAttachmentController extends Controller
             ], 404);
         }
 
-        if (!Storage::disk('public')->exists($attachment->file_path)) {
+        try {
+            // Générer URL présignée (valide 1h)
+            $presignedUrl = $this->minioService->getPresignedUrl($attachment->filename, 3600);
+            
+            return redirect($presignedUrl);
+        } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
                 'message' => 'File not found on storage',
             ], 404);
         }
-
-        return Storage::disk('public')->download(
-            $attachment->file_path,
-            $attachment->original_name
-        );
     }
 
     public function destroy(string $ticketId, string $id): JsonResponse
@@ -134,13 +151,23 @@ class TicketAttachmentController extends Controller
             ], 404);
         }
 
-        // Le fichier sera automatiquement supprimé grâce au boot() dans le modèle
-        $attachment->delete();
+        try {
+            // Supprimer de MinIO
+            $this->minioService->deleteFile($attachment->filename);
+            
+            // Supprimer de la base
+            $attachment->delete();
 
-        return response()->json([
-            'success' => true,
-            'message' => 'Attachment deleted successfully',
-        ]);
+            return response()->json([
+                'success' => true,
+                'message' => 'Attachment deleted successfully',
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to delete attachment',
+            ], 500);
+        }
     }
 
     public function getByMessage(string $ticketId, string $messageId): JsonResponse
@@ -197,18 +224,29 @@ class TicketAttachmentController extends Controller
         foreach ($request->file('files') as $file) {
             try {
                 $originalName = $file->getClientOriginalName();
-                $filename = time() . '_' . str_replace(' ', '_', $originalName);
                 
-                $filePath = $file->storeAs('sav-attachments', $filename, 'public');
+                // Générer chemin sécurisé pour MinIO
+                $filename = "tickets/{$ticketId}/" . uniqid() . '_' . $this->sanitizeFilename($originalName);
+                
+                // Upload vers MinIO
+                $uploadResult = $this->minioService->uploadFile(
+                    $filename,
+                    $file,
+                    [
+                        'ticket_id' => (string) $ticketId,
+                        'uploaded_by' => auth()->id() ?? 'system',
+                        'original_name' => $originalName,
+                    ]
+                );
 
                 $attachment = TicketAttachment::create([
                     'ticket_id' => $ticketId,
                     'message_id' => $request->message_id ?? null,
                     'original_name' => $originalName,
                     'filename' => $filename,
-                    'file_path' => $filePath,
+                    'file_path' => $uploadResult['url'],
                     'mime_type' => $file->getMimeType(),
-                    'file_size' => $file->getSize(),
+                    'file_size' => $uploadResult['size'],
                 ]);
 
                 $attachments[] = $attachment;
@@ -225,5 +263,15 @@ class TicketAttachmentController extends Controller
             'data' => $attachments,
             'errors' => $errors,
         ], count($errors) === 0 ? 201 : 207);
+    }
+
+    /**
+     * Sanitize filename pour sécurité MinIO
+     */
+    private function sanitizeFilename(string $filename): string
+    {
+        // Supprimer caractères dangereux
+        $filename = preg_replace('/[^a-zA-Z0-9._-]/', '_', $filename);
+        return substr($filename, 0, 100); // Limiter longueur
     }
 }

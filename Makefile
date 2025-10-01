@@ -134,7 +134,7 @@ k8s-deploy: banner
 ## 🔨 Construire toutes les images pour Kubernetes
 k8s-build:
 	@echo "$(YELLOW)🔨 Construction des images pour Kubernetes...$(NC)"
-	@$(AUTOMATION_SCRIPT) build-all latest true
+	@$(AUTOMATION_SCRIPT) build-all latest false
 
 ## 🏥 Vérifier la santé Kubernetes
 k8s-health:
@@ -417,6 +417,79 @@ backup-docker:
 	@echo "$(GREEN)✅ Sauvegardes créées dans ./backups/$(NC)"
 
 # =============================================================================
+# 💾 MINIO - OBJECT STORAGE
+# =============================================================================
+
+## 🗄️ Démarrer MinIO
+minio-start:
+	@echo "$(GREEN)🗄️ Démarrage de MinIO...$(NC)"
+	@docker-compose up -d minio
+	@sleep 5
+	@$(MAKE) minio-health
+
+## 🏥 Vérifier la santé de MinIO
+minio-health:
+	@echo "$(BLUE)🏥 Vérification de la santé MinIO...$(NC)"
+	@./scripts/minio-health-check.sh || echo "$(YELLOW)MinIO en cours de démarrage...$(NC)"
+
+## 📦 Créer les buckets MinIO
+minio-setup:
+	@echo "$(YELLOW)📦 Configuration des buckets MinIO...$(NC)"
+	@./scripts/minio-setup-buckets.sh
+	@echo "$(GREEN)✅ Buckets MinIO créés$(NC)"
+
+## 🔧 Installer AWS SDK dans les services
+minio-install-sdk:
+	@echo "$(YELLOW)🔧 Installation AWS SDK...$(NC)"
+	@./scripts/install-aws-sdk.sh
+	@echo "$(GREEN)✅ AWS SDK installé$(NC)"
+
+## 🧪 Tester l'intégration MinIO
+minio-test:
+	@echo "$(BLUE)🧪 Tests d'intégration MinIO...$(NC)"
+	@./scripts/test-minio-integration.sh
+
+## ✅ Valider Phase 1 MinIO
+minio-validate:
+	@echo "$(PURPLE)✅ Validation Phase 1 MinIO...$(NC)"
+	@./scripts/validate-phase1-minio.sh
+
+## 🌐 Ouvrir la console MinIO
+minio-console:
+	@echo "$(BLUE)🌐 Ouverture console MinIO...$(NC)"
+	@echo "URL: http://localhost:9001"
+	@echo "User: admin"
+	@echo "Pass: adminpass123"
+	@open http://localhost:9001 2>/dev/null || xdg-open http://localhost:9001 2>/dev/null || echo "Ouvrez manuellement: http://localhost:9001"
+
+## 📊 Statistiques MinIO
+minio-stats:
+	@echo "$(YELLOW)📊 Statistiques MinIO:$(NC)"
+	@docker exec minio-storage mc admin info local 2>/dev/null || echo "$(RED)MinIO non disponible$(NC)"
+
+## 🗑️ Nettoyer les buckets MinIO
+minio-clean:
+	@echo "$(RED)🗑️ Nettoyage des buckets MinIO...$(NC)"
+	@docker exec minio-storage sh -c "rm -rf /data/products/* /data/sav/* /data/newsletters/*" 2>/dev/null || true
+	@echo "$(GREEN)✅ Buckets MinIO nettoyés$(NC)"
+
+## 🛑 Arrêter MinIO
+minio-stop:
+	@echo "$(YELLOW)🛑 Arrêt de MinIO...$(NC)"
+	@docker-compose stop minio
+	@echo "$(GREEN)✅ MinIO arrêté$(NC)"
+
+## 🔄 Workflow MinIO complet
+minio-workflow:
+	@echo "$(PURPLE)🔄 Workflow MinIO complet:$(NC)"
+	@$(MAKE) minio-start
+	@$(MAKE) minio-setup
+	@$(MAKE) minio-validate
+	@$(MAKE) minio-test
+	@echo "$(GREEN)✅ Workflow MinIO terminé!$(NC)"
+	@echo "$(BLUE)Console: http://localhost:9001 (admin/adminpass123)$(NC)"
+
+# =============================================================================
 # 🔧 WORKFLOWS DE DÉPLOIEMENT
 # =============================================================================
 
@@ -501,6 +574,15 @@ help: banner
 	@echo "  $(BLUE)docker-down$(NC)            Arrêter et supprimer services Docker"
 	@echo "  $(BLUE)docker-clean$(NC)           Nettoyer Docker Compose"
 	@echo "  $(BLUE)docker-kill$(NC)            Arrêt d'urgence Docker"
+	@echo ""
+	@echo "$(YELLOW)💾 MINIO - OBJECT STORAGE:$(NC)"
+	@echo "  $(BLUE)minio-start$(NC)            Démarrer MinIO"
+	@echo "  $(BLUE)minio-setup$(NC)            Créer buckets MinIO"
+	@echo "  $(BLUE)minio-health$(NC)           Vérifier santé MinIO"
+	@echo "  $(BLUE)minio-console$(NC)          Ouvrir console MinIO"
+	@echo "  $(BLUE)minio-test$(NC)             Tester intégration MinIO"
+	@echo "  $(BLUE)minio-validate$(NC)         Valider Phase 1 MinIO"
+	@echo "  $(BLUE)minio-workflow$(NC)         Workflow MinIO complet"
 	@echo ""
 	@echo "$(YELLOW)🛑 ARRÊT GLOBAL:$(NC)"
 	@echo "  $(BLUE)stop-all$(NC)               Arrêter tout (Docker + Kubernetes)"
