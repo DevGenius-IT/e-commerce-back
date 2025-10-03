@@ -35,6 +35,9 @@ COPY ./services/orders-service .
 # Copy shared directory
 COPY ./shared /var/www/shared
 
+# Clear Laravel caches to remove any stale provider references
+RUN rm -rf /var/www/bootstrap/cache/*.php
+
 # Ensure Laravel structure is complete
 RUN mkdir -p /var/www/public /var/www/storage/app /var/www/storage/framework/{cache,sessions,views} /var/www/storage/logs
 RUN mkdir -p /var/www/bootstrap/cache
