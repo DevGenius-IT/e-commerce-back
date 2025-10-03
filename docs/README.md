@@ -1,178 +1,106 @@
-# 📚 Documentation E-commerce Platform
+# Documentation E-commerce Microservices Platform
 
-Plateforme e-commerce microservices avec communication asynchrone RabbitMQ et stockage distribué MinIO.
-
-## 🚀 Quick Start
-
-```bash
-# Installation complète
-make install-complete
-
-# Démarrage services
-make docker-start
-
-# MinIO object storage
-make minio-workflow
-
-# Tests
-make test-all
-```
-
-**Console:** http://localhost:9001 (admin/adminpass123)  
-**RabbitMQ:** http://localhost:15672 (guest/guest)  
-**API Gateway:** http://localhost
-
-## 📁 Structure Documentation
-
-```
-docs/
-├── README.md                    # Ce fichier
-│
-├── architecture/                # Architecture & design
-│   ├── README.md               # Vue d'ensemble architecture
-│   ├── ARCHITECTURE_PLAN.md    # Plan technique détaillé
-│   └── PROJECT_ROADMAP.md      # Roadmap et phases
-│
-├── deployment/                  # Guides déploiement
-│   ├── README.md               # Guide déploiement
-│   ├── KUBERNETES_COMPLETE_SETUP.md
-│   └── KUBERNETES_QUICKSTART.md
-│
-├── development/                 # Guides développeurs
-│   ├── README.md               # Guide développement
-│   ├── QUICK_START.md          # Démarrage rapide
-│   ├── CONTRIBUTING.md         # Guide contribution
-│   └── ISSUES.md               # Issues connues
-│
-├── api/postman/                 # API testing
-│   └── README.md               # Collections Postman
-│
-└── minio/                       # Object storage
-    ├── README.md               # Guide MinIO
-    └── MINIO.md               # Documentation technique
-```
-
-## 🎯 Par Rôle
-
-### 👨‍💻 Développeurs
-
-1. **Démarrage:** [development/QUICK_START.md](development/QUICK_START.md)
-2. **Development:** [development/README.md](development/README.md)
-3. **API Testing:** [api/postman/README.md](api/postman/README.md)
-4. **MinIO:** [minio/README.md](minio/README.md)
-5. **Contribution:** [development/CONTRIBUTING.md](development/CONTRIBUTING.md)
-
-### 🏗️ DevOps
-
-1. **Architecture:** [architecture/README.md](architecture/README.md)
-2. **Déploiement:** [deployment/README.md](deployment/README.md)
-3. **Kubernetes:** [deployment/KUBERNETES_COMPLETE_SETUP.md](deployment/KUBERNETES_COMPLETE_SETUP.md)
-4. **MinIO Technique:** [minio/MINIO.md](minio/MINIO.md)
-
-### 📋 Product Owners
-
-1. **Roadmap:** [architecture/PROJECT_ROADMAP.md](architecture/PROJECT_ROADMAP.md)
-2. **Architecture Plan:** [architecture/ARCHITECTURE_PLAN.md](architecture/ARCHITECTURE_PLAN.md)
-
-## 🏗️ Architecture
-
-### Services
-
-| Service | Port | Fonction |
-|---------|------|----------|
-| api-gateway | 8100 | Point d'entrée, routing |
-| auth-service | 8001 | JWT authentication |
-| products-service | 8003 | Catalogue produits |
-| orders-service | 8004 | Commandes |
-| baskets-service | 8005 | Paniers |
-| deliveries-service | 8006 | Livraisons |
-| newsletters-service | 8007 | Email campaigns |
-| sav-service | 8008 | Support client |
-
-### Infrastructure
-
-- **RabbitMQ:** Message broker (5672, 15672)
-- **MinIO:** Object storage (9000, 9001)
-- **MySQL:** Database per service
-- **Nginx:** Reverse proxy
-
-## 🛠️ Commandes Essentielles
-
-### Docker
-
-```bash
-make docker-start          # Démarrer services
-make docker-stop           # Arrêter services
-make health-docker         # Health checks
-make test-docker           # Tests
-```
-
-### MinIO
-
-```bash
-make minio-workflow        # Workflow complet
-make minio-console         # Console web
-make minio-test            # Tests
-```
-
-### Kubernetes
-
-```bash
-make k8s-setup             # Setup infrastructure
-make k8s-deploy            # Déployer
-make k8s-health            # Health checks
-```
-
-### Database
-
-```bash
-make migrate-all           # Migrations
-make seed-all              # Seeders
-make backup-docker         # Backup
-```
-
-## 🔒 Sécurité
-
-- JWT authentication centralisée
-- Role-based access control (RBAC)
-- Presigned URLs (MinIO)
-- File sanitization
-- API rate limiting
-
-## 📊 Monitoring
-
-**Health Checks:**
-```bash
-http://localhost/api/health              # API Gateway
-http://localhost/api/{service}/health    # Services
-http://localhost:15672                   # RabbitMQ
-http://localhost:9001                    # MinIO
-```
-
-**Metrics:**
-- Response time: <500ms
-- Throughput: 1000 req/s
-- Availability: 99.9%
-
-## 🧪 Tests
-
-```bash
-make test-all              # Tous tests
-make test-docker           # Tests Docker
-make minio-test            # Tests MinIO
-make validate-platform     # Validation complète
-```
-
-## 🤝 Contribution
-
-Voir [development/CONTRIBUTING.md](development/CONTRIBUTING.md)
-
-## 📞 Support
-
-**Issues:** [development/ISSUES.md](development/ISSUES.md)  
-**API:** [api/postman/README.md](api/postman/README.md)  
-**Architecture:** [architecture/README.md](architecture/README.md)
+**Plateforme** : Collect & Verything - Solution B2B SaaS
+**Architecture** : 13 microservices Laravel + Kubernetes
+**Date de creation** : 03 Octobre 2025
+**Derniere mise a jour** : 03 Octobre 2025
+**Version** : 1.0
 
 ---
 
-**Documentation complète pour une plateforme e-commerce moderne! 🚀**
+## Table des Matieres
+
+### Base de Donnees
+- [00 - Vue d'ensemble Architecture BDD Globale](./database/00-global-database-architecture.md)
+- [01 - Relations Inter-Services](./database/01-database-relationships.md)
+
+#### Services Individuels
+- [auth-service Database](./database/services/auth-service-database.md)
+- [addresses-service Database](./database/services/addresses-service-database.md)
+- [products-service Database](./database/services/products-service-database.md)
+- [baskets-service Database](./database/services/baskets-service-database.md)
+- [orders-service Database](./database/services/orders-service-database.md)
+- [deliveries-service Database](./database/services/deliveries-service-database.md)
+- [newsletters-service Database](./database/services/newsletters-service-database.md)
+- [sav-service Database](./database/services/sav-service-database.md)
+- [contacts-service Database](./database/services/contacts-service-database.md)
+- [questions-service Database](./database/services/questions-service-database.md)
+- [websites-service Database](./database/services/websites-service-database.md)
+
+### Infrastructure
+- [01 - Architecture Docker Compose](./infrastructure/01-docker-compose-architecture.md) (Developpement)
+- [02 - Architecture Infrastructure Complete](./infrastructure/02-complete-infrastructure-architecture.md) (Production)
+- [03 - Architecture Simplifiee](./infrastructure/03-simplified-architecture.md) (Vue Business)
+- [04 - Architecture Reseau](./infrastructure/04-networking-architecture.md)
+- [05 - Architecture Securite](./infrastructure/05-security-architecture.md)
+
+### Business & Deploiement
+- [Plan de Deploiement Collect & Verything](./business/collect-verything-deployment-plan.md)
+- [Architecture Multi-Tenant](./business/multi-tenant-architecture.md)
+- [Modeles d'Abonnement](./business/pricing-tiers.md)
+- [Workflow de Provisioning](./business/provisioning-workflow.md)
+
+---
+
+## Vue d'Ensemble Rapide
+
+### Architecture Globale
+
+La plateforme **Collect & Verything** est une solution B2B SaaS permettant aux entreprises de creer et gerer leur propre site e-commerce via abonnement.
+
+#### Statistiques Cles
+- **13 microservices** : architecture decouplee et scalable
+- **11 bases de donnees** : isolation complete (database-per-service)
+- **3 buckets MinIO** : stockage distribue S3-compatible
+- **Communication asynchrone** : RabbitMQ pour evenements inter-services
+- **Deploiement** : Docker Compose (dev) + Kubernetes (prod)
+
+#### Stack Technique
+- **Backend** : PHP 8.3 + Laravel 12
+- **Bases de donnees** : MySQL 8.0
+- **Message Broker** : RabbitMQ 3.12
+- **Object Storage** : MinIO (S3-compatible)
+- **Cache** : Redis
+- **Reverse Proxy** : Nginx
+- **Orchestration** : Kubernetes
+- **Monitoring** : Prometheus + Grafana
+
+---
+
+## Quick Start
+
+### Developpement Local (Docker Compose)
+```bash
+# Installation complete
+make docker-install
+
+# Demarrage avec hot-reload
+make dev
+
+# Verifier le statut
+make docker-status
+```
+
+### Production (Kubernetes)
+```bash
+# Deploiement complet
+make k8s-deploy
+
+# Verifier la sante
+make k8s-health
+
+# Voir le statut
+make k8s-status
+```
+
+---
+
+## Support & Contact
+
+- **Issues** : [GitHub Issues](https://github.com/DevGenius-IT/e-commerce-back/issues)
+- **Documentation** : Ce repertoire
+- **Projet** : [GitHub Project](https://github.com/orgs/DevGenius-IT/projects/6)
+
+---
+
+Copyright (c) 2024-present DevGenius-IT
