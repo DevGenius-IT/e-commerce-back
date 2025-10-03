@@ -38,11 +38,11 @@ spec:
           mountPath: /var/lib/rabbitmq
         resources:
           requests:
-            memory: 256Mi
-            cpu: 100m
+            memory: 512Mi
+            cpu: 200m
           limits:
-            memory: 256Mi
-            cpu: 400m
+            memory: 512Mi
+            cpu: 500m
         readinessProbe:
           exec:
             command:

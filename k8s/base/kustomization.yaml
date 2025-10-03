@@ -14,6 +14,7 @@ metadata:
 resources:
 - namespace.yaml
 - configmaps/global-config.yaml
+- configmaps/mysql-init-configmap.yaml
 - secrets/secrets-template.yaml
 - services/redis.yaml
 - services/addresses-mysql.yaml
