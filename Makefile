@@ -152,6 +152,13 @@ k8s-setup: banner
 k8s-deploy: banner
 	@echo "$(GREEN)📦 Déploiement sur Kubernetes (environnement: $(K8S_ENVIRONMENT))...$(NC)"
 	@$(AUTOMATION_SCRIPT) deploy-env $(K8S_ENVIRONMENT)
+	@echo ""
+	@echo "$(GREEN)🌐 Activation du port-forward API Gateway...$(NC)"
+	@echo "$(YELLOW)Environnement: $(K8S_ENVIRONMENT)$(NC)"
+	@echo "$(GREEN)URL d'accès: http://localhost:8100$(NC)"
+	@echo "$(YELLOW)Appuyez sur Ctrl+C pour arrêter$(NC)"
+	@echo ""
+	@kubectl port-forward -n e-commerce svc/api-gateway 8100:80
 
 ## 🔨 Construire toutes les images pour Kubernetes
 k8s-build:
@@ -173,6 +180,15 @@ k8s-monitoring:
 	@echo "$(PURPLE)📈 Ouverture des tableaux de bord de monitoring...$(NC)"
 	@$(AUTOMATION_SCRIPT) monitoring
 
+## 🌐 Port-forward API Gateway (port 8100)
+k8s-port-forward:
+	@echo "$(BLUE)🌐 Activation du port-forward API Gateway...$(NC)"
+	@echo "$(YELLOW)Environnement: $(K8S_ENVIRONMENT)$(NC)"
+	@echo "$(GREEN)URL d'accès: http://localhost:8100$(NC)"
+	@echo "$(YELLOW)Appuyez sur Ctrl+C pour arrêter$(NC)"
+	@echo ""
+	@kubectl port-forward -n e-commerce svc/api-gateway 8100:80
+
 ## 📝 Logs Kubernetes
 k8s-logs:
 	@echo "$(BLUE)📝 Logs du service $(SERVICE_NAME)...$(NC)"
@@ -191,17 +207,18 @@ k8s-stop:
 		kubectl get deployments -n monitoring 2>/dev/null | tail -n +2 | awk '{print $$1}' | xargs -I {} kubectl scale deployment {} --replicas=0 -n monitoring 2>/dev/null || true; \
 	else \
 		echo "$(BLUE)Mise à l'échelle des déploiements microservices à 0 répliques...$(NC)"; \
-		kubectl get deployments -n $(K8S_ENVIRONMENT)-microservices 2>/dev/null | tail -n +2 | awk '{print $$1}' | xargs -I {} kubectl scale deployment {} --replicas=0 -n $(K8S_ENVIRONMENT)-microservices 2>/dev/null || true; \
+		kubectl get deployments -n e-commerce 2>/dev/null | tail -n +2 | awk '{print $$1}' | xargs -I {} kubectl scale deployment {} --replicas=0 -n e-commerce 2>/dev/null || true; \
 		echo "$(BLUE)Arrêt des services dans l'environnement de monitoring...$(NC)"; \
-		kubectl get deployments -n $(K8S_ENVIRONMENT)-monitoring 2>/dev/null | tail -n +2 | awk '{print $$1}' | xargs -I {} kubectl scale deployment {} --replicas=0 -n $(K8S_ENVIRONMENT)-monitoring 2>/dev/null || true; \
+		kubectl get deployments -n e-commerce-monitoring 2>/dev/null | tail -n +2 | awk '{print $$1}' | xargs -I {} kubectl scale deployment {} --replicas=0 -n e-commerce-monitoring 2>/dev/null || true; \
 	fi
 	@echo "$(GREEN)✅ Environnement $(K8S_ENVIRONMENT) arrêté (déploiements mis à l'échelle 0)$(NC)"
 
 ## 🛑 Supprimer l'environnement Kubernetes
 k8s-down:
 	@echo "$(YELLOW)🛑 Suppression de l'environnement $(K8S_ENVIRONMENT)...$(NC)"
-	@kubectl delete namespace $(K8S_ENVIRONMENT)-microservices 2>/dev/null || true
-	@kubectl delete namespace $(K8S_ENVIRONMENT)-monitoring 2>/dev/null || true
+	@kubectl delete namespace e-commerce 2>/dev/null || true
+	@kubectl delete namespace e-commerce-monitoring 2>/dev/null || true
+	@kubectl delete namespace e-commerce-messaging 2>/dev/null || true
 	@echo "$(GREEN)✅ Environnement $(K8S_ENVIRONMENT) supprimé$(NC)"
 
 ## 🧹 Nettoyer l'environnement Kubernetes
@@ -212,12 +229,10 @@ k8s-clean:
 ## 🚨 Arrêt d'urgence Kubernetes (tout)
 k8s-kill:
 	@echo "$(RED)🚨 Arrêt d'urgence de tous les environnements Kubernetes...$(NC)"
-	@kubectl delete namespace development-microservices 2>/dev/null || true
-	@kubectl delete namespace staging-microservices 2>/dev/null || true
-	@kubectl delete namespace production-microservices 2>/dev/null || true
-	@kubectl delete namespace development-monitoring 2>/dev/null || true
-	@kubectl delete namespace staging-monitoring 2>/dev/null || true
-	@kubectl delete namespace production-monitoring 2>/dev/null || true
+	@kubectl delete namespace e-commerce 2>/dev/null || true
+	@kubectl delete namespace e-commerce-monitoring 2>/dev/null || true
+	@kubectl delete namespace e-commerce-messaging 2>/dev/null || true
+	@kubectl delete namespace argocd 2>/dev/null || true
 	@echo "$(GREEN)✅ Arrêt d'urgence Kubernetes terminé$(NC)"
 
 ## ☸️ Préparer la migration Kubernetes
@@ -521,13 +536,16 @@ minio-workflow:
 # =============================================================================
 
 ## 🚀 Déploiement complet (build + deploy + verify + test)
-deploy-complete: 
+deploy-complete:
 	@echo "$(GREEN)🚀 Déploiement complet sur Kubernetes...$(NC)"
 	@$(MAKE) k8s-build
 	@$(MAKE) k8s-deploy
 	@$(MAKE) verify-deployment
 	@$(MAKE) test-integration
 	@echo "$(GREEN)✅ Déploiement complet terminé!$(NC)"
+	@echo ""
+	@echo "$(YELLOW)🌐 Pour accéder à l'API Gateway, exécutez:$(NC)"
+	@echo "$(BLUE)kubectl port-forward -n e-commerce svc/api-gateway 8100:80$(NC)"
 
 ## 🎯 Workflow de développement
 dev-workflow:
@@ -588,6 +606,7 @@ help: banner
 	@echo "  $(BLUE)k8s-health$(NC)             Vérifier santé Kubernetes"
 	@echo "  $(BLUE)k8s-status$(NC)             Statut plateforme Kubernetes"
 	@echo "  $(BLUE)k8s-monitoring$(NC)         Ouvrir monitoring Kubernetes"
+	@echo "  $(BLUE)k8s-port-forward$(NC)       Port-forward API Gateway (8100)"
 	@echo "  $(BLUE)k8s-stop$(NC)               Arrêter environnement Kubernetes"
 	@echo "  $(BLUE)k8s-down$(NC)               Supprimer environnement Kubernetes"
 	@echo "  $(BLUE)k8s-clean$(NC)              Nettoyer environnement Kubernetes"
@@ -633,6 +652,7 @@ help: banner
 	@echo "  make dashboard                    # Interface interactive"
 	@echo "  make install-complete            # Installation complète"
 	@echo "  make K8S_ENVIRONMENT=staging k8s-deploy  # Déployer staging"
+	@echo "  make K8S_ENVIRONMENT=staging k8s-port-forward  # Port-forward 8100"
 	@echo "  make SERVICE_NAME=auth-service k8s-logs  # Logs service"
 	@echo ""
 	@echo "$(GREEN)📖 Documentation: README.md | PLATFORM_INTEGRATION_COMPLETE.md$(NC)"
@@ -673,3 +693,78 @@ check-tools:
 	@echo -n "curl: "; curl --version 2>/dev/null | head -1 && echo "$(GREEN)✅$(NC)" || echo "$(RED)❌$(NC)"
 
 .PHONY: dashboard install-complete migrate-to-k8s docker-start docker-install docker-status docker-stop docker-down docker-clean docker-kill docker-endpoints k8s-setup k8s-deploy k8s-build k8s-health k8s-status k8s-monitoring k8s-logs k8s-endpoints k8s-stop k8s-down k8s-clean k8s-kill k8s-prepare stop-all down-all clean-all kill-all validate-platform validate-quick verify-deployment verify-quick test-integration test-health test-auth test-performance test-security test-all migrate-all seed-all fresh-all test-docker test-service shell composer-install health-docker clear-cache dev stats newsletters-process newsletters-stats backup-docker deploy-complete dev-workflow prod-workflow migration-workflow banner help info check-tools
+# Kubernetes Database Management
+.PHONY: k8s-migrate k8s-migrate-clean k8s-seed k8s-create-admin
+
+k8s-migrate: ## Run database migrations on all services
+	@echo "$(CYAN)Running database migrations on all services...$(NC)"
+	@echo "$(YELLOW)Migrating auth-service...$(NC)"
+	@kubectl exec -n e-commerce deployment/auth-service -- php artisan migrate --force
+	@echo "$(YELLOW)Migrating products-service...$(NC)"
+	@kubectl exec -n e-commerce deployment/products-service -- php artisan migrate --force
+	@echo "$(YELLOW)Migrating addresses-service...$(NC)"
+	@kubectl exec -n e-commerce deployment/addresses-service -- php artisan migrate --force 2>&1 | grep -E "(INFO|DONE|Nothing)" || true
+	@echo "$(YELLOW)Migrating baskets-service...$(NC)"
+	@kubectl exec -n e-commerce deployment/baskets-service -- php artisan migrate --force 2>&1 | grep -E "(INFO|DONE|Nothing)" || true
+	@echo "$(YELLOW)Migrating orders-service...$(NC)"
+	@kubectl exec -n e-commerce deployment/orders-service -- php artisan migrate --force 2>&1 | grep -E "(INFO|DONE|Nothing)" || true
+	@echo "$(YELLOW)Migrating deliveries-service...$(NC)"
+	@kubectl exec -n e-commerce deployment/deliveries-service -- php artisan migrate --force 2>&1 | grep -E "(INFO|DONE|Nothing)" || true
+	@echo "$(YELLOW)Migrating newsletters-service...$(NC)"
+	@kubectl exec -n e-commerce deployment/newsletters-service -- php artisan migrate --force 2>&1 | grep -E "(INFO|DONE|Nothing)" || true
+	@echo "$(YELLOW)Migrating sav-service...$(NC)"
+	@kubectl exec -n e-commerce deployment/sav-service -- php artisan migrate --force 2>&1 | grep -E "(INFO|DONE|Nothing)" || true
+	@echo "$(YELLOW)Migrating contacts-service...$(NC)"
+	@kubectl exec -n e-commerce deployment/contacts-service -- php artisan migrate --force 2>&1 | grep -E "(INFO|DONE|Nothing)" || true
+	@echo "$(YELLOW)Migrating questions-service...$(NC)"
+	@kubectl exec -n e-commerce deployment/questions-service -- php artisan migrate --force 2>&1 | grep -E "(INFO|DONE|Nothing)" || true
+	@echo "$(GREEN)✓ All migrations completed$(NC)"
+
+k8s-migrate-clean: ## Clean up migration jobs (deprecated - using direct exec now)
+	@echo "$(YELLOW)Note: Migration jobs are no longer used. Using kubectl exec instead.$(NC)"
+	@echo "$(GREEN)No cleanup needed$(NC)"
+
+k8s-seed: ## Run database seeders (requires migrations first)
+	@echo "$(CYAN)Running database seeders...$(NC)"
+	@echo "$(YELLOW)Seeding auth-service...$(NC)"
+	@kubectl exec -n e-commerce deployment/auth-service -- php artisan db:seed --force 2>&1 | grep -v "Nothing to seed" || true
+	@echo "$(YELLOW)Seeding products-service...$(NC)"
+	@kubectl exec -n e-commerce deployment/products-service -- php artisan db:seed --force 2>&1 | grep -v "Nothing to seed" || true
+	@echo "$(GREEN)✓ Database seeding completed$(NC)"
+
+k8s-create-admin: ## Create admin user in auth-service
+	@echo "$(CYAN)Creating admin user...$(NC)"
+	@kubectl exec -n e-commerce deployment/auth-service -- php artisan tinker --execute="\
+		\$$user = new \App\Models\User(); \
+		\$$user->firstname = 'Admin'; \
+		\$$user->lastname = 'User'; \
+		\$$user->email = 'admin@test.com'; \
+		\$$user->password = bcrypt('password123'); \
+		\$$user->save(); \
+		echo 'User created: ' . \$$user->email;"
+	@echo "$(GREEN)✓ Admin user created: admin@test.com / password123$(NC)"
+
+k8s-test-login: ## Test login endpoint
+	@echo "$(CYAN)Testing login endpoint...$(NC)"
+	@curl -s -X POST http://localhost:8100/api/v1/login \
+		-H "Content-Type: application/json" \
+		-d '{"email":"admin@test.com","password":"password123"}' | jq '.'
+	@echo "$(GREEN)✓ Login test completed$(NC)"
+
+export-composer-locks: ## Export composer.lock files from all services
+	@echo "$(CYAN)Exporting composer.lock files from all services...$(NC)"
+	@docker-compose exec api-gateway cat composer.lock > services/api-gateway/composer.lock 2>/dev/null && echo "$(GREEN)✓ api-gateway/composer.lock$(NC)" || echo "$(RED)✗ api-gateway/composer.lock$(NC)"
+	@docker-compose exec auth-service cat composer.lock > services/auth-service/composer.lock 2>/dev/null && echo "$(GREEN)✓ auth-service/composer.lock$(NC)" || echo "$(RED)✗ auth-service/composer.lock$(NC)"
+	@docker-compose exec messages-broker cat composer.lock > services/messages-broker/composer.lock 2>/dev/null && echo "$(GREEN)✓ messages-broker/composer.lock$(NC)" || echo "$(RED)✗ messages-broker/composer.lock$(NC)"
+	@docker-compose exec addresses-service cat composer.lock > services/addresses-service/composer.lock 2>/dev/null && echo "$(GREEN)✓ addresses-service/composer.lock$(NC)" || echo "$(RED)✗ addresses-service/composer.lock$(NC)"
+	@docker-compose exec products-service cat composer.lock > services/products-service/composer.lock 2>/dev/null && echo "$(GREEN)✓ products-service/composer.lock$(NC)" || echo "$(RED)✗ products-service/composer.lock$(NC)"
+	@docker-compose exec baskets-service cat composer.lock > services/baskets-service/composer.lock 2>/dev/null && echo "$(GREEN)✓ baskets-service/composer.lock$(NC)" || echo "$(RED)✗ baskets-service/composer.lock$(NC)"
+	@docker-compose exec orders-service cat composer.lock > services/orders-service/composer.lock 2>/dev/null && echo "$(GREEN)✓ orders-service/composer.lock$(NC)" || echo "$(RED)✗ orders-service/composer.lock$(NC)"
+	@docker-compose exec deliveries-service cat composer.lock > services/deliveries-service/composer.lock 2>/dev/null && echo "$(GREEN)✓ deliveries-service/composer.lock$(NC)" || echo "$(RED)✗ deliveries-service/composer.lock$(NC)"
+	@docker-compose exec newsletters-service cat composer.lock > services/newsletters-service/composer.lock 2>/dev/null && echo "$(GREEN)✓ newsletters-service/composer.lock$(NC)" || echo "$(RED)✗ newsletters-service/composer.lock$(NC)"
+	@docker-compose exec sav-service cat composer.lock > services/sav-service/composer.lock 2>/dev/null && echo "$(GREEN)✓ sav-service/composer.lock$(NC)" || echo "$(RED)✗ sav-service/composer.lock$(NC)"
+	@docker-compose exec contacts-service cat composer.lock > services/contacts-service/composer.lock 2>/dev/null && echo "$(GREEN)✓ contacts-service/composer.lock$(NC)" || echo "$(RED)✗ contacts-service/composer.lock$(NC)"
+	@docker-compose exec questions-service cat composer.lock > services/questions-service/composer.lock 2>/dev/null && echo "$(GREEN)✓ questions-service/composer.lock$(NC)" || echo "$(RED)✗ questions-service/composer.lock$(NC)"
+	@docker-compose exec websites-service cat composer.lock > services/websites-service/composer.lock 2>/dev/null && echo "$(GREEN)✓ websites-service/composer.lock$(NC)" || echo "$(RED)✗ websites-service/composer.lock$(NC)"
+	@docker-compose exec shared cat composer.lock > shared/composer.lock 2>/dev/null && echo "$(GREEN)✓ shared/composer.lock$(NC)" || echo "$(RED)✗ shared/composer.lock$(NC)"
+	@echo "$(GREEN)✓ All composer.lock files exported$(NC)"

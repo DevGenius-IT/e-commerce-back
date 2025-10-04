@@ -1,0 +1,389 @@
+---
+# Database Setup Job - Creates databases and grants permissions
+# Run this BEFORE migrations
+
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: database-setup-auth
+  namespace: e-commerce
+  labels:
+    app: database-setup
+    component: maintenance
+spec:
+  ttlSecondsAfterFinished: 3600
+  backoffLimit: 3
+  template:
+    metadata:
+      labels:
+        app: database-setup
+    spec:
+      restartPolicy: Never
+      containers:
+      - name: setup-auth-db
+        image: mysql:8.0
+        command:
+        - /bin/sh
+        - -c
+        - |
+          mysql -h auth-service-mysql.e-commerce.svc.cluster.local -u root -p"${MYSQL_ROOT_PASSWORD}" <<EOF
+          CREATE DATABASE IF NOT EXISTS auth_db CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+          CREATE USER IF NOT EXISTS 'auth_user'@'%' IDENTIFIED BY '${MYSQL_PASSWORD}';
+          GRANT ALL PRIVILEGES ON auth_db.* TO 'auth_user'@'%';
+          FLUSH PRIVILEGES;
+          EOF
+        env:
+        - name: MYSQL_ROOT_PASSWORD
+          value: "rootpassword123"
+        - name: MYSQL_PASSWORD
+          value: "password123"
+---
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: database-setup-products
+  namespace: e-commerce
+  labels:
+    app: database-setup
+spec:
+  ttlSecondsAfterFinished: 3600
+  backoffLimit: 3
+  template:
+    metadata:
+      labels:
+        app: database-setup
+    spec:
+      restartPolicy: Never
+      containers:
+      - name: setup-products-db
+        image: mysql:8.0
+        command:
+        - /bin/sh
+        - -c
+        - |
+          mysql -h products-service-mysql.e-commerce.svc.cluster.local -u root -p"${MYSQL_ROOT_PASSWORD}" <<EOF
+          CREATE DATABASE IF NOT EXISTS products_db CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+          CREATE USER IF NOT EXISTS 'products_user'@'%' IDENTIFIED BY '${MYSQL_PASSWORD}';
+          GRANT ALL PRIVILEGES ON products_db.* TO 'products_user'@'%';
+          FLUSH PRIVILEGES;
+          EOF
+        env:
+        - name: MYSQL_ROOT_PASSWORD
+          value: "rootpassword123"
+        - name: MYSQL_PASSWORD
+          value: "password123"
+---
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: database-setup-addresses
+  namespace: e-commerce
+  labels:
+    app: database-setup
+spec:
+  ttlSecondsAfterFinished: 3600
+  backoffLimit: 3
+  template:
+    metadata:
+      labels:
+        app: database-setup
+    spec:
+      restartPolicy: Never
+      containers:
+      - name: setup-addresses-db
+        image: mysql:8.0
+        command:
+        - /bin/sh
+        - -c
+        - |
+          mysql -h addresses-service-mysql.e-commerce.svc.cluster.local -u root -p"${MYSQL_ROOT_PASSWORD}" <<EOF
+          CREATE DATABASE IF NOT EXISTS addresses_db CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+          CREATE USER IF NOT EXISTS 'addresses_user'@'%' IDENTIFIED BY '${MYSQL_PASSWORD}';
+          GRANT ALL PRIVILEGES ON addresses_db.* TO 'addresses_user'@'%';
+          FLUSH PRIVILEGES;
+          EOF
+        env:
+        - name: MYSQL_ROOT_PASSWORD
+          value: "rootpassword123"
+        - name: MYSQL_PASSWORD
+          value: "password123"
+---
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: database-setup-baskets
+  namespace: e-commerce
+  labels:
+    app: database-setup
+spec:
+  ttlSecondsAfterFinished: 3600
+  backoffLimit: 3
+  template:
+    metadata:
+      labels:
+        app: database-setup
+    spec:
+      restartPolicy: Never
+      containers:
+      - name: setup-baskets-db
+        image: mysql:8.0
+        command:
+        - /bin/sh
+        - -c
+        - |
+          mysql -h baskets-service-mysql.e-commerce.svc.cluster.local -u root -p"${MYSQL_ROOT_PASSWORD}" <<EOF
+          CREATE DATABASE IF NOT EXISTS baskets_db CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+          CREATE USER IF NOT EXISTS 'baskets_user'@'%' IDENTIFIED BY '${MYSQL_PASSWORD}';
+          GRANT ALL PRIVILEGES ON baskets_db.* TO 'baskets_user'@'%';
+          FLUSH PRIVILEGES;
+          EOF
+        env:
+        - name: MYSQL_ROOT_PASSWORD
+          value: "rootpassword123"
+        - name: MYSQL_PASSWORD
+          value: "password123"
+---
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: database-setup-orders
+  namespace: e-commerce
+  labels:
+    app: database-setup
+spec:
+  ttlSecondsAfterFinished: 3600
+  backoffLimit: 3
+  template:
+    metadata:
+      labels:
+        app: database-setup
+    spec:
+      restartPolicy: Never
+      containers:
+      - name: setup-orders-db
+        image: mysql:8.0
+        command:
+        - /bin/sh
+        - -c
+        - |
+          mysql -h orders-service-mysql.e-commerce.svc.cluster.local -u root -p"${MYSQL_ROOT_PASSWORD}" <<EOF
+          CREATE DATABASE IF NOT EXISTS orders_db CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+          CREATE USER IF NOT EXISTS 'orders_user'@'%' IDENTIFIED BY '${MYSQL_PASSWORD}';
+          GRANT ALL PRIVILEGES ON orders_db.* TO 'orders_user'@'%';
+          FLUSH PRIVILEGES;
+          EOF
+        env:
+        - name: MYSQL_ROOT_PASSWORD
+          value: "rootpassword123"
+        - name: MYSQL_PASSWORD
+          value: "password123"
+---
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: database-setup-deliveries
+  namespace: e-commerce
+  labels:
+    app: database-setup
+spec:
+  ttlSecondsAfterFinished: 3600
+  backoffLimit: 3
+  template:
+    metadata:
+      labels:
+        app: database-setup
+    spec:
+      restartPolicy: Never
+      containers:
+      - name: setup-deliveries-db
+        image: mysql:8.0
+        command:
+        - /bin/sh
+        - -c
+        - |
+          mysql -h deliveries-service-mysql.e-commerce.svc.cluster.local -u root -p"${MYSQL_ROOT_PASSWORD}" <<EOF
+          CREATE DATABASE IF NOT EXISTS deliveries_db CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+          CREATE USER IF NOT EXISTS 'deliveries_user'@'%' IDENTIFIED BY '${MYSQL_PASSWORD}';
+          GRANT ALL PRIVILEGES ON deliveries_db.* TO 'deliveries_user'@'%';
+          FLUSH PRIVILEGES;
+          EOF
+        env:
+        - name: MYSQL_ROOT_PASSWORD
+          value: "rootpassword123"
+        - name: MYSQL_PASSWORD
+          value: "password123"
+---
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: database-setup-newsletters
+  namespace: e-commerce
+  labels:
+    app: database-setup
+spec:
+  ttlSecondsAfterFinished: 3600
+  backoffLimit: 3
+  template:
+    metadata:
+      labels:
+        app: database-setup
+    spec:
+      restartPolicy: Never
+      containers:
+      - name: setup-newsletters-db
+        image: mysql:8.0
+        command:
+        - /bin/sh
+        - -c
+        - |
+          mysql -h newsletters-service-mysql.e-commerce.svc.cluster.local -u root -p"${MYSQL_ROOT_PASSWORD}" <<EOF
+          CREATE DATABASE IF NOT EXISTS newsletters_db CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+          CREATE USER IF NOT EXISTS 'newsletters_user'@'%' IDENTIFIED BY '${MYSQL_PASSWORD}';
+          GRANT ALL PRIVILEGES ON newsletters_db.* TO 'newsletters_user'@'%';
+          FLUSH PRIVILEGES;
+          EOF
+        env:
+        - name: MYSQL_ROOT_PASSWORD
+          value: "rootpassword123"
+        - name: MYSQL_PASSWORD
+          value: "password123"
+---
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: database-setup-sav
+  namespace: e-commerce
+  labels:
+    app: database-setup
+spec:
+  ttlSecondsAfterFinished: 3600
+  backoffLimit: 3
+  template:
+    metadata:
+      labels:
+        app: database-setup
+    spec:
+      restartPolicy: Never
+      containers:
+      - name: setup-sav-db
+        image: mysql:8.0
+        command:
+        - /bin/sh
+        - -c
+        - |
+          mysql -h sav-service-mysql.e-commerce.svc.cluster.local -u root -p"${MYSQL_ROOT_PASSWORD}" <<EOF
+          CREATE DATABASE IF NOT EXISTS sav_db CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+          CREATE USER IF NOT EXISTS 'sav_user'@'%' IDENTIFIED BY '${MYSQL_PASSWORD}';
+          GRANT ALL PRIVILEGES ON sav_db.* TO 'sav_user'@'%';
+          FLUSH PRIVILEGES;
+          EOF
+        env:
+        - name: MYSQL_ROOT_PASSWORD
+          value: "rootpassword123"
+        - name: MYSQL_PASSWORD
+          value: "password123"
+---
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: database-setup-contacts
+  namespace: e-commerce
+  labels:
+    app: database-setup
+spec:
+  ttlSecondsAfterFinished: 3600
+  backoffLimit: 3
+  template:
+    metadata:
+      labels:
+        app: database-setup
+    spec:
+      restartPolicy: Never
+      containers:
+      - name: setup-contacts-db
+        image: mysql:8.0
+        command:
+        - /bin/sh
+        - -c
+        - |
+          mysql -h contacts-service-mysql.e-commerce.svc.cluster.local -u root -p"${MYSQL_ROOT_PASSWORD}" <<EOF
+          CREATE DATABASE IF NOT EXISTS contacts_db CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+          CREATE USER IF NOT EXISTS 'contacts_user'@'%' IDENTIFIED BY '${MYSQL_PASSWORD}';
+          GRANT ALL PRIVILEGES ON contacts_db.* TO 'contacts_user'@'%';
+          FLUSH PRIVILEGES;
+          EOF
+        env:
+        - name: MYSQL_ROOT_PASSWORD
+          value: "rootpassword123"
+        - name: MYSQL_PASSWORD
+          value: "password123"
+---
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: database-setup-questions
+  namespace: e-commerce
+  labels:
+    app: database-setup
+spec:
+  ttlSecondsAfterFinished: 3600
+  backoffLimit: 3
+  template:
+    metadata:
+      labels:
+        app: database-setup
+    spec:
+      restartPolicy: Never
+      containers:
+      - name: setup-questions-db
+        image: mysql:8.0
+        command:
+        - /bin/sh
+        - -c
+        - |
+          mysql -h questions-service-mysql.e-commerce.svc.cluster.local -u root -p"${MYSQL_ROOT_PASSWORD}" <<EOF
+          CREATE DATABASE IF NOT EXISTS questions_db CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+          CREATE USER IF NOT EXISTS 'questions_user'@'%' IDENTIFIED BY '${MYSQL_PASSWORD}';
+          GRANT ALL PRIVILEGES ON questions_db.* TO 'questions_user'@'%';
+          FLUSH PRIVILEGES;
+          EOF
+        env:
+        - name: MYSQL_ROOT_PASSWORD
+          value: "rootpassword123"
+        - name: MYSQL_PASSWORD
+          value: "password123"
+---
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: database-setup-websites
+  namespace: e-commerce
+  labels:
+    app: database-setup
+spec:
+  ttlSecondsAfterFinished: 3600
+  backoffLimit: 3
+  template:
+    metadata:
+      labels:
+        app: database-setup
+    spec:
+      restartPolicy: Never
+      containers:
+      - name: setup-websites-db
+        image: mysql:8.0
+        command:
+        - /bin/sh
+        - -c
+        - |
+          mysql -h websites-service-mysql.e-commerce.svc.cluster.local -u root -p"${MYSQL_ROOT_PASSWORD}" <<EOF
+          CREATE DATABASE IF NOT EXISTS websites_db CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+          CREATE USER IF NOT EXISTS 'websites_user'@'%' IDENTIFIED BY '${MYSQL_PASSWORD}';
+          GRANT ALL PRIVILEGES ON websites_db.* TO 'websites_user'@'%';
+          FLUSH PRIVILEGES;
+          EOF
+        env:
+        - name: MYSQL_ROOT_PASSWORD
+          value: "rootpassword123"
+        - name: MYSQL_PASSWORD
+          value: "password123"

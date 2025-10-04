@@ -87,7 +87,7 @@ class HttpClientService
         $this->messageBroker = app()->make('\App\Services\RabbitMQService', ['config' => $rabbitConfig]);
       }
     } catch (\Exception $e) {
-      Log::warning("Message broker initialization failed: " . $e->getMessage());
+      // Log::warning("Message broker initialization failed: " . $e->getMessage());
       $this->messageBroker = null;
     }
   }
@@ -106,15 +106,15 @@ class HttpClientService
     try {
       // Determine the URL based on service and endpoint
       $url = $this->buildUrl($endpoint);
-      
-      \Log::info("HttpClientService making request", [
-        'service' => $this->serviceName,
-        'method' => $method,
-        'endpoint' => $endpoint,
-        'url' => $url,
-        'base_uri' => $this->baseUri
-      ]);
-      
+
+      // \Log::info("HttpClientService making request", [
+      //   'service' => $this->serviceName,
+      //   'method' => $method,
+      //   'endpoint' => $endpoint,
+      //   'url' => $url,
+      //   'base_uri' => $this->baseUri
+      // ]);
+
       $response = Http::withHeaders([
         "X-Service-Key" => $this->secret,
         "Accept" => "application/json",
@@ -205,9 +205,9 @@ class HttpClientService
       ];
 
       $this->messageBroker->publish('events', $routingKey, $eventData);
-      Log::info("Event published: {$routingKey}");
+      // Log::info("Event published: {$routingKey}");
     } catch (\Exception $e) {
-      Log::warning("Failed to publish event: " . $e->getMessage());
+      // Log::warning("Failed to publish event: " . $e->getMessage());
     }
   }
 
@@ -282,7 +282,7 @@ class HttpClientService
   public function publishEventAsync($eventType, $data = [])
   {
     if (!$this->messageBroker) {
-      Log::warning("Cannot publish async event: Message broker not available");
+      // Log::warning("Cannot publish async event: Message broker not available");
       return false;
     }
 
@@ -297,10 +297,10 @@ class HttpClientService
       ];
 
       $this->messageBroker->publish('events', $routingKey, $eventData);
-      Log::info("Async event published: {$routingKey}");
+      // Log::info("Async event published: {$routingKey}");
       return true;
     } catch (\Exception $e) {
-      Log::error("Failed to publish async event: " . $e->getMessage());
+      // Log::error("Failed to publish async event: " . $e->getMessage());
       return false;
     }
   }

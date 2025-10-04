@@ -57,5 +57,9 @@ coverage/
 # Exports
 exports/*
 
+# Windows files
+windows/
+windows.zip
+
 # Claude documentation (auto-generated)
 CLAUDE.md
