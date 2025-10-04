@@ -751,20 +751,29 @@ k8s-test-login: ## Test login endpoint
 		-d '{"email":"admin@test.com","password":"password123"}' | jq '.'
 	@echo "$(GREEN)✓ Login test completed$(NC)"
 
-export-composer-locks: ## Export composer.lock files from all services
+export-composer-locks: ## Export composer.lock files from all services to ./exports (zipped)
 	@echo "$(CYAN)Exporting composer.lock files from all services...$(NC)"
-	@docker-compose exec api-gateway cat composer.lock > services/api-gateway/composer.lock 2>/dev/null && echo "$(GREEN)✓ api-gateway/composer.lock$(NC)" || echo "$(RED)✗ api-gateway/composer.lock$(NC)"
-	@docker-compose exec auth-service cat composer.lock > services/auth-service/composer.lock 2>/dev/null && echo "$(GREEN)✓ auth-service/composer.lock$(NC)" || echo "$(RED)✗ auth-service/composer.lock$(NC)"
-	@docker-compose exec messages-broker cat composer.lock > services/messages-broker/composer.lock 2>/dev/null && echo "$(GREEN)✓ messages-broker/composer.lock$(NC)" || echo "$(RED)✗ messages-broker/composer.lock$(NC)"
-	@docker-compose exec addresses-service cat composer.lock > services/addresses-service/composer.lock 2>/dev/null && echo "$(GREEN)✓ addresses-service/composer.lock$(NC)" || echo "$(RED)✗ addresses-service/composer.lock$(NC)"
-	@docker-compose exec products-service cat composer.lock > services/products-service/composer.lock 2>/dev/null && echo "$(GREEN)✓ products-service/composer.lock$(NC)" || echo "$(RED)✗ products-service/composer.lock$(NC)"
-	@docker-compose exec baskets-service cat composer.lock > services/baskets-service/composer.lock 2>/dev/null && echo "$(GREEN)✓ baskets-service/composer.lock$(NC)" || echo "$(RED)✗ baskets-service/composer.lock$(NC)"
-	@docker-compose exec orders-service cat composer.lock > services/orders-service/composer.lock 2>/dev/null && echo "$(GREEN)✓ orders-service/composer.lock$(NC)" || echo "$(RED)✗ orders-service/composer.lock$(NC)"
-	@docker-compose exec deliveries-service cat composer.lock > services/deliveries-service/composer.lock 2>/dev/null && echo "$(GREEN)✓ deliveries-service/composer.lock$(NC)" || echo "$(RED)✗ deliveries-service/composer.lock$(NC)"
-	@docker-compose exec newsletters-service cat composer.lock > services/newsletters-service/composer.lock 2>/dev/null && echo "$(GREEN)✓ newsletters-service/composer.lock$(NC)" || echo "$(RED)✗ newsletters-service/composer.lock$(NC)"
-	@docker-compose exec sav-service cat composer.lock > services/sav-service/composer.lock 2>/dev/null && echo "$(GREEN)✓ sav-service/composer.lock$(NC)" || echo "$(RED)✗ sav-service/composer.lock$(NC)"
-	@docker-compose exec contacts-service cat composer.lock > services/contacts-service/composer.lock 2>/dev/null && echo "$(GREEN)✓ contacts-service/composer.lock$(NC)" || echo "$(RED)✗ contacts-service/composer.lock$(NC)"
-	@docker-compose exec questions-service cat composer.lock > services/questions-service/composer.lock 2>/dev/null && echo "$(GREEN)✓ questions-service/composer.lock$(NC)" || echo "$(RED)✗ questions-service/composer.lock$(NC)"
-	@docker-compose exec websites-service cat composer.lock > services/websites-service/composer.lock 2>/dev/null && echo "$(GREEN)✓ websites-service/composer.lock$(NC)" || echo "$(RED)✗ websites-service/composer.lock$(NC)"
-	@docker-compose exec shared cat composer.lock > shared/composer.lock 2>/dev/null && echo "$(GREEN)✓ shared/composer.lock$(NC)" || echo "$(RED)✗ shared/composer.lock$(NC)"
-	@echo "$(GREEN)✓ All composer.lock files exported$(NC)"
+	@mkdir -p exports/composer-locks
+	@TIMESTAMP=$$(date +%Y%m%d_%H%M%S); \
+	EXPORT_DIR="exports/composer-locks/$$TIMESTAMP"; \
+	ZIP_FILE="exports/composer-locks-$$TIMESTAMP.zip"; \
+	mkdir -p "$$EXPORT_DIR"; \
+	echo "$(YELLOW)Export directory: $$EXPORT_DIR$(NC)"; \
+	cp services/api-gateway/composer.lock "$$EXPORT_DIR/api-gateway.composer.lock" 2>/dev/null && echo "$(GREEN)✓ api-gateway$(NC)" || echo "$(RED)✗ api-gateway$(NC)"; \
+	cp services/auth-service/composer.lock "$$EXPORT_DIR/auth-service.composer.lock" 2>/dev/null && echo "$(GREEN)✓ auth-service$(NC)" || echo "$(RED)✗ auth-service$(NC)"; \
+	cp services/messages-broker/composer.lock "$$EXPORT_DIR/messages-broker.composer.lock" 2>/dev/null && echo "$(GREEN)✓ messages-broker$(NC)" || echo "$(RED)✗ messages-broker$(NC)"; \
+	cp services/addresses-service/composer.lock "$$EXPORT_DIR/addresses-service.composer.lock" 2>/dev/null && echo "$(GREEN)✓ addresses-service$(NC)" || echo "$(RED)✗ addresses-service$(NC)"; \
+	cp services/products-service/composer.lock "$$EXPORT_DIR/products-service.composer.lock" 2>/dev/null && echo "$(GREEN)✓ products-service$(NC)" || echo "$(RED)✗ products-service$(NC)"; \
+	cp services/baskets-service/composer.lock "$$EXPORT_DIR/baskets-service.composer.lock" 2>/dev/null && echo "$(GREEN)✓ baskets-service$(NC)" || echo "$(RED)✗ baskets-service$(NC)"; \
+	cp services/orders-service/composer.lock "$$EXPORT_DIR/orders-service.composer.lock" 2>/dev/null && echo "$(GREEN)✓ orders-service$(NC)" || echo "$(RED)✗ orders-service$(NC)"; \
+	cp services/deliveries-service/composer.lock "$$EXPORT_DIR/deliveries-service.composer.lock" 2>/dev/null && echo "$(GREEN)✓ deliveries-service$(NC)" || echo "$(RED)✗ deliveries-service$(NC)"; \
+	cp services/newsletters-service/composer.lock "$$EXPORT_DIR/newsletters-service.composer.lock" 2>/dev/null && echo "$(GREEN)✓ newsletters-service$(NC)" || echo "$(RED)✗ newsletters-service$(NC)"; \
+	cp services/sav-service/composer.lock "$$EXPORT_DIR/sav-service.composer.lock" 2>/dev/null && echo "$(GREEN)✓ sav-service$(NC)" || echo "$(RED)✗ sav-service$(NC)"; \
+	cp services/contacts-service/composer.lock "$$EXPORT_DIR/contacts-service.composer.lock" 2>/dev/null && echo "$(GREEN)✓ contacts-service$(NC)" || echo "$(RED)✗ contacts-service$(NC)"; \
+	cp services/questions-service/composer.lock "$$EXPORT_DIR/questions-service.composer.lock" 2>/dev/null && echo "$(GREEN)✓ questions-service$(NC)" || echo "$(RED)✗ questions-service$(NC)"; \
+	cp services/websites-service/composer.lock "$$EXPORT_DIR/websites-service.composer.lock" 2>/dev/null && echo "$(GREEN)✓ websites-service$(NC)" || echo "$(RED)✗ websites-service$(NC)"; \
+	cp shared/composer.lock "$$EXPORT_DIR/shared.composer.lock" 2>/dev/null && echo "$(GREEN)✓ shared$(NC)" || echo "$(RED)✗ shared$(NC)"; \
+	echo "$(CYAN)Creating zip archive...$(NC)"; \
+	cd "$$EXPORT_DIR" && zip -q -r "../../../$$ZIP_FILE" . && cd - > /dev/null; \
+	rm -rf "$$EXPORT_DIR"; \
+	echo "$(GREEN)✓ All composer.lock files exported and zipped to $$ZIP_FILE$(NC)"

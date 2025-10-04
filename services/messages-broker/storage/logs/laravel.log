@@ -11,3 +11,5 @@
 [2025-10-04 12:30:13] local.ERROR: Failed to connect to RabbitMQ: stream_socket_client(): Unable to connect to tcp://rabbitmq:5672 (Connection refused)  
 [2025-10-04 12:30:13] local.ERROR: Consumer error: stream_socket_client(): Unable to connect to tcp://rabbitmq:5672 (Connection refused)  
 [2025-10-04 12:30:13] local.INFO: RabbitMQ connection closed  
+[2025-10-04 12:59:27] local.INFO: RabbitMQ connection closed  
+[2025-10-04 12:59:28] local.INFO: RabbitMQ connection closed  

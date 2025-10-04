@@ -60,9 +60,13 @@ RUN cd shared && composer dump-autoload --optimize
 RUN cd services/products-service && composer dump-autoload --optimize
 
 # Copy Docker configuration
-COPY docker/config/nginx.conf /etc/nginx/nginx.conf
+COPY docker/config/nginx.conf /tmp/nginx.conf.template
 COPY docker/config/php.ini /usr/local/etc/php/conf.d/99-custom.ini
 COPY docker/config/opcache.ini /usr/local/etc/php/conf.d/opcache.ini
+
+# Substitute SERVICE_NAME in nginx.conf
+RUN sed 's/\$SERVICE_NAME/products-service/g' /tmp/nginx.conf.template > /etc/nginx/nginx.conf \
+    && rm /tmp/nginx.conf.template
 
 # Copy supervisord config specific to products service
 COPY services/products-service/docker/supervisord.conf /etc/supervisor/conf.d/supervisord.conf
@@ -74,15 +78,16 @@ RUN chmod +x /usr/local/bin/entrypoint.sh
 # Create directories and set permissions
 RUN mkdir -p /var/log/supervisor /var/log/nginx /run/nginx /var/run \
     && mkdir -p /var/www/services/products-service/storage/{app/public/products,framework/{cache,sessions,views},logs} \
+    && mkdir -p /var/lib/nginx/{body,proxy,fastcgi,scgi,uwsgi} \
     && groupadd -r appgroup && useradd -r -g appgroup appuser \
-    && chown -R appuser:appgroup /var/www /var/log /run/nginx /var/run
+    && chown -R appuser:appgroup /var/www /var/log /run/nginx /var/run /var/lib/nginx
 
 # Switch to service directory
 WORKDIR /var/www/services/products-service
 
 # Health check for products service
 HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
-    CMD curl -f http://localhost:8000/api/products/health || exit 1
+    CMD curl -f http://localhost:8000/api/health || exit 1
 
 # Expose ports
 EXPOSE 8000 9090
