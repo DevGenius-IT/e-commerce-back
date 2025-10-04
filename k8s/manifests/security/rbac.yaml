@@ -1,0 +1,223 @@
+---
+# Service Account for E-Commerce Services
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: e-commerce-service-account
+  namespace: e-commerce
+  labels:
+    app.kubernetes.io/name: e-commerce-platform
+    app.kubernetes.io/component: security
+---
+# Role for E-Commerce Services
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: e-commerce-service-role
+  namespace: e-commerce
+  labels:
+    app.kubernetes.io/name: e-commerce-platform
+    app.kubernetes.io/component: security
+rules:
+  # Allow reading ConfigMaps
+  - apiGroups: [""]
+    resources: ["configmaps"]
+    verbs: ["get", "list", "watch"]
+
+  # Allow reading Secrets
+  - apiGroups: [""]
+    resources: ["secrets"]
+    verbs: ["get", "list"]
+
+  # Allow reading Services for service discovery
+  - apiGroups: [""]
+    resources: ["services"]
+    verbs: ["get", "list"]
+
+  # Allow reading Pods for health checks
+  - apiGroups: [""]
+    resources: ["pods"]
+    verbs: ["get", "list"]
+
+  # Allow reading Endpoints for service discovery
+  - apiGroups: [""]
+    resources: ["endpoints"]
+    verbs: ["get", "list", "watch"]
+---
+# RoleBinding for E-Commerce Services
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: e-commerce-service-rolebinding
+  namespace: e-commerce
+  labels:
+    app.kubernetes.io/name: e-commerce-platform
+    app.kubernetes.io/component: security
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: e-commerce-service-role
+subjects:
+  - kind: ServiceAccount
+    name: e-commerce-service-account
+    namespace: e-commerce
+---
+# Service Account for Messaging Services
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: messaging-service-account
+  namespace: e-commerce-messaging
+  labels:
+    app.kubernetes.io/name: e-commerce-platform
+    app.kubernetes.io/component: messaging
+---
+# Role for Messaging Services
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: messaging-service-role
+  namespace: e-commerce-messaging
+  labels:
+    app.kubernetes.io/name: e-commerce-platform
+    app.kubernetes.io/component: messaging
+rules:
+  # Allow reading ConfigMaps
+  - apiGroups: [""]
+    resources: ["configmaps"]
+    verbs: ["get", "list", "watch"]
+
+  # Allow reading Secrets
+  - apiGroups: [""]
+    resources: ["secrets"]
+    verbs: ["get", "list"]
+
+  # Allow managing PersistentVolumeClaims for MinIO
+  - apiGroups: [""]
+    resources: ["persistentvolumeclaims"]
+    verbs: ["get", "list", "watch", "create", "update", "patch"]
+---
+# RoleBinding for Messaging Services
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: messaging-service-rolebinding
+  namespace: e-commerce-messaging
+  labels:
+    app.kubernetes.io/name: e-commerce-platform
+    app.kubernetes.io/component: messaging
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: messaging-service-role
+subjects:
+  - kind: ServiceAccount
+    name: messaging-service-account
+    namespace: e-commerce-messaging
+---
+# Service Account for Monitoring
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: monitoring-service-account
+  namespace: e-commerce-monitoring
+  labels:
+    app.kubernetes.io/name: e-commerce-platform
+    app.kubernetes.io/component: monitoring
+---
+# ClusterRole for Monitoring (needs cluster-wide access)
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: e-commerce-monitoring-role
+  labels:
+    app.kubernetes.io/name: e-commerce-platform
+    app.kubernetes.io/component: monitoring
+rules:
+  # Allow reading all pods across namespaces
+  - apiGroups: [""]
+    resources: ["pods", "nodes", "services", "endpoints"]
+    verbs: ["get", "list", "watch"]
+
+  # Allow reading metrics
+  - apiGroups: ["metrics.k8s.io"]
+    resources: ["pods", "nodes"]
+    verbs: ["get", "list"]
+---
+# ClusterRoleBinding for Monitoring
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: e-commerce-monitoring-rolebinding
+  labels:
+    app.kubernetes.io/name: e-commerce-platform
+    app.kubernetes.io/component: monitoring
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: e-commerce-monitoring-role
+subjects:
+  - kind: ServiceAccount
+    name: monitoring-service-account
+    namespace: e-commerce-monitoring
+---
+# Network Policy for E-Commerce Namespace
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: e-commerce-network-policy
+  namespace: e-commerce
+  labels:
+    app.kubernetes.io/name: e-commerce-platform
+    app.kubernetes.io/component: security
+spec:
+  podSelector: {}
+  policyTypes:
+    - Ingress
+    - Egress
+
+  ingress:
+    # Allow traffic from same namespace
+    - from:
+        - podSelector: {}
+
+    # Allow traffic from messaging namespace (RabbitMQ)
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              name: e-commerce-messaging
+
+    # Allow traffic from monitoring
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              name: e-commerce-monitoring
+
+  egress:
+    # Allow DNS
+    - to:
+        - namespaceSelector:
+            matchLabels:
+              name: kube-system
+      ports:
+        - protocol: UDP
+          port: 53
+
+    # Allow traffic to same namespace
+    - to:
+        - podSelector: {}
+
+    # Allow traffic to messaging namespace
+    - to:
+        - namespaceSelector:
+            matchLabels:
+              name: e-commerce-messaging
+
+    # Allow external traffic (for external APIs)
+    - to:
+        - namespaceSelector: {}
+      ports:
+        - protocol: TCP
+          port: 443
+        - protocol: TCP
+          port: 80

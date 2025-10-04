@@ -1,0 +1,28 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: mysql-init-script
+  namespace: e-commerce
+  labels:
+    app: mysql
+    component: database
+data:
+  init.sh: |
+    #!/bin/bash
+    set -e
+
+    until mysqladmin ping -h localhost --silent; do
+      echo "Waiting for MySQL..."
+      sleep 2
+    done
+
+    mysql -u root -p"${MYSQL_ROOT_PASSWORD}" <<EOSQL
+      CREATE USER IF NOT EXISTS 'root'@'%' IDENTIFIED BY '${MYSQL_ROOT_PASSWORD}';
+      GRANT ALL PRIVILEGES ON *.* TO 'root'@'%' WITH GRANT OPTION;
+      GRANT ALL PRIVILEGES ON \`${MYSQL_DATABASE}\`.* TO '${MYSQL_USER}'@'%';
+      GRANT ALL PRIVILEGES ON \`${MYSQL_DATABASE}\`.* TO '${MYSQL_USER}'@'localhost';
+      FLUSH PRIVILEGES;
+      SELECT 'MySQL initialization completed' AS status;
+    EOSQL
+
+    echo "Database initialization completed for ${MYSQL_DATABASE}"

@@ -1,0 +1,31 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: service-urls
+  namespace: e-commerce
+data:
+  # Microservice URLs (internal Kubernetes DNS)
+  AUTH_SERVICE_URL: "http://auth-service.e-commerce.svc.cluster.local"
+  PRODUCTS_SERVICE_URL: "http://products-service.e-commerce.svc.cluster.local"
+  ADDRESSES_SERVICE_URL: "http://addresses-service.e-commerce.svc.cluster.local"
+  BASKETS_SERVICE_URL: "http://baskets-service.e-commerce.svc.cluster.local"
+  ORDERS_SERVICE_URL: "http://orders-service.e-commerce.svc.cluster.local"
+  DELIVERIES_SERVICE_URL: "http://deliveries-service.e-commerce.svc.cluster.local"
+  NEWSLETTERS_SERVICE_URL: "http://newsletters-service.e-commerce.svc.cluster.local"
+  SAV_SERVICE_URL: "http://sav-service.e-commerce.svc.cluster.local"
+  CONTACTS_SERVICE_URL: "http://contacts-service.e-commerce.svc.cluster.local"
+  QUESTIONS_SERVICE_URL: "http://questions-service.e-commerce.svc.cluster.local"
+  WEBSITES_SERVICE_URL: "http://websites-service.e-commerce.svc.cluster.local"
+
+  # Service secrets (should match individual service configurations)
+  AUTH_SERVICE_SECRET: "your-auth-secret-key"
+  PRODUCTS_SERVICE_SECRET: "your-products-secret-key"
+  ADDRESSES_SERVICE_SECRET: "your-addresses-secret-key"
+  BASKETS_SERVICE_SECRET: "your-baskets-secret-key"
+  ORDERS_SERVICE_SECRET: "your-orders-secret-key"
+  DELIVERIES_SERVICE_SECRET: "your-deliveries-secret-key"
+  NEWSLETTERS_SERVICE_SECRET: "your-newsletters-secret-key"
+  SAV_SERVICE_SECRET: "your-sav-secret-key"
+  CONTACTS_SERVICE_SECRET: "your-contacts-secret-key"
+  QUESTIONS_SERVICE_SECRET: "your-questions-secret-key"
+  WEBSITES_SERVICE_SECRET: "your-websites-secret-key"

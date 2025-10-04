@@ -97,6 +97,28 @@ docker-down:
 	@docker-compose down
 	@echo "$(GREEN)✅ Services Docker arrêtés et supprimés$(NC)"
 
+## 📦 Exporter les fichiers .env en ZIP
+export-env:
+	@echo "$(YELLOW)📦 Export des fichiers .env...$(NC)"
+	@mkdir -p exports
+	@zip -r exports/env-backup-$$(date +%Y%m%d-%H%M%S).zip \
+		.env \
+		services/api-gateway/.env \
+		services/auth-service/.env \
+		services/messages-broker/.env \
+		services/addresses-service/.env \
+		services/products-service/.env \
+		services/baskets-service/.env \
+		services/orders-service/.env \
+		services/deliveries-service/.env \
+		services/newsletters-service/.env \
+		services/sav-service/.env \
+		services/contacts-service/.env \
+		services/questions-service/.env \
+		services/websites-service/.env
+	@echo "$(GREEN)✅ Export créé dans exports/$(NC)"
+	@ls -lh exports/*.zip | tail -1
+
 ## 🗑️ Nettoyer Docker Compose
 docker-clean:
 	@echo "$(RED)🧹 Nettoyage Docker Compose...$(NC)"
@@ -130,11 +152,18 @@ k8s-setup: banner
 k8s-deploy: banner
 	@echo "$(GREEN)📦 Déploiement sur Kubernetes (environnement: $(K8S_ENVIRONMENT))...$(NC)"
 	@$(AUTOMATION_SCRIPT) deploy-env $(K8S_ENVIRONMENT)
+	@echo ""
+	@echo "$(GREEN)🌐 Activation du port-forward API Gateway...$(NC)"
+	@echo "$(YELLOW)Environnement: $(K8S_ENVIRONMENT)$(NC)"
+	@echo "$(GREEN)URL d'accès: http://localhost:8100$(NC)"
+	@echo "$(YELLOW)Appuyez sur Ctrl+C pour arrêter$(NC)"
+	@echo ""
+	@kubectl port-forward -n e-commerce svc/api-gateway 8100:80
 
 ## 🔨 Construire toutes les images pour Kubernetes
 k8s-build:
 	@echo "$(YELLOW)🔨 Construction des images pour Kubernetes...$(NC)"
-	@$(AUTOMATION_SCRIPT) build-all latest true
+	@$(AUTOMATION_SCRIPT) build-all latest false
 
 ## 🏥 Vérifier la santé Kubernetes
 k8s-health:
@@ -150,6 +179,15 @@ k8s-status:
 k8s-monitoring:
 	@echo "$(PURPLE)📈 Ouverture des tableaux de bord de monitoring...$(NC)"
 	@$(AUTOMATION_SCRIPT) monitoring
+
+## 🌐 Port-forward API Gateway (port 8100)
+k8s-port-forward:
+	@echo "$(BLUE)🌐 Activation du port-forward API Gateway...$(NC)"
+	@echo "$(YELLOW)Environnement: $(K8S_ENVIRONMENT)$(NC)"
+	@echo "$(GREEN)URL d'accès: http://localhost:8100$(NC)"
+	@echo "$(YELLOW)Appuyez sur Ctrl+C pour arrêter$(NC)"
+	@echo ""
+	@kubectl port-forward -n e-commerce svc/api-gateway 8100:80
 
 ## 📝 Logs Kubernetes
 k8s-logs:
@@ -169,17 +207,18 @@ k8s-stop:
 		kubectl get deployments -n monitoring 2>/dev/null | tail -n +2 | awk '{print $$1}' | xargs -I {} kubectl scale deployment {} --replicas=0 -n monitoring 2>/dev/null || true; \
 	else \
 		echo "$(BLUE)Mise à l'échelle des déploiements microservices à 0 répliques...$(NC)"; \
-		kubectl get deployments -n $(K8S_ENVIRONMENT)-microservices 2>/dev/null | tail -n +2 | awk '{print $$1}' | xargs -I {} kubectl scale deployment {} --replicas=0 -n $(K8S_ENVIRONMENT)-microservices 2>/dev/null || true; \
+		kubectl get deployments -n e-commerce 2>/dev/null | tail -n +2 | awk '{print $$1}' | xargs -I {} kubectl scale deployment {} --replicas=0 -n e-commerce 2>/dev/null || true; \
 		echo "$(BLUE)Arrêt des services dans l'environnement de monitoring...$(NC)"; \
-		kubectl get deployments -n $(K8S_ENVIRONMENT)-monitoring 2>/dev/null | tail -n +2 | awk '{print $$1}' | xargs -I {} kubectl scale deployment {} --replicas=0 -n $(K8S_ENVIRONMENT)-monitoring 2>/dev/null || true; \
+		kubectl get deployments -n e-commerce-monitoring 2>/dev/null | tail -n +2 | awk '{print $$1}' | xargs -I {} kubectl scale deployment {} --replicas=0 -n e-commerce-monitoring 2>/dev/null || true; \
 	fi
 	@echo "$(GREEN)✅ Environnement $(K8S_ENVIRONMENT) arrêté (déploiements mis à l'échelle 0)$(NC)"
 
 ## 🛑 Supprimer l'environnement Kubernetes
 k8s-down:
 	@echo "$(YELLOW)🛑 Suppression de l'environnement $(K8S_ENVIRONMENT)...$(NC)"
-	@kubectl delete namespace $(K8S_ENVIRONMENT)-microservices 2>/dev/null || true
-	@kubectl delete namespace $(K8S_ENVIRONMENT)-monitoring 2>/dev/null || true
+	@kubectl delete namespace e-commerce 2>/dev/null || true
+	@kubectl delete namespace e-commerce-monitoring 2>/dev/null || true
+	@kubectl delete namespace e-commerce-messaging 2>/dev/null || true
 	@echo "$(GREEN)✅ Environnement $(K8S_ENVIRONMENT) supprimé$(NC)"
 
 ## 🧹 Nettoyer l'environnement Kubernetes
@@ -190,12 +229,10 @@ k8s-clean:
 ## 🚨 Arrêt d'urgence Kubernetes (tout)
 k8s-kill:
 	@echo "$(RED)🚨 Arrêt d'urgence de tous les environnements Kubernetes...$(NC)"
-	@kubectl delete namespace development-microservices 2>/dev/null || true
-	@kubectl delete namespace staging-microservices 2>/dev/null || true
-	@kubectl delete namespace production-microservices 2>/dev/null || true
-	@kubectl delete namespace development-monitoring 2>/dev/null || true
-	@kubectl delete namespace staging-monitoring 2>/dev/null || true
-	@kubectl delete namespace production-monitoring 2>/dev/null || true
+	@kubectl delete namespace e-commerce 2>/dev/null || true
+	@kubectl delete namespace e-commerce-monitoring 2>/dev/null || true
+	@kubectl delete namespace e-commerce-messaging 2>/dev/null || true
+	@kubectl delete namespace argocd 2>/dev/null || true
 	@echo "$(GREEN)✅ Arrêt d'urgence Kubernetes terminé$(NC)"
 
 ## ☸️ Préparer la migration Kubernetes
@@ -359,6 +396,11 @@ composer-install:
 	@echo "$(YELLOW)🔧 Installation Composer pour $(SERVICE_NAME)...$(NC)"
 	@docker-compose exec $(SERVICE_NAME) composer install
 
+## 🔄 Reset complet Composer (composer.lock + vendor/)
+reset-composer:
+	@echo "$(RED)🔄 Reset complet des dépendances Composer...$(NC)"
+	@./scripts/reset-composer.sh
+
 ## 📋 Vérifier la santé des services Docker
 health-docker:
 	@echo "$(BLUE)🏥 Vérification de la santé des services Docker:$(NC)"
@@ -417,17 +459,93 @@ backup-docker:
 	@echo "$(GREEN)✅ Sauvegardes créées dans ./backups/$(NC)"
 
 # =============================================================================
+# 💾 MINIO - OBJECT STORAGE
+# =============================================================================
+
+## 🗄️ Démarrer MinIO
+minio-start:
+	@echo "$(GREEN)🗄️ Démarrage de MinIO...$(NC)"
+	@docker-compose up -d minio
+	@sleep 5
+	@$(MAKE) minio-health
+
+## 🏥 Vérifier la santé de MinIO
+minio-health:
+	@echo "$(BLUE)🏥 Vérification de la santé MinIO...$(NC)"
+	@./scripts/minio-health-check.sh || echo "$(YELLOW)MinIO en cours de démarrage...$(NC)"
+
+## 📦 Créer les buckets MinIO
+minio-setup:
+	@echo "$(YELLOW)📦 Configuration des buckets MinIO...$(NC)"
+	@./scripts/minio-setup-buckets.sh
+	@echo "$(GREEN)✅ Buckets MinIO créés$(NC)"
+
+## 🔧 Installer AWS SDK dans les services
+minio-install-sdk:
+	@echo "$(YELLOW)🔧 Installation AWS SDK...$(NC)"
+	@./scripts/install-aws-sdk.sh
+	@echo "$(GREEN)✅ AWS SDK installé$(NC)"
+
+## 🧪 Tester l'intégration MinIO
+minio-test:
+	@echo "$(BLUE)🧪 Tests d'intégration MinIO...$(NC)"
+	@./scripts/test-minio-integration.sh
+
+## ✅ Valider Phase 1 MinIO
+minio-validate:
+	@echo "$(PURPLE)✅ Validation Phase 1 MinIO...$(NC)"
+	@./scripts/validate-phase1-minio.sh
+
+## 🌐 Ouvrir la console MinIO
+minio-console:
+	@echo "$(BLUE)🌐 Ouverture console MinIO...$(NC)"
+	@echo "URL: http://localhost:9001"
+	@echo "User: admin"
+	@echo "Pass: adminpass123"
+	@open http://localhost:9001 2>/dev/null || xdg-open http://localhost:9001 2>/dev/null || echo "Ouvrez manuellement: http://localhost:9001"
+
+## 📊 Statistiques MinIO
+minio-stats:
+	@echo "$(YELLOW)📊 Statistiques MinIO:$(NC)"
+	@docker exec minio-storage mc admin info local 2>/dev/null || echo "$(RED)MinIO non disponible$(NC)"
+
+## 🗑️ Nettoyer les buckets MinIO
+minio-clean:
+	@echo "$(RED)🗑️ Nettoyage des buckets MinIO...$(NC)"
+	@docker exec minio-storage sh -c "rm -rf /data/products/* /data/sav/* /data/newsletters/*" 2>/dev/null || true
+	@echo "$(GREEN)✅ Buckets MinIO nettoyés$(NC)"
+
+## 🛑 Arrêter MinIO
+minio-stop:
+	@echo "$(YELLOW)🛑 Arrêt de MinIO...$(NC)"
+	@docker-compose stop minio
+	@echo "$(GREEN)✅ MinIO arrêté$(NC)"
+
+## 🔄 Workflow MinIO complet
+minio-workflow:
+	@echo "$(PURPLE)🔄 Workflow MinIO complet:$(NC)"
+	@$(MAKE) minio-start
+	@$(MAKE) minio-setup
+	@$(MAKE) minio-validate
+	@$(MAKE) minio-test
+	@echo "$(GREEN)✅ Workflow MinIO terminé!$(NC)"
+	@echo "$(BLUE)Console: http://localhost:9001 (admin/adminpass123)$(NC)"
+
+# =============================================================================
 # 🔧 WORKFLOWS DE DÉPLOIEMENT
 # =============================================================================
 
 ## 🚀 Déploiement complet (build + deploy + verify + test)
-deploy-complete: 
+deploy-complete:
 	@echo "$(GREEN)🚀 Déploiement complet sur Kubernetes...$(NC)"
 	@$(MAKE) k8s-build
 	@$(MAKE) k8s-deploy
 	@$(MAKE) verify-deployment
 	@$(MAKE) test-integration
 	@echo "$(GREEN)✅ Déploiement complet terminé!$(NC)"
+	@echo ""
+	@echo "$(YELLOW)🌐 Pour accéder à l'API Gateway, exécutez:$(NC)"
+	@echo "$(BLUE)kubectl port-forward -n e-commerce svc/api-gateway 8100:80$(NC)"
 
 ## 🎯 Workflow de développement
 dev-workflow:
@@ -488,6 +606,7 @@ help: banner
 	@echo "  $(BLUE)k8s-health$(NC)             Vérifier santé Kubernetes"
 	@echo "  $(BLUE)k8s-status$(NC)             Statut plateforme Kubernetes"
 	@echo "  $(BLUE)k8s-monitoring$(NC)         Ouvrir monitoring Kubernetes"
+	@echo "  $(BLUE)k8s-port-forward$(NC)       Port-forward API Gateway (8100)"
 	@echo "  $(BLUE)k8s-stop$(NC)               Arrêter environnement Kubernetes"
 	@echo "  $(BLUE)k8s-down$(NC)               Supprimer environnement Kubernetes"
 	@echo "  $(BLUE)k8s-clean$(NC)              Nettoyer environnement Kubernetes"
@@ -501,6 +620,15 @@ help: banner
 	@echo "  $(BLUE)docker-down$(NC)            Arrêter et supprimer services Docker"
 	@echo "  $(BLUE)docker-clean$(NC)           Nettoyer Docker Compose"
 	@echo "  $(BLUE)docker-kill$(NC)            Arrêt d'urgence Docker"
+	@echo ""
+	@echo "$(YELLOW)💾 MINIO - OBJECT STORAGE:$(NC)"
+	@echo "  $(BLUE)minio-start$(NC)            Démarrer MinIO"
+	@echo "  $(BLUE)minio-setup$(NC)            Créer buckets MinIO"
+	@echo "  $(BLUE)minio-health$(NC)           Vérifier santé MinIO"
+	@echo "  $(BLUE)minio-console$(NC)          Ouvrir console MinIO"
+	@echo "  $(BLUE)minio-test$(NC)             Tester intégration MinIO"
+	@echo "  $(BLUE)minio-validate$(NC)         Valider Phase 1 MinIO"
+	@echo "  $(BLUE)minio-workflow$(NC)         Workflow MinIO complet"
 	@echo ""
 	@echo "$(YELLOW)🛑 ARRÊT GLOBAL:$(NC)"
 	@echo "  $(BLUE)stop-all$(NC)               Arrêter tout (Docker + Kubernetes)"
@@ -524,6 +652,7 @@ help: banner
 	@echo "  make dashboard                    # Interface interactive"
 	@echo "  make install-complete            # Installation complète"
 	@echo "  make K8S_ENVIRONMENT=staging k8s-deploy  # Déployer staging"
+	@echo "  make K8S_ENVIRONMENT=staging k8s-port-forward  # Port-forward 8100"
 	@echo "  make SERVICE_NAME=auth-service k8s-logs  # Logs service"
 	@echo ""
 	@echo "$(GREEN)📖 Documentation: README.md | PLATFORM_INTEGRATION_COMPLETE.md$(NC)"
@@ -564,3 +693,87 @@ check-tools:
 	@echo -n "curl: "; curl --version 2>/dev/null | head -1 && echo "$(GREEN)✅$(NC)" || echo "$(RED)❌$(NC)"
 
 .PHONY: dashboard install-complete migrate-to-k8s docker-start docker-install docker-status docker-stop docker-down docker-clean docker-kill docker-endpoints k8s-setup k8s-deploy k8s-build k8s-health k8s-status k8s-monitoring k8s-logs k8s-endpoints k8s-stop k8s-down k8s-clean k8s-kill k8s-prepare stop-all down-all clean-all kill-all validate-platform validate-quick verify-deployment verify-quick test-integration test-health test-auth test-performance test-security test-all migrate-all seed-all fresh-all test-docker test-service shell composer-install health-docker clear-cache dev stats newsletters-process newsletters-stats backup-docker deploy-complete dev-workflow prod-workflow migration-workflow banner help info check-tools
+# Kubernetes Database Management
+.PHONY: k8s-migrate k8s-migrate-clean k8s-seed k8s-create-admin
+
+k8s-migrate: ## Run database migrations on all services
+	@echo "$(CYAN)Running database migrations on all services...$(NC)"
+	@echo "$(YELLOW)Migrating auth-service...$(NC)"
+	@kubectl exec -n e-commerce deployment/auth-service -- php artisan migrate --force
+	@echo "$(YELLOW)Migrating products-service...$(NC)"
+	@kubectl exec -n e-commerce deployment/products-service -- php artisan migrate --force
+	@echo "$(YELLOW)Migrating addresses-service...$(NC)"
+	@kubectl exec -n e-commerce deployment/addresses-service -- php artisan migrate --force 2>&1 | grep -E "(INFO|DONE|Nothing)" || true
+	@echo "$(YELLOW)Migrating baskets-service...$(NC)"
+	@kubectl exec -n e-commerce deployment/baskets-service -- php artisan migrate --force 2>&1 | grep -E "(INFO|DONE|Nothing)" || true
+	@echo "$(YELLOW)Migrating orders-service...$(NC)"
+	@kubectl exec -n e-commerce deployment/orders-service -- php artisan migrate --force 2>&1 | grep -E "(INFO|DONE|Nothing)" || true
+	@echo "$(YELLOW)Migrating deliveries-service...$(NC)"
+	@kubectl exec -n e-commerce deployment/deliveries-service -- php artisan migrate --force 2>&1 | grep -E "(INFO|DONE|Nothing)" || true
+	@echo "$(YELLOW)Migrating newsletters-service...$(NC)"
+	@kubectl exec -n e-commerce deployment/newsletters-service -- php artisan migrate --force 2>&1 | grep -E "(INFO|DONE|Nothing)" || true
+	@echo "$(YELLOW)Migrating sav-service...$(NC)"
+	@kubectl exec -n e-commerce deployment/sav-service -- php artisan migrate --force 2>&1 | grep -E "(INFO|DONE|Nothing)" || true
+	@echo "$(YELLOW)Migrating contacts-service...$(NC)"
+	@kubectl exec -n e-commerce deployment/contacts-service -- php artisan migrate --force 2>&1 | grep -E "(INFO|DONE|Nothing)" || true
+	@echo "$(YELLOW)Migrating questions-service...$(NC)"
+	@kubectl exec -n e-commerce deployment/questions-service -- php artisan migrate --force 2>&1 | grep -E "(INFO|DONE|Nothing)" || true
+	@echo "$(GREEN)✓ All migrations completed$(NC)"
+
+k8s-migrate-clean: ## Clean up migration jobs (deprecated - using direct exec now)
+	@echo "$(YELLOW)Note: Migration jobs are no longer used. Using kubectl exec instead.$(NC)"
+	@echo "$(GREEN)No cleanup needed$(NC)"
+
+k8s-seed: ## Run database seeders (requires migrations first)
+	@echo "$(CYAN)Running database seeders...$(NC)"
+	@echo "$(YELLOW)Seeding auth-service...$(NC)"
+	@kubectl exec -n e-commerce deployment/auth-service -- php artisan db:seed --force 2>&1 | grep -v "Nothing to seed" || true
+	@echo "$(YELLOW)Seeding products-service...$(NC)"
+	@kubectl exec -n e-commerce deployment/products-service -- php artisan db:seed --force 2>&1 | grep -v "Nothing to seed" || true
+	@echo "$(GREEN)✓ Database seeding completed$(NC)"
+
+k8s-create-admin: ## Create admin user in auth-service
+	@echo "$(CYAN)Creating admin user...$(NC)"
+	@kubectl exec -n e-commerce deployment/auth-service -- php artisan tinker --execute="\
+		\$$user = new \App\Models\User(); \
+		\$$user->firstname = 'Admin'; \
+		\$$user->lastname = 'User'; \
+		\$$user->email = 'admin@test.com'; \
+		\$$user->password = bcrypt('password123'); \
+		\$$user->save(); \
+		echo 'User created: ' . \$$user->email;"
+	@echo "$(GREEN)✓ Admin user created: admin@test.com / password123$(NC)"
+
+k8s-test-login: ## Test login endpoint
+	@echo "$(CYAN)Testing login endpoint...$(NC)"
+	@curl -s -X POST http://localhost:8100/api/v1/login \
+		-H "Content-Type: application/json" \
+		-d '{"email":"admin@test.com","password":"password123"}' | jq '.'
+	@echo "$(GREEN)✓ Login test completed$(NC)"
+
+export-composer-locks: ## Export composer.lock files from all services to ./exports (zipped)
+	@echo "$(CYAN)Exporting composer.lock files from all services...$(NC)"
+	@mkdir -p exports/composer-locks
+	@TIMESTAMP=$$(date +%Y%m%d_%H%M%S); \
+	EXPORT_DIR="exports/composer-locks/$$TIMESTAMP"; \
+	ZIP_FILE="exports/composer-locks-$$TIMESTAMP.zip"; \
+	mkdir -p "$$EXPORT_DIR"; \
+	echo "$(YELLOW)Export directory: $$EXPORT_DIR$(NC)"; \
+	cp services/api-gateway/composer.lock "$$EXPORT_DIR/api-gateway.composer.lock" 2>/dev/null && echo "$(GREEN)✓ api-gateway$(NC)" || echo "$(RED)✗ api-gateway$(NC)"; \
+	cp services/auth-service/composer.lock "$$EXPORT_DIR/auth-service.composer.lock" 2>/dev/null && echo "$(GREEN)✓ auth-service$(NC)" || echo "$(RED)✗ auth-service$(NC)"; \
+	cp services/messages-broker/composer.lock "$$EXPORT_DIR/messages-broker.composer.lock" 2>/dev/null && echo "$(GREEN)✓ messages-broker$(NC)" || echo "$(RED)✗ messages-broker$(NC)"; \
+	cp services/addresses-service/composer.lock "$$EXPORT_DIR/addresses-service.composer.lock" 2>/dev/null && echo "$(GREEN)✓ addresses-service$(NC)" || echo "$(RED)✗ addresses-service$(NC)"; \
+	cp services/products-service/composer.lock "$$EXPORT_DIR/products-service.composer.lock" 2>/dev/null && echo "$(GREEN)✓ products-service$(NC)" || echo "$(RED)✗ products-service$(NC)"; \
+	cp services/baskets-service/composer.lock "$$EXPORT_DIR/baskets-service.composer.lock" 2>/dev/null && echo "$(GREEN)✓ baskets-service$(NC)" || echo "$(RED)✗ baskets-service$(NC)"; \
+	cp services/orders-service/composer.lock "$$EXPORT_DIR/orders-service.composer.lock" 2>/dev/null && echo "$(GREEN)✓ orders-service$(NC)" || echo "$(RED)✗ orders-service$(NC)"; \
+	cp services/deliveries-service/composer.lock "$$EXPORT_DIR/deliveries-service.composer.lock" 2>/dev/null && echo "$(GREEN)✓ deliveries-service$(NC)" || echo "$(RED)✗ deliveries-service$(NC)"; \
+	cp services/newsletters-service/composer.lock "$$EXPORT_DIR/newsletters-service.composer.lock" 2>/dev/null && echo "$(GREEN)✓ newsletters-service$(NC)" || echo "$(RED)✗ newsletters-service$(NC)"; \
+	cp services/sav-service/composer.lock "$$EXPORT_DIR/sav-service.composer.lock" 2>/dev/null && echo "$(GREEN)✓ sav-service$(NC)" || echo "$(RED)✗ sav-service$(NC)"; \
+	cp services/contacts-service/composer.lock "$$EXPORT_DIR/contacts-service.composer.lock" 2>/dev/null && echo "$(GREEN)✓ contacts-service$(NC)" || echo "$(RED)✗ contacts-service$(NC)"; \
+	cp services/questions-service/composer.lock "$$EXPORT_DIR/questions-service.composer.lock" 2>/dev/null && echo "$(GREEN)✓ questions-service$(NC)" || echo "$(RED)✗ questions-service$(NC)"; \
+	cp services/websites-service/composer.lock "$$EXPORT_DIR/websites-service.composer.lock" 2>/dev/null && echo "$(GREEN)✓ websites-service$(NC)" || echo "$(RED)✗ websites-service$(NC)"; \
+	cp shared/composer.lock "$$EXPORT_DIR/shared.composer.lock" 2>/dev/null && echo "$(GREEN)✓ shared$(NC)" || echo "$(RED)✗ shared$(NC)"; \
+	echo "$(CYAN)Creating zip archive...$(NC)"; \
+	cd "$$EXPORT_DIR" && zip -q -r "../../../$$ZIP_FILE" . && cd - > /dev/null; \
+	rm -rf "$$EXPORT_DIR"; \
+	echo "$(GREEN)✓ All composer.lock files exported and zipped to $$ZIP_FILE$(NC)"

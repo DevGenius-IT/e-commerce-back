@@ -8,11 +8,12 @@ use Illuminate\Foundation\Configuration\Middleware;
 return Application::configure(basePath: dirname(__DIR__))
   ->withRouting(
     api: __DIR__ . "/../routes/api.php",
-    apiPrefix: ENV("API_VERSION", "v1"),
+    apiPrefix: "api",
     commands: __DIR__ . "/../routes/console.php"
   )
   ->withMiddleware(function (Middleware $middleware) {
-    $middleware->trustHosts();
+    // Disable TrustHosts middleware for Kubernetes environment
+    // where requests come from various internal sources
     $middleware->alias([
       "auth.gateway" => AuthenticateGateway::class,
     ]);

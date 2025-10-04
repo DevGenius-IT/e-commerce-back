@@ -12,7 +12,9 @@
         "php-amqplib/php-amqplib": "^3.6",
         "spatie/laravel-permission": "^6.21",
         "tymon/jwt-auth": "^2.2",
-        "laravel/sanctum": "^4.0"
+        "laravel/sanctum": "^4.0",
+        "aws/aws-sdk-php": "^3.0",
+        "intervention/image": "^3.0"
     },
     "require-dev": {
         "fakerphp/faker": "^1.23",

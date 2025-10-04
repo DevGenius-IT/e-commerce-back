@@ -12,7 +12,8 @@
         "laravel/tinker": "^2.10.1",
         "php-amqplib/php-amqplib": "^3.5",
         "spatie/laravel-permission": "^6.10",
-        "tymon/jwt-auth": "^2.1"
+        "tymon/jwt-auth": "^2.1",
+        "aws/aws-sdk-php": "^3.0"
     },
     "require-dev": {
         "fakerphp/faker": "^1.23",

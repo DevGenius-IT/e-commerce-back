@@ -11,13 +11,14 @@ return Application::configure(basePath: dirname(__DIR__))
     commands: __DIR__ . "/../routes/console.php"
   )
   ->withMiddleware(function (Middleware $middleware) {
-    $middleware->trustHosts();
-    
+    // Disable TrustHosts middleware for Kubernetes environment
+    // where requests come from various internal sources
+
     // Register the JWT middleware with full path
     $middleware->alias([
       'jwt.auth' => \Shared\Middleware\JWTAuthMiddleware::class,
     ]);
-    
+
     // Try alternative registration approach for Laravel 12
     $middleware->appendToGroup('api', [
       // Add to API middleware group

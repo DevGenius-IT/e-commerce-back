@@ -32,22 +32,32 @@ log_error() {
 # Environment setup
 setup_environment() {
     log_info "Setting up environment for ${SERVICE_NAME:-microservice}..."
-    
+
     # Set default values
     export CONTAINER_ROLE=${CONTAINER_ROLE:-app}
     export APP_ENV=${APP_ENV:-production}
     export LOG_LEVEL=${LOG_LEVEL:-info}
-    
+
     # Create required directories
     mkdir -p /var/www/services/${SERVICE_NAME}/storage/{app,framework/{cache,sessions,views},logs}
     mkdir -p /var/log/supervisor /var/log/nginx /run/nginx
-    
+
+    # Replace environment variables in nginx.conf if nginx is installed
+    if [ -f /etc/nginx/nginx.conf ] && command -v envsubst >/dev/null 2>&1; then
+        log_info "Substituting environment variables in nginx.conf..."
+        envsubst '$SERVICE_NAME' < /etc/nginx/nginx.conf > /tmp/nginx.conf.tmp
+        if [ -s /tmp/nginx.conf.tmp ]; then
+            mv /tmp/nginx.conf.tmp /etc/nginx/nginx.conf
+            log_success "Nginx configuration updated with SERVICE_NAME=${SERVICE_NAME}"
+        fi
+    fi
+
     # Set proper permissions (if running as root, will change to appuser later)
     if [ "$(id -u)" = "0" ]; then
         chown -R appuser:appgroup /var/www/services/${SERVICE_NAME}/storage
         chown -R appuser:appgroup /var/log
     fi
-    
+
     log_success "Environment setup completed"
 }
 
