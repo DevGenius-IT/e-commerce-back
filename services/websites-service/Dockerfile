@@ -38,6 +38,8 @@ COPY ./shared /var/www/shared
 COPY --chown=www:www ./services/websites-service /var/www/websites-service
 COPY --chown=www:www ./shared /var/www/shared
 
+RUN composer update --no-interaction --optimize-autoloader
+
 # Set working directory to the service
 WORKDIR /var/www/websites-service
 
