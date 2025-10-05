@@ -30,18 +30,14 @@ ENV COMPOSER_ALLOW_SUPERUSER=1
 RUN groupadd -g 1000 www
 RUN useradd -u 1000 -ms /bin/bash -g www www
 
-# Copy existing application directory contents
-COPY ./services/websites-service /var/www/websites-service
-COPY ./shared /var/www/shared
+# Set working directory to the service first
+WORKDIR /var/www/websites-service
 
-# Copy existing application directory permissions
-COPY --chown=www:www ./services/websites-service /var/www/websites-service
-COPY --chown=www:www ./shared /var/www/shared
+# Copy application files (after setting WORKDIR)
+COPY --chown=www:www services/websites-service .
+COPY --chown=www:www shared/ ../../shared
 
 RUN composer update --no-interaction --optimize-autoloader
-
-# Set working directory to the service
-WORKDIR /var/www/websites-service
 
 # Dependencies will be installed at runtime via volume mounts
 
