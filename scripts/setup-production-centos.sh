@@ -60,12 +60,14 @@ BACKUP_DIR="/var/backups/e-commerce"
 
 echo ""
 log_info "Ce script va installer et configurer:"
+echo "  - Outils système (git, make, curl, wget, vim)"
 echo "  - Docker & Docker Compose"
 echo "  - Firewall (firewalld)"
 echo "  - SELinux configuration"
 echo "  - Swap (4GB)"
 echo "  - Optimisations système"
 echo "  - Fail2ban"
+echo "  - Certbot (SSL)"
 echo ""
 read -p "Continuer? (y/n): " -n 1 -r
 echo
@@ -78,34 +80,34 @@ fi
 # 1. MISE À JOUR DU SYSTÈME
 ###############################################################################
 echo ""
-log_info "Étape 1/10: Mise à jour du système"
+log_info "Étape 1/11: Mise à jour du système"
 sudo dnf update -y
-sudo dnf install -y curl wget git vim htop net-tools bind-utils dnf-plugins-core
+sudo dnf install -y curl wget git vim net-tools bind-utils dnf-plugins-core make
+
+# Installer EPEL et outils supplémentaires
+sudo dnf install -y epel-release 2>/dev/null || true
+sudo dnf install -y htop ncdu 2>/dev/null || log_warning "Outils optionnels non disponibles"
+
 log_success "Système mis à jour"
 
 ###############################################################################
 # 2. INSTALLATION DOCKER
 ###############################################################################
 echo ""
-log_info "Étape 2/10: Installation de Docker"
+log_info "Étape 2/11: Installation de Docker"
 
-# Supprimer les anciennes versions
-sudo dnf remove -y docker docker-client docker-common docker-latest podman runc 2>/dev/null || true
+if command -v docker &> /dev/null; then
+    log_warning "Docker déjà installé"
+else
+    sudo dnf remove -y docker docker-client docker-common docker-latest podman runc 2>/dev/null || true
+    sudo dnf config-manager --add-repo https://download.docker.com/linux/centos/docker-ce.repo
+    sudo dnf install -y docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
+    sudo systemctl start docker
+    sudo systemctl enable docker
+    sudo usermod -aG docker $USER
+    log_success "Docker installé"
+fi
 
-# Ajouter le repository Docker
-sudo dnf config-manager --add-repo https://download.docker.com/linux/centos/docker-ce.repo
-
-# Installer Docker
-sudo dnf install -y docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
-
-# Démarrer Docker
-sudo systemctl start docker
-sudo systemctl enable docker
-
-# Ajouter l'utilisateur au groupe docker
-sudo usermod -aG docker $USER
-
-log_success "Docker installé"
 docker --version
 docker compose version
 
@@ -113,21 +115,20 @@ docker compose version
 # 3. CONFIGURATION FIREWALL
 ###############################################################################
 echo ""
-log_info "Étape 3/10: Configuration du Firewall"
+log_info "Étape 3/11: Configuration du Firewall"
 
-# Démarrer firewalld
+if ! command -v firewall-cmd &> /dev/null; then
+    log_info "Installation de firewalld..."
+    sudo dnf install -y firewalld
+fi
+
 sudo systemctl start firewalld
 sudo systemctl enable firewalld
 
-# Autoriser les ports nécessaires
 sudo firewall-cmd --permanent --add-service=ssh
 sudo firewall-cmd --permanent --add-service=http
 sudo firewall-cmd --permanent --add-service=https
-
-# Rich rule pour limiter SSH (protection brute force)
 sudo firewall-cmd --permanent --add-rich-rule='rule service name="ssh" limit value="10/m" accept'
-
-# Recharger
 sudo firewall-cmd --reload
 
 log_success "Firewall configuré"
@@ -137,20 +138,20 @@ sudo firewall-cmd --list-all
 # 4. CONFIGURATION SELINUX
 ###############################################################################
 echo ""
-log_info "Étape 4/10: Configuration SELinux"
+log_info "Étape 4/11: Configuration SELinux"
 
 CURRENT_SELINUX=$(getenforce)
 log_info "SELinux actuel: $CURRENT_SELINUX"
 
 echo "Choisissez l'option SELinux:"
-echo "  1) Désactiver (plus simple, moins sécurisé)"
-echo "  2) Configurer pour Docker (recommandé pour production)"
+echo "  1) Désactiver (plus simple)"
+echo "  2) Configurer pour Docker (recommandé)"
 read -p "Option (1/2): " selinux_choice
 
 if [ "$selinux_choice" = "1" ]; then
     sudo setenforce 0
     sudo sed -i 's/^SELINUX=enforcing/SELINUX=disabled/' /etc/selinux/config
-    log_success "SELinux désactivé (redémarrage requis pour appliquer définitivement)"
+    log_success "SELinux désactivé"
 else
     sudo dnf install -y policycoreutils-python-utils
     sudo setsebool -P container_manage_cgroup on
@@ -162,10 +163,10 @@ fi
 # 5. CONFIGURATION SWAP
 ###############################################################################
 echo ""
-log_info "Étape 5/10: Configuration du Swap"
+log_info "Étape 5/11: Configuration du Swap"
 
 if [ -f /swapfile ]; then
-    log_warning "Swap déjà configuré, passage à l'étape suivante"
+    log_warning "Swap déjà configuré"
 else
     sudo fallocate -l 4G /swapfile
     sudo chmod 600 /swapfile
@@ -181,24 +182,29 @@ free -h
 # 6. OPTIMISATIONS SYSTÈME
 ###############################################################################
 echo ""
-log_info "Étape 6/10: Optimisations système"
+log_info "Étape 6/11: Optimisations système"
 
-# Limites de fichiers
-sudo tee -a /etc/security/limits.conf << EOF
+if ! grep -q "nofile.*65536" /etc/security/limits.conf; then
+    sudo tee -a /etc/security/limits.conf << EOF
 *  soft  nofile  65536
 *  hard  nofile  65536
 root soft nofile 65536
 root hard nofile 65536
 EOF
+fi
 
-# Optimisations réseau et mémoire
-sudo tee -a /etc/sysctl.conf << EOF
+sudo modprobe br_netfilter
+echo "br_netfilter" | sudo tee /etc/modules-load.d/br_netfilter.conf
+
+if ! grep -q "net.ipv4.ip_forward = 1" /etc/sysctl.conf; then
+    sudo tee -a /etc/sysctl.conf << EOF
 net.ipv4.ip_forward = 1
 net.bridge.bridge-nf-call-iptables = 1
 net.bridge.bridge-nf-call-ip6tables = 1
 vm.max_map_count = 262144
 vm.swappiness = 10
 EOF
+fi
 
 sudo sysctl -p
 log_success "Optimisations appliquées"
@@ -207,40 +213,41 @@ log_success "Optimisations appliquées"
 # 7. INSTALLATION FAIL2BAN
 ###############################################################################
 echo ""
-log_info "Étape 7/10: Installation de Fail2ban"
+log_info "Étape 7/11: Installation de Fail2ban"
 
-sudo dnf install -y fail2ban fail2ban-systemd
+if [ -f /etc/fail2ban/jail.local ]; then
+    log_warning "Fail2ban déjà configuré"
+else
+    sudo dnf install -y fail2ban fail2ban-systemd
 
-# Créer la configuration locale
-sudo cp /etc/fail2ban/jail.conf /etc/fail2ban/jail.local
-
-# Activer la protection SSH
-sudo tee -a /etc/fail2ban/jail.local << EOF
+    sudo tee /etc/fail2ban/jail.local > /dev/null << 'EOF'
+[DEFAULT]
+bantime = 3600
+findtime = 600
+maxretry = 5
+backend = systemd
 
 [sshd]
 enabled = true
 port = ssh
-logpath = /var/log/secure
-maxretry = 5
-bantime = 3600
+logpath = %(sshd_log)s
+backend = %(sshd_backend)s
 EOF
 
-sudo systemctl enable fail2ban
-sudo systemctl start fail2ban
-
-log_success "Fail2ban configuré"
-sudo fail2ban-client status
+    sudo systemctl enable fail2ban
+    sudo systemctl start fail2ban
+    sleep 3
+    log_success "Fail2ban configuré"
+fi
 
 ###############################################################################
 # 8. CRÉATION DES RÉPERTOIRES
 ###############################################################################
 echo ""
-log_info "Étape 8/10: Création des répertoires"
+log_info "Étape 8/11: Création des répertoires"
 
 sudo mkdir -p /var/www
 sudo mkdir -p $BACKUP_DIR
-
-# Permissions
 sudo chown -R $USER:$USER /var/www
 sudo chown -R $USER:$USER $BACKUP_DIR
 
@@ -250,25 +257,25 @@ log_success "Répertoires créés"
 # 9. INSTALLATION CERTBOT
 ###############################################################################
 echo ""
-log_info "Étape 9/10: Installation de Certbot"
+log_info "Étape 9/11: Installation de Certbot"
 
-sudo dnf install -y epel-release
-sudo dnf install -y certbot
-
-# Activer le timer de renouvellement
-sudo systemctl enable certbot-renew.timer
-sudo systemctl start certbot-renew.timer
-
-log_success "Certbot installé"
+if command -v certbot &> /dev/null; then
+    log_warning "Certbot déjà installé"
+else
+    sudo dnf install -y certbot
+    sudo systemctl enable certbot-renew.timer 2>/dev/null || true
+    sudo systemctl start certbot-renew.timer 2>/dev/null || true
+    log_success "Certbot installé"
+fi
 
 ###############################################################################
-# 10. CONFIGURATION FINALE
+# 10. CONFIGURATION DOCKER
 ###############################################################################
 echo ""
-log_info "Étape 10/10: Configuration finale"
+log_info "Étape 10/11: Configuration finale Docker"
 
-# Configurer la rotation des logs Docker
-sudo tee /etc/docker/daemon.json << EOF
+if [ ! -f /etc/docker/daemon.json ]; then
+    sudo tee /etc/docker/daemon.json << EOF
 {
   "log-driver": "json-file",
   "log-opts": {
@@ -277,71 +284,44 @@ sudo tee /etc/docker/daemon.json << EOF
   }
 }
 EOF
+    sudo systemctl restart docker
+    log_success "Configuration Docker appliquée"
+fi
 
-# Redémarrer Docker pour appliquer
-sudo systemctl restart docker
+###############################################################################
+# 11. VÉRIFICATION
+###############################################################################
+echo ""
+log_info "Étape 11/11: Vérification finale"
 
-log_success "Configuration Docker appliquée"
+docker ps &> /dev/null && log_success "Docker OK" || log_warning "Reconnexion requise pour Docker"
+sudo firewall-cmd --state &> /dev/null && log_success "Firewall OK"
+sudo systemctl is-active --quiet fail2ban && log_success "Fail2ban OK"
 
 ###############################################################################
 # RÉCAPITULATIF
 ###############################################################################
 echo ""
 echo "╔═══════════════════════════════════════════════════════════════╗"
-echo "║                                                               ║"
-echo "║   INSTALLATION TERMINÉE !                                     ║"
-echo "║                                                               ║"
+echo "║              INSTALLATION TERMINÉE !                          ║"
 echo "╚═══════════════════════════════════════════════════════════════╝"
-echo ""
-
-log_success "Le serveur est maintenant prêt pour le déploiement"
 echo ""
 echo "📋 PROCHAINES ÉTAPES:"
 echo ""
-echo "1. Cloner le projet dans /var/www:"
+echo "1. Redémarrer: sudo reboot"
+echo ""
+echo "2. Cloner le projet:"
 echo "   cd /var/www"
-echo "   git clone https://github.com/votre-organisation/e-commerce-back.git"
-echo "   cd e-commerce-back"
+echo "   git clone <votre-repo> e-commerce-back"
 echo ""
-echo "2. Configurer votre DNS (enregistrements A):"
-echo "   api.votre-domaine.com  ->  IP_DU_SERVEUR"
-echo "   minio.votre-domaine.com -> IP_DU_SERVEUR"
+echo "3. Configurer DNS:"
+echo "   api.demo.collect-n-verything.com → 72.60.212.44"
+echo "   minio.demo.collect-n-verything.com → 72.60.212.44"
 echo ""
-echo "3. Obtenir les certificats SSL:"
-echo "   sudo certbot certonly --standalone -d api.votre-domaine.com"
+echo "4. Obtenir SSL:"
+echo "   sudo certbot certonly --standalone \\"
+echo "     -d api.demo.collect-n-verything.com \\"
+echo "     -d minio.demo.collect-n-verything.com"
 echo ""
-echo "4. Générer les secrets:"
-echo "   ./generate-secrets.sh > secrets.txt"
-echo ""
-echo "5. Configurer .env:"
-echo "   cp .env.example .env"
-echo "   vi .env  # Copier les secrets générés"
-echo ""
-echo "6. Configurer Nginx:"
-echo "   cp docker/nginx/conf.d/production.conf.example docker/nginx/conf.d/production.conf"
-echo "   vi docker/nginx/conf.d/production.conf  # Adapter au domaine"
-echo ""
-echo "7. Déployer:"
-echo "   docker compose build"
-echo "   docker compose -f docker-compose.yml -f docker-compose.production.yml up -d"
-echo "   make migrate-all"
-echo "   make seed-all"
-echo "   make minio-workflow"
-echo ""
-echo "8. Vérifier:"
-echo "   curl https://api.votre-domaine.com/health"
-echo ""
-echo "⚠️  IMPORTANT:"
-echo "   - Changez TOUS les secrets par défaut"
-echo "   - Configurez les backups automatiques"
-echo "   - Testez le renouvellement SSL: sudo certbot renew --dry-run"
-echo ""
-echo "📚 Documentation:"
-echo "   - Guide complet: docs/PRODUCTION_DEPLOYMENT_GUIDE.md"
-echo "   - Guide CentOS: docs/PRODUCTION_CENTOS_GUIDE.md"
-echo "   - Guide serveur: docs/DEPLOYMENT_SERVER_SETUP.md"
-echo ""
-
-log_info "Redémarrez le serveur pour appliquer tous les changements:"
-echo "   sudo reboot"
+echo "5. Déployer (voir DEPLOIEMENT_SERVEUR.md)"
 echo ""
