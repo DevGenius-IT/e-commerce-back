@@ -69,17 +69,25 @@ docker-start: banner
 ## 🏗️ Installation Docker Compose (première installation)
 docker-install: banner
 	@echo "$(GREEN)🏗️ Installation Docker Compose...$(NC)"
-	@echo "$(YELLOW)1. Construction des images Docker...$(NC)"
+	@echo "$(YELLOW)1. Génération des composer.lock...$(NC)"
+	@$(MAKE) composer-locks
+	@echo "$(YELLOW)2. Construction des images Docker...$(NC)"
 	@docker-compose build
-	@echo "$(YELLOW)2. Démarrage des services...$(NC)"
+	@echo "$(YELLOW)3. Démarrage des services...$(NC)"
 	@docker-compose up -d
-	@echo "$(YELLOW)3. Attente de la disponibilité des bases de données...$(NC)"
+	@echo "$(YELLOW)4. Attente de la disponibilité des bases de données...$(NC)"
 	@sleep 15
-	@echo "$(YELLOW)4. Exécution des migrations et seeds...$(NC)"
+	@echo "$(YELLOW)5. Exécution des migrations et seeds...$(NC)"
 	@$(MAKE) migrate-all
 	@$(MAKE) seed-all
 	@echo "$(GREEN)✅ Installation Docker terminée!$(NC)"
 	@$(MAKE) docker-status
+
+## 📦 Générer les composer.lock pour tous les services
+composer-locks:
+	@echo "$(BLUE)📦 Génération des composer.lock...$(NC)"
+	@chmod +x scripts/generate-composer-locks.sh
+	@./scripts/generate-composer-locks.sh
 
 ## 📊 Statut des services Docker
 docker-status: 
