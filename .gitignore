@@ -11,6 +11,7 @@ services/**/storage/framework/cache/
 services/**/storage/framework/sessions/
 services/**/storage/framework/views/
 services/**/bootstrap/cache/
+services/**/composer.lock
 
 # Docker & Infrastructure
 docker-compose.override.yml
@@ -52,6 +53,13 @@ coverage/
 *.tmp
 *.temp
 .tmp/
+
+# Exports
+exports/*
+
+# Windows files
+windows/
+windows.zip
 
 # Claude documentation (auto-generated)
 CLAUDE.md

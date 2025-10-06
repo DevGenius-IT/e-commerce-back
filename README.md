@@ -14,7 +14,14 @@ An Laravel API for an e-commerce platform that provides a set of micro-services 
 
 ## Documentation 📝
 
-- [View documentation](https://github.com/DevGenius-IT/e-commerce-back/blob/main/docs/README.md)
+- [Documentation complète](https://github.com/DevGenius-IT/e-commerce-back/blob/main/docs/README.md)
+- [Guide de démarrage rapide](QUICKSTART.md)
+
+### 🚀 Déploiement Production
+- [**📋 Déploiement sur votre serveur**](DEPLOIEMENT_SERVEUR.md) - Guide rapide pour srv1046806.hstgr.cloud
+- [Vue d'ensemble déploiement](PRODUCTION_DEPLOYMENT.md) - Index complet
+- [Guide complet production](docs/PRODUCTION_DEPLOYMENT_GUIDE.md) - Documentation détaillée
+- [Guide CentOS](docs/PRODUCTION_CENTOS_GUIDE.md) - Spécifique CentOS 10 Stream
 
 ## Contributing 🤝
 

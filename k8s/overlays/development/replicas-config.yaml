@@ -1,0 +1,110 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: replicas-strategy
+  namespace: e-commerce
+data:
+  strategy: |
+    # Stratégie de replicas pour optimisation CPU
+    
+    # ESSENTIELS (toujours actifs)
+    api-gateway: 1
+    auth-service: 1
+    auth-service-mysql: 1
+    products-service: 1
+    products-service-mysql: 1
+    orders-service: 1
+    orders-service-mysql: 1
+    messages-broker: 1
+    redis: 1
+    
+    # OPTIONNELS (activables à la demande)
+    addresses-service: 0
+    addresses-service-mysql: 0
+    baskets-service: 0
+    baskets-service-mysql: 0
+    contacts-service: 0
+    contacts-service-mysql: 0
+    deliveries-service: 0
+    deliveries-service-mysql: 0
+    newsletters-service: 0
+    newsletters-service-mysql: 0
+    questions-service: 0
+    questions-service-mysql: 0
+    sav-service: 0
+    sav-service-mysql: 0
+    websites-service: 0
+    websites-service-mysql: 0
+---
+# Patch pour services essentiels (1 replica)
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: api-gateway
+  namespace: e-commerce
+spec:
+  replicas: 1
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: auth-service
+  namespace: e-commerce
+spec:
+  replicas: 1
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: auth-service-mysql
+  namespace: e-commerce
+spec:
+  replicas: 1
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: products-service
+  namespace: e-commerce
+spec:
+  replicas: 1
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: products-service-mysql
+  namespace: e-commerce
+spec:
+  replicas: 1
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: orders-service
+  namespace: e-commerce
+spec:
+  replicas: 1
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: orders-service-mysql
+  namespace: e-commerce
+spec:
+  replicas: 1
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: messages-broker
+  namespace: e-commerce
+spec:
+  replicas: 1
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: redis
+  namespace: e-commerce
+spec:
+  replicas: 1

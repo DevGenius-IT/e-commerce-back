@@ -1,0 +1,455 @@
+---
+# Database Migration Job for all microservices
+# Runs migrations sequentially on all services that have databases
+
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: database-migrations
+  namespace: e-commerce
+  labels:
+    app: database-migrations
+    component: maintenance
+spec:
+  ttlSecondsAfterFinished: 3600  # Auto-delete job after 1 hour
+  backoffLimit: 3
+  template:
+    metadata:
+      labels:
+        app: database-migrations
+        component: maintenance
+    spec:
+      restartPolicy: Never
+      serviceAccountName: default
+      containers:
+      - name: migrate-auth-service
+        image: e-commerce-back-auth-service:latest
+        imagePullPolicy: Never
+        command: ["php", "artisan", "migrate", "--force"]
+        env:
+        - name: DB_HOST
+          value: "auth-service-mysql.e-commerce.svc.cluster.local"
+        - name: DB_DATABASE
+          value: "auth_db"
+        - name: DB_USERNAME
+          value: "auth_user"
+        - name: DB_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: auth-service-secrets
+              key: DB_PASSWORD
+        - name: APP_KEY
+          valueFrom:
+            secretKeyRef:
+              name: global-secrets
+              key: APP_KEY
+---
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: database-migrations-products
+  namespace: e-commerce
+  labels:
+    app: database-migrations
+    component: maintenance
+spec:
+  ttlSecondsAfterFinished: 3600
+  backoffLimit: 3
+  template:
+    metadata:
+      labels:
+        app: database-migrations
+        component: maintenance
+    spec:
+      restartPolicy: Never
+      containers:
+      - name: migrate-products-service
+        image: e-commerce-back-products-service:latest
+        imagePullPolicy: Never
+        command: ["php", "artisan", "migrate", "--force"]
+        env:
+        - name: DB_HOST
+          value: "products-service-mysql.e-commerce.svc.cluster.local"
+        - name: DB_DATABASE
+          value: "products_db"
+        - name: DB_USERNAME
+          value: "products_user"
+        - name: DB_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: products-service-secrets
+              key: DB_PASSWORD
+        - name: APP_KEY
+          valueFrom:
+            secretKeyRef:
+              name: global-secrets
+              key: APP_KEY
+---
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: database-migrations-addresses
+  namespace: e-commerce
+  labels:
+    app: database-migrations
+    component: maintenance
+spec:
+  ttlSecondsAfterFinished: 3600
+  backoffLimit: 3
+  template:
+    metadata:
+      labels:
+        app: database-migrations
+        component: maintenance
+    spec:
+      restartPolicy: Never
+      containers:
+      - name: migrate-addresses-service
+        image: e-commerce-back-addresses-service:latest
+        imagePullPolicy: Never
+        command: ["php", "artisan", "migrate", "--force"]
+        env:
+        - name: DB_HOST
+          value: "addresses-service-mysql.e-commerce.svc.cluster.local"
+        - name: DB_DATABASE
+          value: "addresses_db"
+        - name: DB_USERNAME
+          value: "addresses_user"
+        - name: DB_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: addresses-service-secrets
+              key: DB_PASSWORD
+        - name: APP_KEY
+          valueFrom:
+            secretKeyRef:
+              name: global-secrets
+              key: APP_KEY
+---
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: database-migrations-baskets
+  namespace: e-commerce
+  labels:
+    app: database-migrations
+    component: maintenance
+spec:
+  ttlSecondsAfterFinished: 3600
+  backoffLimit: 3
+  template:
+    metadata:
+      labels:
+        app: database-migrations
+        component: maintenance
+    spec:
+      restartPolicy: Never
+      containers:
+      - name: migrate-baskets-service
+        image: e-commerce-back-baskets-service:latest
+        imagePullPolicy: Never
+        command: ["php", "artisan", "migrate", "--force"]
+        env:
+        - name: DB_HOST
+          value: "baskets-service-mysql.e-commerce.svc.cluster.local"
+        - name: DB_DATABASE
+          value: "baskets_db"
+        - name: DB_USERNAME
+          value: "baskets_user"
+        - name: DB_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: baskets-service-secrets
+              key: DB_PASSWORD
+        - name: APP_KEY
+          valueFrom:
+            secretKeyRef:
+              name: global-secrets
+              key: APP_KEY
+---
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: database-migrations-orders
+  namespace: e-commerce
+  labels:
+    app: database-migrations
+    component: maintenance
+spec:
+  ttlSecondsAfterFinished: 3600
+  backoffLimit: 3
+  template:
+    metadata:
+      labels:
+        app: database-migrations
+        component: maintenance
+    spec:
+      restartPolicy: Never
+      containers:
+      - name: migrate-orders-service
+        image: e-commerce-back-orders-service:latest
+        imagePullPolicy: Never
+        command: ["php", "artisan", "migrate", "--force"]
+        env:
+        - name: DB_HOST
+          value: "orders-service-mysql.e-commerce.svc.cluster.local"
+        - name: DB_DATABASE
+          value: "orders_db"
+        - name: DB_USERNAME
+          value: "orders_user"
+        - name: DB_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: orders-service-secrets
+              key: DB_PASSWORD
+        - name: APP_KEY
+          valueFrom:
+            secretKeyRef:
+              name: global-secrets
+              key: APP_KEY
+---
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: database-migrations-deliveries
+  namespace: e-commerce
+  labels:
+    app: database-migrations
+    component: maintenance
+spec:
+  ttlSecondsAfterFinished: 3600
+  backoffLimit: 3
+  template:
+    metadata:
+      labels:
+        app: database-migrations
+        component: maintenance
+    spec:
+      restartPolicy: Never
+      containers:
+      - name: migrate-deliveries-service
+        image: e-commerce-back-deliveries-service:latest
+        imagePullPolicy: Never
+        command: ["php", "artisan", "migrate", "--force"]
+        env:
+        - name: DB_HOST
+          value: "deliveries-service-mysql.e-commerce.svc.cluster.local"
+        - name: DB_DATABASE
+          value: "deliveries_db"
+        - name: DB_USERNAME
+          value: "deliveries_user"
+        - name: DB_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: deliveries-service-secrets
+              key: DB_PASSWORD
+        - name: APP_KEY
+          valueFrom:
+            secretKeyRef:
+              name: global-secrets
+              key: APP_KEY
+---
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: database-migrations-newsletters
+  namespace: e-commerce
+  labels:
+    app: database-migrations
+    component: maintenance
+spec:
+  ttlSecondsAfterFinished: 3600
+  backoffLimit: 3
+  template:
+    metadata:
+      labels:
+        app: database-migrations
+        component: maintenance
+    spec:
+      restartPolicy: Never
+      containers:
+      - name: migrate-newsletters-service
+        image: e-commerce-back-newsletters-service:latest
+        imagePullPolicy: Never
+        command: ["php", "artisan", "migrate", "--force"]
+        env:
+        - name: DB_HOST
+          value: "newsletters-service-mysql.e-commerce.svc.cluster.local"
+        - name: DB_DATABASE
+          value: "newsletters_db"
+        - name: DB_USERNAME
+          value: "newsletters_user"
+        - name: DB_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: newsletters-service-secrets
+              key: DB_PASSWORD
+        - name: APP_KEY
+          valueFrom:
+            secretKeyRef:
+              name: global-secrets
+              key: APP_KEY
+---
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: database-migrations-sav
+  namespace: e-commerce
+  labels:
+    app: database-migrations
+    component: maintenance
+spec:
+  ttlSecondsAfterFinished: 3600
+  backoffLimit: 3
+  template:
+    metadata:
+      labels:
+        app: database-migrations
+        component: maintenance
+    spec:
+      restartPolicy: Never
+      containers:
+      - name: migrate-sav-service
+        image: e-commerce-back-sav-service:latest
+        imagePullPolicy: Never
+        command: ["php", "artisan", "migrate", "--force"]
+        env:
+        - name: DB_HOST
+          value: "sav-service-mysql.e-commerce.svc.cluster.local"
+        - name: DB_DATABASE
+          value: "sav_db"
+        - name: DB_USERNAME
+          value: "sav_user"
+        - name: DB_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: sav-service-secrets
+              key: DB_PASSWORD
+        - name: APP_KEY
+          valueFrom:
+            secretKeyRef:
+              name: global-secrets
+              key: APP_KEY
+---
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: database-migrations-contacts
+  namespace: e-commerce
+  labels:
+    app: database-migrations
+    component: maintenance
+spec:
+  ttlSecondsAfterFinished: 3600
+  backoffLimit: 3
+  template:
+    metadata:
+      labels:
+        app: database-migrations
+        component: maintenance
+    spec:
+      restartPolicy: Never
+      containers:
+      - name: migrate-contacts-service
+        image: e-commerce-back-contacts-service:latest
+        imagePullPolicy: Never
+        command: ["php", "artisan", "migrate", "--force"]
+        env:
+        - name: DB_HOST
+          value: "contacts-service-mysql.e-commerce.svc.cluster.local"
+        - name: DB_DATABASE
+          value: "contacts_db"
+        - name: DB_USERNAME
+          value: "contacts_user"
+        - name: DB_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: contacts-service-secrets
+              key: DB_PASSWORD
+        - name: APP_KEY
+          valueFrom:
+            secretKeyRef:
+              name: global-secrets
+              key: APP_KEY
+---
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: database-migrations-questions
+  namespace: e-commerce
+  labels:
+    app: database-migrations
+    component: maintenance
+spec:
+  ttlSecondsAfterFinished: 3600
+  backoffLimit: 3
+  template:
+    metadata:
+      labels:
+        app: database-migrations
+        component: maintenance
+    spec:
+      restartPolicy: Never
+      containers:
+      - name: migrate-questions-service
+        image: e-commerce-back-questions-service:latest
+        imagePullPolicy: Never
+        command: ["php", "artisan", "migrate", "--force"]
+        env:
+        - name: DB_HOST
+          value: "questions-service-mysql.e-commerce.svc.cluster.local"
+        - name: DB_DATABASE
+          value: "questions_db"
+        - name: DB_USERNAME
+          value: "questions_user"
+        - name: DB_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: questions-service-secrets
+              key: DB_PASSWORD
+        - name: APP_KEY
+          valueFrom:
+            secretKeyRef:
+              name: global-secrets
+              key: APP_KEY
+---
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: database-migrations-websites
+  namespace: e-commerce
+  labels:
+    app: database-migrations
+    component: maintenance
+spec:
+  ttlSecondsAfterFinished: 3600
+  backoffLimit: 3
+  template:
+    metadata:
+      labels:
+        app: database-migrations
+        component: maintenance
+    spec:
+      restartPolicy: Never
+      containers:
+      - name: migrate-websites-service
+        image: e-commerce-back-websites-service:latest
+        imagePullPolicy: Never
+        command: ["php", "artisan", "migrate", "--force"]
+        env:
+        - name: DB_HOST
+          value: "websites-service-mysql.e-commerce.svc.cluster.local"
+        - name: DB_DATABASE
+          value: "websites_db"
+        - name: DB_USERNAME
+          value: "websites_user"
+        - name: DB_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: websites-service-secrets
+              key: DB_PASSWORD
+        - name: APP_KEY
+          valueFrom:
+            secretKeyRef:
+              name: global-secrets
+              key: APP_KEY

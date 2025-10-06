@@ -14,11 +14,23 @@ metadata:
 resources:
 - namespace.yaml
 - configmaps/global-config.yaml
+- configmaps/mysql-init-configmap.yaml
+- configmaps/service-urls-configmap.yaml
 - secrets/secrets-template.yaml
 - services/redis.yaml
+- services/addresses-mysql.yaml
 - services/auth-mysql.yaml
+- services/baskets-mysql.yaml
+- services/contacts-mysql.yaml
+- services/deliveries-mysql.yaml
+- services/newsletters-mysql.yaml
+- services/orders-mysql.yaml
 - services/products-mysql.yaml
+- services/questions-mysql.yaml
+- services/sav-mysql.yaml
+- services/websites-mysql.yaml
 - services/rabbitmq.yaml
+- minio-deployment.yaml
 
 labels:
 - pairs:

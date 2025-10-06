@@ -35,6 +35,9 @@ COPY ./services/orders-service .
 # Copy shared directory
 COPY ./shared /var/www/shared
 
+# Clear Laravel caches to remove any stale provider references
+RUN rm -rf /var/www/bootstrap/cache/*.php
+
 # Ensure Laravel structure is complete
 RUN mkdir -p /var/www/public /var/www/storage/app /var/www/storage/framework/{cache,sessions,views} /var/www/storage/logs
 RUN mkdir -p /var/www/bootstrap/cache
@@ -69,7 +72,8 @@ RUN chown -R www-data:www-data /var/www \
 # Create start script
 RUN echo '#!/bin/bash\n\
 echo "Waiting for database connection..."\n\
-while ! nc -z orders-db 3306; do\n\
+DB_HOST_ONLY=$(echo ${DB_HOST:-orders-service-mysql} | cut -d: -f1)\n\
+while ! nc -z $DB_HOST_ONLY 3306; do\n\
   sleep 0.1\n\
 done\n\
 echo "Database connected!"\n\
